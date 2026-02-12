@@ -1,0 +1,75 @@
+---
+description: Always use React Native Paper as primary UI library
+alwaysApply: true
+---
+
+# React Native Paper UI Library
+
+**PRIMARY UI LIBRARY**: React Native Paper must be used for ALL UI components in this project.
+
+## Core Principles
+
+- Use React Native Paper components instead of bare React Native components
+- Follow Material Design 3 guidelines
+- Maintain consistent theming throughout the app
+- Prefer Paper components over custom implementations
+
+## Common Component Mappings
+
+```tsx
+// ❌ BAD - bare React Native
+import { Button, Text, TextInput } from 'react-native';
+
+// ✅ GOOD - React Native Paper
+import { Button, Text, TextInput } from 'react-native-paper';
+```
+
+## Navigation Components
+
+For Bottom Navigation:
+```tsx
+import { BottomNavigation } from 'react-native-paper';
+```
+
+For App Bar/Header:
+```tsx
+import { Appbar } from 'react-native-paper';
+```
+
+## Icons
+
+Always use Material Community Icons from React Native Paper:
+```tsx
+import { IconButton } from 'react-native-paper';
+
+// Or standalone icon
+<Icon source="home" size={24} />
+```
+
+## Theme Integration
+
+Wrap app with Paper's Provider:
+```tsx
+import { PaperProvider } from 'react-native-paper';
+
+export default function App() {
+  return (
+    <PaperProvider>
+      {/* app content */}
+    </PaperProvider>
+  );
+}
+```
+
+## Common Components to Use
+
+- `Button` - for all buttons
+- `Card` - for card layouts
+- `TextInput` - for all text inputs
+- `FAB` - for floating action buttons
+- `Chip` - for tags/filters
+- `Dialog` - for modals
+- `Snackbar` - for notifications
+- `List.Item` - for list items
+- `BottomNavigation` - for tab navigation
+- `Appbar` - for headers
