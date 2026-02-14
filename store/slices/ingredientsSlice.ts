@@ -3,10 +3,12 @@ import { RootState } from '../index';
 
 interface IngredientsState {
   favoriteIds: string[]; // храним только ID избранных ингредиентов
+  showOnlyFavorites: boolean; // фильтр для отображения только избранных
 }
 
 const initialState: IngredientsState = {
   favoriteIds: [],
+  showOnlyFavorites: false,
 };
 
 const ingredientsSlice = createSlice({
@@ -23,6 +25,9 @@ const ingredientsSlice = createSlice({
       const id = action.payload;
       state.favoriteIds = state.favoriteIds.filter(favoriteId => favoriteId !== id);
     },
+    toggleShowOnlyFavorites: (state) => {
+      state.showOnlyFavorites = !state.showOnlyFavorites;
+    },
   },
 });
 
@@ -30,5 +35,11 @@ const ingredientsSlice = createSlice({
 export const selectIsFavorite = (state: RootState, ingredientId: string) =>
   state.ingredients.favoriteIds.includes(ingredientId);
 
-export const { addToFavorite, removeFromFavorite } = ingredientsSlice.actions;
+export const selectShowOnlyFavorites = (state: RootState) =>
+  state.ingredients.showOnlyFavorites;
+
+export const selectFavoriteIds = (state: RootState) =>
+  state.ingredients.favoriteIds;
+
+export const { addToFavorite, removeFromFavorite, toggleShowOnlyFavorites } = ingredientsSlice.actions;
 export default ingredientsSlice.reducer;
