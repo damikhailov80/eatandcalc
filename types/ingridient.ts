@@ -11,4 +11,5 @@ export interface Ingridient {
   measurementUnits: MeasurementUnit[]; // дополнительные единицы измерения (граммы добавляются автоматически)
   description?: string; // краткое описание продукта
   isDeleted?: boolean; // флаг для удалённых продуктов (используется только в админ-режиме)
+  isFavorite?: boolean; // флаг для избранных продуктов
 }

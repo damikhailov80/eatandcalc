@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Card, Text, Chip, Button } from 'react-native-paper';
-import { Ingridient } from '../types/ingridient';
-import { INGRIDIENT_CATEGORIES } from '../data/categories';
+import { Card, Text, Chip, Button, IconButton } from 'react-native-paper';
+import { Ingridient } from '../../types/ingridient';
+import { INGRIDIENT_CATEGORIES } from '../../data/categories';
 
 interface IngredientCardProps {
   ingredient: Ingridient;
@@ -10,6 +10,7 @@ interface IngredientCardProps {
   onPress?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onToggleFavorite?: () => void;
 }
 
 export const IngredientCard: React.FC<IngredientCardProps> = ({
@@ -17,14 +18,35 @@ export const IngredientCard: React.FC<IngredientCardProps> = ({
   isActive = false,
   onPress,
   onEdit,
-  onDelete
+  onDelete,
+  onToggleFavorite
 }) => {
   const categoryName = INGRIDIENT_CATEGORIES[ingredient.category]?.name || ingredient.category;
+  const lastTapRef = useRef<number>(0);
+
+  const handleCardPress = () => {
+    const now = Date.now();
+    const DOUBLE_PRESS_DELAY = 300;
+
+    if (now - lastTapRef.current < DOUBLE_PRESS_DELAY) {
+      // Double tap
+      onToggleFavorite?.();
+      lastTapRef.current = 0;
+    } else {
+      // Single tap
+      lastTapRef.current = now;
+      setTimeout(() => {
+        if (lastTapRef.current === now) {
+          onPress?.();
+        }
+      }, DOUBLE_PRESS_DELAY);
+    }
+  };
 
   return (
     <Card
       style={[styles.card, isActive && styles.cardActive]}
-      onPress={onPress}
+      onPress={handleCardPress}
       mode={isActive ? 'elevated' : 'outlined'}
     >
       <Card.Content>
@@ -32,6 +54,15 @@ export const IngredientCard: React.FC<IngredientCardProps> = ({
           <Text variant="titleMedium" style={styles.name}>
             {ingredient.name}
           </Text>
+          <IconButton
+            icon={ingredient.isFavorite ? "heart" : "heart-outline"}
+            size={20}
+            iconColor={ingredient.isFavorite ? "#d32f2f" : undefined}
+            onPress={(e) => {
+              e?.stopPropagation?.();
+              onToggleFavorite?.();
+            }}
+          />
           <Chip compact>{categoryName}</Chip>
         </View>
 

@@ -1,18 +1,18 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Chip } from 'react-native-paper';
-import { INGRIDIENT_CATEGORIES } from '../data/categories';
+import { INGRIDIENT_CATEGORIES } from '../../data/categories';
 
-interface CategoryFilterProps {
+interface IngredientCategoryFilterProps {
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
 }
 
-export function CategoryFilter({ selectedCategory, onCategoryChange }: CategoryFilterProps) {
+export function IngredientCategoryFilter({ selectedCategory, onCategoryChange }: CategoryFilterProps) {
   return (
     <View style={styles.categoryContainer}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoryScrollContent}
       >

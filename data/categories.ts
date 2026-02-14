@@ -1,4 +1,4 @@
-import { IngridientCategory } from '../types/categories';
+import { IngridientCategory } from '../types/categorie';
 
 export const INGRIDIENT_CATEGORIES: Record<string, IngridientCategory> = {
   UNCATEGORIZED: {

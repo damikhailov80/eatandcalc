@@ -1,0 +1,28 @@
+---
+description: Do not create documentation files unless explicitly requested
+alwaysApply: true
+---
+
+# Documentation Files
+
+**NEVER create documentation files (*.md, README.md, USAGE.md, etc.) unless the user explicitly asks for them.**
+
+This includes:
+- README files
+- USAGE examples
+- Documentation markdown files
+- Tutorial files
+- Integration guides
+
+## Exception
+
+Only create documentation files if:
+- User explicitly requests: "create a README" or "write documentation"
+- Project setup requires it (e.g., npm init creates package.json but not README)
+
+## What to do instead
+
+- Write code comments in the actual code files
+- Include JSDoc/TSDoc comments in TypeScript/JavaScript files
+- Use inline comments to explain complex logic
+- Trust that the user can read the code directly

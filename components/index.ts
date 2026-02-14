@@ -1,2 +1,3 @@
-export { IngredientCard } from './IngredientCard';
-export { CategoryFilter } from './CategoryFilter';
+export { IngredientCard } from './ingredient/IngredientCard';
+export { IngredientCategoryFilter } from './ingredient/IngredientCategoryFilter';
+export { ConnectedIngredientCard } from './ingredient/ConnectedIngredientCard';

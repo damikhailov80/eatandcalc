@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, TouchableWithoutFeedback, Pressable } from 'react-native';
+import { View, StyleSheet, FlatList, Pressable } from 'react-native';
 import { Searchbar } from 'react-native-paper';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { RootTabParamList } from '../types/navigation';
-import { IngredientCard } from '../components/IngredientCard';
-import { CategoryFilter } from '../components/CategoryFilter';
+import { ConnectedIngredientCard, IngredientCategoryFilter } from '../components/index';
 import { INGRIDIENTS_DATABASE } from '../data/Ingridients';
 import { Ingridient } from '../types/ingridient';
 
@@ -20,7 +19,7 @@ export default function IngredientsScreen({ navigation }: Props) {
 
     // Фильтрация по категории
     if (selectedCategory !== 'ALL') {
-      ingredients = ingredients.filter(ingredient => 
+      ingredients = ingredients.filter(ingredient =>
         ingredient.category === selectedCategory
       );
     }
@@ -55,7 +54,7 @@ export default function IngredientsScreen({ navigation }: Props) {
   };
 
   const renderItem = ({ item }: { item: Ingridient }) => (
-    <IngredientCard
+    <ConnectedIngredientCard
       ingredient={item}
       isActive={activeCardId === item.id}
       onPress={() => handleCardPress(item.id)}
@@ -77,7 +76,7 @@ export default function IngredientsScreen({ navigation }: Props) {
           keyboardType="default"
         />
       </View>
-      <CategoryFilter 
+      <IngredientCategoryFilter
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
       />
