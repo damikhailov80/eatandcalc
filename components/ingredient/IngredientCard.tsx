@@ -22,31 +22,11 @@ export const IngredientCard: React.FC<IngredientCardProps> = ({
   onToggleFavorite
 }) => {
   const categoryName = INGRIDIENT_CATEGORIES[ingredient.category]?.name || ingredient.category;
-  const lastTapRef = useRef<number>(0);
-
-  const handleCardPress = () => {
-    const now = Date.now();
-    const DOUBLE_PRESS_DELAY = 300;
-
-    if (now - lastTapRef.current < DOUBLE_PRESS_DELAY) {
-      // Double tap
-      onToggleFavorite?.();
-      lastTapRef.current = 0;
-    } else {
-      // Single tap
-      lastTapRef.current = now;
-      setTimeout(() => {
-        if (lastTapRef.current === now) {
-          onPress?.();
-        }
-      }, DOUBLE_PRESS_DELAY);
-    }
-  };
 
   return (
     <Card
       style={[styles.card, isActive && styles.cardActive]}
-      onPress={handleCardPress}
+      onPress={onPress}
       mode={isActive ? 'elevated' : 'outlined'}
     >
       <Card.Content>
