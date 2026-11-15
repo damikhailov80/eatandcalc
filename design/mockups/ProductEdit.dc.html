@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Продукт — Оливковое масло</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1180px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 16px 16px 0; display: flex; align-items: center; gap: 8px">
+  <a href="Products.dc.html" aria-label="Назад" style="width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #1D1C19"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></a>
+  <h1 style="flex: 1; margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 20px; font-weight: 800">Продукт</h1>
+</header>
+
+<main style="padding: 12px 20px 120px; display: flex; flex-direction: column; gap: 14px">
+  <label style="display: flex; flex-direction: column; gap: 6px">
+    <span style="font-size: 13px; font-weight: 600; color: #4A4740">Название</span>
+    <input type="text" value="Оливковое масло" style="height: 52px; border-radius: 14px; border: 1px solid #D5D0C4; background: #FFFFFF; padding: 0 14px; font-family: inherit; font-size: 17px; font-weight: 600; color: #1D1C19; outline: none; box-sizing: border-box">
+  </label>
+
+  <fieldset style="border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px">
+    <legend style="font-size: 13px; font-weight: 600; color: #4A4740; padding: 0 0 8px">Категория</legend>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <button style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Мясо</button>
+      <button style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Рыба</button>
+      <button style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Овощи</button>
+      <button style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Фрукты</button>
+      <button style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Молочные</button>
+      <button style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Крупы</button>
+      <button aria-pressed="true" style="height: 36px; padding: 0 12px; border-radius: 999px; border: 0; background: #1D1C19; font-family: inherit; font-size: 13px; font-weight: 600; color: #FFFFFF">Масла</button>
+      <button style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Яйца и бакалея</button>
+    </div>
+  </fieldset>
+
+  <section style="background: #FFFFFF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <h2 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 16px; font-weight: 700">Пищевая ценность</h2>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 13px; color: #4A4740">Указана на</span>
+      <div role="radiogroup" aria-label="Единица измерения" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 12px; background: #EDEAE2">
+        <sc-for list="{{bases}}" as="b" hint-placeholder-count="5">
+          <button role="radio" aria-checked="{{b.checked}}" onClick="{{b.pick}}" style="height: 36px; border: 0; border-radius: 9px; padding: 0; font-family: inherit; font-size: 13px; font-weight: 600; color: #1D1C19; background: {{b.bg}}">{{b.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{needsGrams}}" hint-placeholder-val="{{false}}">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <label style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 12px; color: #4A4740">Название единицы</span>
+          <input type="text" value="{{customName}}" style="height: 44px; border-radius: 12px; border: 1px solid #D5D0C4; background: #FFFFFF; padding: 0 12px; font-family: inherit; font-size: 15px; color: #1D1C19; outline: none; box-sizing: border-box">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 12px; color: #4A4740">Вес единицы, г</span>
+          <input type="number" inputmode="decimal" placeholder="например, 250" style="height: 44px; border-radius: 12px; border: 1px solid #D5D0C4; background: #FFFFFF; padding: 0 12px; font-family: inherit; font-size: 15px; color: #1D1C19; outline: none; box-sizing: border-box">
+        </label>
+      </div>
+    </sc-if>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{fields}}" as="f" hint-placeholder-count="4">
+        <label style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 14px; background: #F6F4EF">
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4A4740"><span style="width: 8px; height: 8px; border-radius: 2px; background: {{f.color}}"></span>{{f.label}}</span>
+          <span style="display: flex; align-items: baseline; gap: 4px">
+            <input type="number" inputmode="decimal" value="{{f.value}}" style="width: 100%; min-width: 0; border: 0; background: transparent; font-family: inherit; font-size: 22px; font-weight: 700; color: #1D1C19; padding: 0; outline: none">
+            <span style="font-size: 13px; color: #67635A">{{f.unit}}</span>
+          </span>
+        </label>
+      </sc-for>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #1F5E3A; font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>{{check}}</div>
+  </section>
+
+  <section style="background: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <div style="padding: 14px 16px 6px; display: flex; flex-direction: column; gap: 2px">
+      <h2 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 16px; font-weight: 700">Другие единицы</h2>
+      <span style="font-size: 12px; color: #67635A">В рецептах можно указывать масло ложками — граммы посчитаются сами</span>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #EFECE4; display: flex; align-items: center; gap: 10px">
+      <span style="flex: 1; font-size: 15px; font-weight: 600">1 ст. ложка</span>
+      <span style="font-size: 14px; color: #4A4740">13,5 г</span>
+      <span style="width: 72px; text-align: right; font-size: 14px; font-weight: 700">121 ккал</span>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #EFECE4; display: flex; align-items: center; gap: 10px">
+      <span style="flex: 1; font-size: 15px; font-weight: 600">1 ч. ложка</span>
+      <span style="font-size: 14px; color: #4A4740">4,5 г</span>
+      <span style="width: 72px; text-align: right; font-size: 14px; font-weight: 700">40 ккал</span>
+    </div>
+    <button style="width: 100%; height: 50px; border: 0; border-top: 1px solid #EFECE4; background: transparent; padding: 0 16px; display: flex; align-items: center; gap: 8px; font-family: inherit; font-size: 14px; font-weight: 600; color: #1F5E3A"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Добавить единицу</button>
+  </section>
+
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px">
+    <button style="height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: #B4320A">Удалить продукт</button>
+    <span style="font-size: 12px; color: #67635A">Используется в 3 рецептах и 12 готовках — они сохранят свои значения</span>
+  </div>
+</main>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 20px 28px; background: #F6F4EF; border-top: 1px solid #E6E2D8">
+  <a href="Products.dc.html" style="height: 52px; border-radius: 16px; background: #2E7D4F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; font-weight: 600">Сохранить</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { basis: 'g100' }; }
+  renderVals() {
+    var self = this;
+    var B = [
+      { id: 'g100', label: '100 г', g: 100 }, { id: 'pc', label: '1 шт', g: null },
+      { id: 'tsp', label: 'ч. л.', g: 4.5 }, { id: 'tbsp', label: 'ст. л.', g: 13.5 }, { id: 'own', label: 'Своя', g: null }
+    ];
+    var cur = B.filter(function (b) { return b.id === self.state.basis; })[0];
+    var per100 = { k: 899, p: 0, f: 99.9, c: 0 };
+    var m = cur.g ? cur.g / 100 : 1;
+    function one(x) { return String(Math.round(x * 10) / 10).replace('.', ','); }
+    var k = cur.g ? Math.round(per100.k * m) : '';
+    var f = cur.g ? one(per100.f * m) : '';
+    return {
+      bases: B.map(function (b) { var on = b.id === self.state.basis; return { label: b.label, checked: on ? 'true' : 'false', bg: on ? '#FFFFFF' : 'transparent', pick: function () { self.setState({ basis: b.id }); } }; }),
+      needsGrams: !cur.g, customName: cur.id === 'pc' ? '1 шт' : 'бутылка',
+      fields: [
+        { label: 'Калории', unit: 'ккал', value: String(k), color: '#2E7D4F' },
+        { label: 'Белки', unit: 'г', value: cur.g ? '0' : '', color: '#3566B0' },
+        { label: 'Жиры', unit: 'г', value: f, color: '#B7791F' },
+        { label: 'Углеводы', unit: 'г', value: cur.g ? '0' : '', color: '#7A5AB0' }
+      ],
+      check: cur.g ? 'По БЖУ выходит ' + Math.round(per100.f * m * 9) + ' ккал — совпадает с указанным' : 'Укажите вес единицы, чтобы сравнивать с другими продуктами'
+    };
+  }
+}
+</script>
+</body>
+</html>

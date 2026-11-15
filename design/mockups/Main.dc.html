@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>День — план питания семьи</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1640px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 20px 20px 0; display: flex; flex-direction: column; gap: 14px">
+  <div style="display: flex; align-items: flex-end; gap: 12px">
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+      <div style="font-size: 13px; color: #67635A; font-weight: 500">Воскресенье · сегодня</div>
+      <h1 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.4px">15 ноября</h1>
+    </div>
+    <button aria-label="Скопировать план другого дня" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid #E6E2D8; background: #FFFFFF; color: #1D1C19; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></button>
+    <a href="History.dc.html" aria-label="История питания" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid #E6E2D8; background: #FFFFFF; color: #1D1C19; display: flex; align-items: center; justify-content: center; box-sizing: border-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></a>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 4px">
+    <button aria-label="Предыдущая неделя" style="width: 28px; height: 56px; border: 0; background: transparent; color: #67635A; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <div style="flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
+      <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+        <button style="height: 56px; border-radius: 14px; border: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-family: inherit; background: {{d.bg}}; color: {{d.fg}}">
+          <span style="font-size: 11px; font-weight: 500">{{d.wd}}</span>
+          <span style="font-size: 16px; font-weight: 700">{{d.num}}</span>
+          <span style="width: 4px; height: 4px; border-radius: 50%; background: {{d.dot}}"></span>
+        </button>
+      </sc-for>
+    </div>
+    <button aria-label="Следующая неделя" style="width: 28px; height: 56px; border: 0; background: transparent; color: #67635A; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+  </div>
+</header>
+
+<section aria-label="Итоги дня по членам семьи" style="margin: 16px 20px 0; background: #FFFFFF; border-radius: 20px; padding: 16px 12px 14px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+  <div style="display: flex; align-items: center; padding: 0 4px 12px">
+    <div style="flex: 1; font-size: 13px; font-weight: 600; color: #67635A">Калории за день</div>
+    <div style="font-size: 12px; color: #67635A">5 478 ккал на семью</div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+    <sc-for list="{{members}}" as="m" hint-placeholder-count="4">
+      <a href="{{m.href}}" style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: #1D1C19; padding: 4px 0">
+        <div style="position: relative; width: 60px; height: 60px">
+          <svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true">
+            <circle cx="30" cy="30" r="25" fill="none" stroke="#EDEAE2" stroke-width="6"></circle>
+            <circle cx="30" cy="30" r="25" fill="none" stroke="{{m.ring}}" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{m.dash}}" transform="rotate(-90 30 30)"></circle>
+          </svg>
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700">{{m.pct}}</div>
+        </div>
+        <div style="font-size: 13px; font-weight: 600">{{m.name}}</div>
+        <div style="font-size: 11px; color: #67635A; margin-top: -4px">{{m.kcal}}</div>
+        <sc-if value="{{m.over}}" hint-placeholder-val="{{false}}">
+          <span style="font-size: 11px; font-weight: 600; color: #C2410C; background: #FCE9DC; border-radius: 6px; padding: 2px 6px">{{m.overText}}</span>
+        </sc-if>
+        <sc-if value="{{m.ok}}" hint-placeholder-val="{{true}}">
+          <span style="font-size: 11px; font-weight: 600; color: #1F5E3A; background: #E3F0E7; border-radius: 6px; padding: 2px 6px">{{m.left}}</span>
+        </sc-if>
+      </a>
+    </sc-for>
+  </div>
+</section>
+
+<main style="padding: 16px 20px 110px; display: flex; flex-direction: column; gap: 12px">
+  <sc-for list="{{meals}}" as="meal" hint-placeholder-count="4">
+    <section style="background: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 14px 12px 12px 16px">
+        <div style="flex: 1; display: flex; align-items: baseline; gap: 8px">
+          <h2 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 18px; font-weight: 700">{{meal.name}}</h2>
+          <span style="font-size: 12px; color: #67635A">{{meal.kcal}}</span>
+        </div>
+        <a href="AddDish.dc.html" aria-label="Добавить блюдо" style="height: 36px; padding: 0 12px; border-radius: 12px; background: #E3F0E7; color: #1F5E3A; display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Блюдо</a>
+      </div>
+      <sc-for list="{{meal.dishes}}" as="dish" hint-placeholder-count="2">
+        <a href="Distribute.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 14px; border-top: 1px solid #EFECE4; text-decoration: none; color: #1D1C19">
+          <div style="display: flex; align-items: flex-start; gap: 12px">
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+              <div style="font-size: 15px; font-weight: 600">{{dish.name}}</div>
+              <div style="font-size: 12px; color: #67635A">{{dish.meta}}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px">
+              <div style="font-size: 15px; font-weight: 600">{{dish.weight}}</div>
+              <div style="font-size: 12px; color: #67635A">{{dish.kcal}}</div>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{dish.people}}" as="p" hint-placeholder-count="4">
+              <span style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; background: #F6F4EF; border-radius: 999px; font-size: 13px; font-weight: 500">
+                <span style="width: 22px; height: 22px; border-radius: 50%; background: {{p.color}}; color: #FFFFFF; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">{{p.initial}}</span>{{p.grams}}
+              </span>
+            </sc-for>
+          </div>
+        </a>
+      </sc-for>
+    </section>
+  </sc-for>
+  <a href="AddDish.dc.html" style="height: 52px; border-radius: 16px; border: 1.5px dashed #C9C3B5; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: #1D1C19; font-size: 14px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Добавить приём пищи</a>
+</main>
+
+<nav aria-label="Разделы" style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; box-sizing: border-box; padding: 8px 6px 24px; background: #FFFFFF; border-top: 1px solid #E6E2D8; display: flex">
+  <a href="Main.dc.html" aria-current="page" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #1F5E3A; font-size: 11px; font-weight: 700"><span style="display: flex; padding: 3px 16px; border-radius: 999px; background: #E3F0E7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>День</a>
+  <a href="CookingHistory.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"></path><path d="M2 10h20M9 6.5c0-1.2 1.2-2.5 3-2.5s3 1.3 3 2.5"></path></svg></span>Готовка</a>
+  <a href="Recipes.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h10a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg></span>Рецепты</a>
+  <a href="Products.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.5c-3-2-8-1-8 4.5 0 5 3 9 5 9 1 0 2-.5 3-.5s2 .5 3 .5c2 0 5-4 5-9 0-5.5-5-6.5-8-4.5z"></path><path d="M12 7.5c0-2 1-3.8 3-4.5"></path></svg></span>Продукты</a>
+  <a href="Family.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.5-3.5 3.2-6 6.5-6s6 2.5 6.5 6"></path><circle cx="17" cy="9" r="2.5"></circle><path d="M17 14c2.5 0 4.3 2 4.6 5"></path></svg></span>Семья</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var P = {
+      D: { initial: 'Д', color: '#2F5D9E' },
+      A: { initial: 'А', color: '#A3456F' },
+      M: { initial: 'М', color: '#2E7D4F' },
+      S: { initial: 'С', color: '#9A6416' }
+    };
+    function ch(k, g) { return { initial: P[k].initial, color: P[k].color, grams: g }; }
+    var wds = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    var days = [];
+    for (var i = 0; i < 7; i++) {
+      var sel = i === 6;
+      days.push({
+        wd: wds[i], num: String(9 + i),
+        bg: sel ? '#2E7D4F' : 'transparent',
+        fg: sel ? '#FFFFFF' : '#1D1C19',
+        dot: sel ? '#FFFFFF' : '#7FB394'
+      });
+    }
+    var C = 2 * Math.PI * 25;
+    function mem(name, eaten, norm, href, overText) {
+      var f = Math.min(eaten / norm, 1);
+      return {
+        name: name, href: href,
+        pct: Math.round(eaten / norm * 100) + '%',
+        kcal: eaten.toLocaleString('ru-RU') + ' / ' + norm.toLocaleString('ru-RU'),
+        dash: (C * f).toFixed(1) + ' ' + C.toFixed(1),
+        ring: '#2E7D4F',
+        over: !!overText, ok: !overText, overText: overText,
+        left: 'ещё ' + (norm - eaten).toLocaleString('ru-RU')
+      };
+    }
+    return {
+      days: days,
+      members: [
+        mem('Денис', 1962, 2400, 'MemberStats.dc.html', 'Белки +8 г'),
+        mem('Анна', 1420, 1800, 'MemberStats.dc.html', ''),
+        mem('Миша', 1190, 1500, 'MemberStats.dc.html', ''),
+        mem('Соня', 906, 1300, 'MemberStats.dc.html', '')
+      ],
+      meals: [
+        { name: 'Завтрак', kcal: '1 435 ккал', dishes: [
+          { name: 'Овсяная каша на молоке', meta: 'Готовка 15 ноя · 102 ккал / 100 г', weight: '900 г', kcal: '917 ккал', people: [ch('D','300 г'), ch('A','220 г'), ch('M','220 г'), ch('S','160 г')] },
+          { name: 'Творог со сметаной', meta: 'Готовка 15 ноя · 148 ккал / 100 г', weight: '350 г', kcal: '518 ккал', people: [ch('D','200 г'), ch('A','150 г')] }
+        ]},
+        { name: 'Обед', kcal: '1 356 ккал', dishes: [
+          { name: 'Куриный суп с лапшой', meta: 'Готовка 14 ноя · 48 ккал / 100 г', weight: '1 400 г', kcal: '672 ккал', people: [ch('D','450 г'), ch('A','400 г'), ch('M','300 г'), ch('S','250 г')] },
+          { name: 'Гречка отварная', meta: 'Готовка 14 ноя · 114 ккал / 100 г', weight: '600 г', kcal: '684 ккал', people: [ch('D','200 г'), ch('A','150 г'), ch('M','150 г'), ch('S','100 г')] }
+        ]},
+        { name: 'Ужин', kcal: '1 700 ккал', dishes: [
+          { name: 'Курица с овощами', meta: 'Готовка 15 ноя · 102 ккал / 100 г · остаток 200 г', weight: '950 г', kcal: '965 ккал', people: [ch('D','350 г'), ch('A','250 г'), ch('M','200 г'), ch('S','150 г')] },
+          { name: 'Картофельное пюре', meta: 'Готовка 15 ноя · 98 ккал / 100 г', weight: '750 г', kcal: '735 ккал', people: [ch('D','250 г'), ch('A','150 г'), ch('M','200 г'), ch('S','150 г')] }
+        ]},
+        { name: 'Перекус', kcal: '987 ккал', dishes: [
+          { name: 'Сырники', meta: 'Готовка 15 ноя · 210 ккал / 100 г · остаток 130 г', weight: '470 г', kcal: '987 ккал', people: [ch('D','150 г'), ch('A','100 г'), ch('M','120 г'), ch('S','100 г')] }
+        ]}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

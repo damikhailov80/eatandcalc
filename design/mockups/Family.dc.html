@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Семья</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1000px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 20px 20px 0; display: flex; flex-direction: column; gap: 4px">
+  <h1 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.4px">Семья</h1>
+  <div style="font-size: 13px; color: #67635A">4 человека · сегодня, 15 ноября</div>
+</header>
+
+<main style="padding: 16px 20px 110px; display: flex; flex-direction: column; gap: 10px">
+  <sc-for list="{{members}}" as="m" hint-placeholder-count="4">
+    <article style="background: #FFFFFF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="width: 44px; height: 44px; border-radius: 50%; background: {{m.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700">{{m.initial}}</span>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+          <div style="font-size: 17px; font-weight: 700">{{m.name}}</div>
+          <div style="font-size: 12px; color: #67635A">{{m.sex}} · норма {{m.norm}} ккал</div>
+        </div>
+        <a href="MemberEdit.dc.html" aria-label="{{m.editLabel}}" style="width: 44px; height: 44px; border-radius: 12px; background: #F6F4EF; color: #1D1C19; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></a>
+      </div>
+      <a href="MemberStats.dc.html" style="display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: #1D1C19">
+        <div style="display: flex; align-items: baseline; gap: 6px; font-size: 13px">
+          <span style="flex: 1; color: #4A4740">Сегодня</span>
+          <span style="font-weight: 700">{{m.eaten}}</span>
+          <span style="color: #67635A">/ {{m.norm}} ккал</span>
+        </div>
+        <div style="height: 8px; border-radius: 999px; background: #EDEAE2; overflow: hidden"><div style="height: 8px; width: {{m.w}}; border-radius: 999px; background: #2E7D4F"></div></div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{m.macros}}" as="x" hint-placeholder-count="3">
+            <div style="background: {{x.bg}}; border-radius: 10px; padding: 6px 8px">
+              <div style="font-size: 11px; color: #4A4740">{{x.name}}</div>
+              <div style="font-size: 13px; font-weight: 700; color: {{x.fg}}">{{x.v}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </a>
+    </article>
+  </sc-for>
+  <a href="MemberEdit.dc.html" style="height: 52px; border-radius: 16px; border: 1.5px dashed #C9C3B5; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: #1D1C19; font-size: 14px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Добавить члена семьи</a>
+</main>
+
+<nav aria-label="Разделы" style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; box-sizing: border-box; padding: 8px 6px 24px; background: #FFFFFF; border-top: 1px solid #E6E2D8; display: flex">
+  <a href="Main.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>День</a>
+  <a href="CookingHistory.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"></path><path d="M2 10h20M9 6.5c0-1.2 1.2-2.5 3-2.5s3 1.3 3 2.5"></path></svg></span>Готовка</a>
+  <a href="Recipes.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h10a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg></span>Рецепты</a>
+  <a href="Products.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.5c-3-2-8-1-8 4.5 0 5 3 9 5 9 1 0 2-.5 3-.5s2 .5 3 .5c2 0 5-4 5-9 0-5.5-5-6.5-8-4.5z"></path><path d="M12 7.5c0-2 1-3.8 3-4.5"></path></svg></span>Продукты</a>
+  <a href="Family.dc.html" aria-current="page" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #1F5E3A; font-size: 11px; font-weight: 700"><span style="display: flex; padding: 3px 16px; border-radius: 999px; background: #E3F0E7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.5-3.5 3.2-6 6.5-6s6 2.5 6.5 6"></path><circle cx="17" cy="9" r="2.5"></circle><path d="M17 14c2.5 0 4.3 2 4.6 5"></path></svg></span>Семья</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function mx(name, eaten, norm) {
+      var over = eaten > norm;
+      return { name: name, v: eaten + ' / ' + norm + ' г', bg: over ? '#FCE9DC' : '#F6F4EF', fg: over ? '#C2410C' : '#1D1C19' };
+    }
+    function m(name, initial, color, sex, eaten, norm, macros) {
+      return { name: name, initial: initial, color: color, sex: sex,
+        eaten: eaten.toLocaleString('ru-RU'), norm: norm.toLocaleString('ru-RU'),
+        w: Math.min(eaten / norm * 100, 100).toFixed(1) + '%', macros: macros, editLabel: 'Изменить профиль — ' + name };
+    }
+    return {
+      members: [
+        m('Денис', 'Д', '#2F5D9E', 'Мужской', 1962, 2400, [mx('Белки', 138, 130), mx('Жиры', 70, 80), mx('Углеводы', 189, 270)]),
+        m('Анна', 'А', '#A3456F', 'Женский', 1420, 1800, [mx('Белки', 78, 90), mx('Жиры', 51, 60), mx('Углеводы', 160, 220)]),
+        m('Миша', 'М', '#2E7D4F', 'Мужской', 1190, 1500, [mx('Белки', 52, 60), mx('Жиры', 38, 50), mx('Углеводы', 148, 200)]),
+        m('Соня', 'С', '#9A6416', 'Женский', 906, 1300, [mx('Белки', 40, 50), mx('Жиры', 30, 45), mx('Углеводы', 112, 170)])
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

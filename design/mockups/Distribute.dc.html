@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Распределение блюда — Курица с овощами</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1040px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 16px 16px 0; display: flex; align-items: center; gap: 8px">
+  <a href="Main.dc.html" aria-label="Назад" style="width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #1D1C19"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></a>
+  <div style="flex: 1; display: flex; flex-direction: column">
+    <div style="font-size: 12px; color: #67635A">Ужин · Вс, 15 ноября</div>
+    <h1 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 20px; font-weight: 800">Курица с овощами</h1>
+  </div>
+  <button aria-label="Удалить блюдо из ужина" style="width: 44px; height: 44px; border-radius: 14px; border: 0; background: transparent; color: #67635A; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"></path></svg></button>
+</header>
+
+<main style="padding: 14px 20px 120px; display: flex; flex-direction: column; gap: 12px">
+  <a href="CookingEdit.dc.html" style="background: #FFFFFF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px; text-decoration: none; color: #1D1C19; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <span style="width: 40px; height: 40px; border-radius: 12px; background: #E3F0E7; color: #1F5E3A; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"></path><path d="M2 10h20M9 6.5c0-1.2 1.2-2.5 3-2.5s3 1.3 3 2.5"></path></svg></span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 14px; font-weight: 600">Готовка 15 ноября · 1 150 г</div>
+        <div style="font-size: 12px; color: #67635A">По рецепту «Курица с овощами», состав изменён</div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#67635A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+      <div style="background: #F6F4EF; border-radius: 12px; padding: 8px 10px"><div style="font-size: 11px; color: #67635A">ккал</div><div style="font-size: 15px; font-weight: 700">102</div></div>
+      <div style="background: #F6F4EF; border-radius: 12px; padding: 8px 10px"><div style="font-size: 11px; color: #67635A">белки</div><div style="font-size: 15px; font-weight: 700">13,2</div></div>
+      <div style="background: #F6F4EF; border-radius: 12px; padding: 8px 10px"><div style="font-size: 11px; color: #67635A">жиры</div><div style="font-size: 15px; font-weight: 700">3,4</div></div>
+      <div style="background: #F6F4EF; border-radius: 12px; padding: 8px 10px"><div style="font-size: 11px; color: #67635A">углев.</div><div style="font-size: 15px; font-weight: 700">4,4</div></div>
+    </div>
+    <div style="font-size: 11px; color: #67635A; margin-top: -4px">На 100 г готового блюда</div>
+  </a>
+
+  <section style="background: #FFFFFF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <div style="display: flex; align-items: baseline; gap: 8px">
+      <h2 style="flex: 1; margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 16px; font-weight: 700">Кто сколько съест</h2>
+      <span style="font-size: 13px; font-weight: 600; color: {{sumColor}}">{{sumText}}</span>
+    </div>
+    <div style="display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: #EDEAE2; gap: 2px">
+      <sc-for list="{{segments}}" as="s" hint-placeholder-count="4">
+        <div style="width: {{s.w}}; background: {{s.color}}"></div>
+      </sc-for>
+    </div>
+    <div style="font-size: 12px; color: {{leftColor}}; font-weight: 600">{{leftText}}</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+      <button onClick="{{equal}}" style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 600; color: #1D1C19">Поровну</button>
+      <button onClick="{{allLeft}}" style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 600; color: #1D1C19">Всё без остатка</button>
+      <button onClick="{{reset}}" style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 600; color: #1D1C19">Как в прошлый раз</button>
+    </div>
+  </section>
+
+  <section style="background: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <sc-for list="{{rows}}" as="m" hint-placeholder-count="4">
+      <div style="padding: 14px 16px; border-top: {{m.border}}; display: flex; flex-direction: column; gap: 10px; opacity: {{m.opacity}}">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <button onClick="{{m.toggle}}" aria-pressed="{{m.pressed}}" aria-label="{{m.toggleLabel}}" style="width: 44px; height: 44px; margin: -4px 0 -4px -4px; border: 0; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center">
+            <span style="width: 24px; height: 24px; border-radius: 7px; border: 2px solid {{m.boxBorder}}; background: {{m.boxBg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-sizing: border-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+          </button>
+          <span style="width: 32px; height: 32px; border-radius: 50%; background: {{m.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">{{m.initial}}</span>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; font-weight: 600">{{m.name}}</div>
+            <div style="font-size: 12px; color: #67635A">{{m.dayLeft}}</div>
+          </div>
+          <div style="display: flex; align-items: center; border-radius: 12px; background: #F6F4EF; height: 44px">
+            <button onClick="{{m.minus}}" aria-label="{{m.minusLabel}}" style="width: 40px; height: 44px; border: 0; background: transparent; color: #1D1C19; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+            <label style="display: flex; align-items: baseline; gap: 2px">
+              <input type="number" inputmode="numeric" aria-label="{{m.inputLabel}}" value="{{m.g}}" onChange="{{m.onInput}}" style="width: 44px; border: 0; background: transparent; text-align: right; font-family: inherit; font-size: 17px; font-weight: 700; color: #1D1C19; padding: 0; outline: none">
+              <span style="font-size: 13px; color: #67635A">г</span>
+            </label>
+            <button onClick="{{m.plus}}" aria-label="{{m.plusLabel}}" style="width: 40px; height: 44px; border: 0; background: transparent; color: #1D1C19; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+          </div>
+        </div>
+        <div style="display: flex; gap: 14px; padding-left: 84px; font-size: 13px">
+          <span style="font-weight: 700">{{m.kcal}} ккал</span>
+          <span style="color: #4A4740">Б {{m.p}}</span>
+          <span style="color: #4A4740">Ж {{m.f}}</span>
+          <span style="color: #4A4740">У {{m.c}}</span>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+</main>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 20px 28px; background: #F6F4EF; border-top: 1px solid #E6E2D8">
+  <a href="Main.dc.html" style="height: 52px; border-radius: 16px; background: #2E7D4F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; font-weight: 600">Сохранить в ужин</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1040}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { g: { D: 350, A: 250, M: 200, S: 150 }, on: { D: true, A: true, M: true, S: true } };
+  }
+  renderVals() {
+    var self = this;
+    var TOTAL = 1150;
+    var per = { k: 1168 / TOTAL, p: 152.1 / TOTAL, f: 39.3 / TOTAL, c: 50.4 / TOTAL };
+    var people = [
+      { id: 'D', name: 'Денис', initial: 'Д', color: '#2F5D9E', before: 1606, norm: 2400 },
+      { id: 'A', name: 'Анна', initial: 'А', color: '#A3456F', before: 1166, norm: 1800 },
+      { id: 'M', name: 'Миша', initial: 'М', color: '#2E7D4F', before: 987, norm: 1500 },
+      { id: 'S', name: 'Соня', initial: 'С', color: '#9A6416', before: 754, norm: 1300 }
+    ];
+    var g = this.state.g, on = this.state.on;
+    function setG(id, v) { var n = Object.assign({}, self.state.g); n[id] = Math.max(0, Math.min(2000, v)); self.setState({ g: n }); }
+    function fmt(x) { return x.toFixed(1).replace('.', ','); }
+    var sum = 0;
+    people.forEach(function (p) { if (on[p.id]) sum += g[p.id]; });
+    var activeIds = people.filter(function (p) { return on[p.id]; }).map(function (p) { return p.id; });
+    var rows = people.map(function (p, i) {
+      var grams = on[p.id] ? g[p.id] : 0;
+      var kcal = Math.round(grams * per.k);
+      var left = p.norm - p.before - kcal;
+      return {
+        name: p.name, initial: p.initial, color: p.color,
+        border: i === 0 ? '0' : '1px solid #EFECE4',
+        opacity: on[p.id] ? '1' : '0.5',
+        pressed: on[p.id] ? 'true' : 'false',
+        toggleLabel: (on[p.id] ? 'Убрать ' : 'Добавить ') + p.name,
+        boxBorder: on[p.id] ? '#2E7D4F' : '#C9C3B5', boxBg: on[p.id] ? '#2E7D4F' : '#FFFFFF',
+        g: String(g[p.id]),
+        kcal: kcal, p: fmt(grams * per.p), f: fmt(grams * per.f), c: fmt(grams * per.c),
+        dayLeft: left >= 0 ? 'до нормы ещё ' + left.toLocaleString('ru-RU') + ' ккал' : 'сверх нормы ' + (-left).toLocaleString('ru-RU') + ' ккал',
+        minusLabel: 'Меньше на 10 г — ' + p.name, plusLabel: 'Больше на 10 г — ' + p.name, inputLabel: 'Граммы — ' + p.name,
+        toggle: function () { var n = Object.assign({}, self.state.on); n[p.id] = !n[p.id]; self.setState({ on: n }); },
+        minus: function () { setG(p.id, self.state.g[p.id] - 10); },
+        plus: function () { setG(p.id, self.state.g[p.id] + 10); },
+        onInput: function (e) { var v = parseInt(e.target.value, 10); setG(p.id, isNaN(v) ? 0 : v); }
+      };
+    });
+    var segments = people.filter(function (p) { return on[p.id] && g[p.id] > 0; }).map(function (p) {
+      return { w: (Math.min(g[p.id] / Math.max(TOTAL, sum), 1) * 100).toFixed(2) + '%', color: p.color };
+    });
+    var rest = TOTAL - sum;
+    return {
+      rows: rows, segments: segments,
+      sumText: sum.toLocaleString('ru-RU') + ' из ' + TOTAL.toLocaleString('ru-RU') + ' г',
+      sumColor: rest < 0 ? '#C2410C' : '#1D1C19',
+      leftText: rest >= 0 ? 'В кастрюле останется ' + rest + ' г — будет доступно в следующих приёмах пищи' : 'Больше, чем приготовлено, на ' + (-rest) + ' г',
+      leftColor: rest >= 0 ? '#67635A' : '#C2410C',
+      equal: function () { var n = Object.assign({}, self.state.g); var each = Math.floor(TOTAL / activeIds.length / 10) * 10; activeIds.forEach(function (id) { n[id] = each; }); self.setState({ g: n }); },
+      allLeft: function () { if (!activeIds.length) return; var n = Object.assign({}, self.state.g); n[activeIds[0]] = n[activeIds[0]] + rest; self.setState({ g: n }); },
+      reset: function () { self.setState({ g: { D: 350, A: 250, M: 200, S: 150 }, on: { D: true, A: true, M: true, S: true } }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>История питания</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1180px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 16px 16px 0; display: flex; align-items: center; gap: 8px">
+  <a href="Main.dc.html" aria-label="Назад" style="width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #1D1C19"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></a>
+  <h1 style="flex: 1; margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 20px; font-weight: 800">История питания</h1>
+</header>
+
+<div style="margin: 10px 20px 0; display: flex; gap: 6px; flex-wrap: wrap">
+  <button style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Семья</button>
+  <button aria-pressed="true" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #1D1C19; font-family: inherit; font-size: 13px; font-weight: 600; color: #FFFFFF">Денис</button>
+  <button style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Анна</button>
+  <button style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Миша</button>
+  <button style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Соня</button>
+</div>
+
+<main style="padding: 14px 20px 110px; display: flex; flex-direction: column; gap: 12px">
+  <section style="background: #FFFFFF; border-radius: 20px; padding: 14px 14px 12px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <div style="display: flex; align-items: center; gap: 4px; padding: 0 0 8px 6px">
+      <h2 style="flex: 1; margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 16px; font-weight: 700">Ноябрь 2026</h2>
+      <button aria-label="Предыдущий месяц" style="width: 40px; height: 40px; border: 0; background: transparent; color: #1D1C19; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+      <button aria-label="Следующий месяц" style="width: 40px; height: 40px; border: 0; background: transparent; color: #1D1C19; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 11px; color: #67635A; text-align: center; padding-bottom: 4px">
+      <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px">
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="35">
+        <div style="height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-radius: 12px; background: {{c.bg}}; border: {{c.ring}}; box-sizing: border-box">
+          <span style="font-size: 14px; font-weight: {{c.weight}}; color: {{c.fg}}">{{c.n}}</span>
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: {{c.dot}}; border: {{c.dotBorder}}; box-sizing: border-box"></span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 14px; padding: 10px 6px 0; font-size: 12px; color: #4A4740; flex-wrap: wrap">
+      <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #2E7D4F"></span>В норме</span>
+      <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #C2410C"></span>Превышение</span>
+      <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #8E8A80; box-sizing: border-box"></span>Недобор</span>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+    <div style="background: #FFFFFF; border-radius: 16px; padding: 12px 14px"><div style="font-size: 12px; color: #67635A">Среднее за неделю</div><div style="font-size: 18px; font-weight: 700; margin-top: 2px">2 285 ккал</div><div style="font-size: 12px; color: #67635A">норма 2 400</div></div>
+    <div style="background: #FFFFFF; border-radius: 16px; padding: 12px 14px"><div style="font-size: 12px; color: #67635A">Дней в норме</div><div style="font-size: 18px; font-weight: 700; margin-top: 2px">3 из 6</div><div style="font-size: 12px; color: #67635A">9–14 ноября</div></div>
+  </section>
+
+  <h2 style="margin: 6px 4px 0; font-family: Manrope, Inter, sans-serif; font-size: 16px; font-weight: 700">Прошлые дни</h2>
+  <sc-for list="{{days}}" as="d" hint-placeholder-count="4">
+    <div style="background: #FFFFFF; border-radius: 16px; padding: 12px 8px 12px 14px; display: flex; align-items: center; gap: 10px">
+      <a href="Main.dc.html" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: #1D1C19">
+        <div style="display: flex; align-items: baseline; gap: 8px">
+          <span style="flex: 1; font-size: 15px; font-weight: 600">{{d.date}}</span>
+          <span style="font-size: 14px; font-weight: 700">{{d.kcal}}</span>
+        </div>
+        <div style="height: 6px; border-radius: 999px; background: #EDEAE2; overflow: hidden"><div style="height: 6px; width: {{d.w}}; background: {{d.bar}}; border-radius: 999px"></div></div>
+        <div style="display: flex; gap: 8px; font-size: 12px; color: #67635A">
+          <span style="flex: 1">{{d.bju}}</span>
+          <span style="font-weight: 600; color: {{d.flagColor}}">{{d.flag}}</span>
+        </div>
+      </a>
+      <button aria-label="{{d.copyLabel}}" style="width: 44px; height: 44px; border-radius: 12px; border: 0; background: #F6F4EF; color: #1D1C19; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></button>
+    </div>
+  </sc-for>
+</main>
+
+<nav aria-label="Разделы" style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; box-sizing: border-box; padding: 8px 6px 24px; background: #FFFFFF; border-top: 1px solid #E6E2D8; display: flex">
+  <a href="Main.dc.html" aria-current="page" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #1F5E3A; font-size: 11px; font-weight: 700"><span style="display: flex; padding: 3px 16px; border-radius: 999px; background: #E3F0E7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>День</a>
+  <a href="CookingHistory.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"></path><path d="M2 10h20M9 6.5c0-1.2 1.2-2.5 3-2.5s3 1.3 3 2.5"></path></svg></span>Готовка</a>
+  <a href="Recipes.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h10a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg></span>Рецепты</a>
+  <a href="Products.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.5c-3-2-8-1-8 4.5 0 5 3 9 5 9 1 0 2-.5 3-.5s2 .5 3 .5c2 0 5-4 5-9 0-5.5-5-6.5-8-4.5z"></path><path d="M12 7.5c0-2 1-3.8 3-4.5"></path></svg></span>Продукты</a>
+  <a href="Family.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.5-3.5 3.2-6 6.5-6s6 2.5 6.5 6"></path><circle cx="17" cy="9" r="2.5"></circle><path d="M17 14c2.5 0 4.3 2 4.6 5"></path></svg></span>Семья</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var status = { 1:'g',2:'g',3:'o',4:'g',5:'u',6:'g',7:'g',8:'o',9:'g',10:'g',11:'u',12:'g',13:'o',14:'o' };
+    var cells = [];
+    for (var i = 0; i < 6; i++) cells.push({ n: '', bg: 'transparent', ring: '0', fg: '#1D1C19', weight: '500', dot: 'transparent', dotBorder: '0' });
+    for (var d = 1; d <= 30; d++) {
+      var s = status[d];
+      var today = d === 15;
+      cells.push({
+        n: String(d),
+        bg: today ? '#E3F0E7' : 'transparent',
+        ring: today ? '2px solid #2E7D4F' : '0',
+        fg: d > 15 ? '#A39E92' : '#1D1C19',
+        weight: today ? '700' : '500',
+        dot: s === 'g' ? '#2E7D4F' : s === 'o' ? '#C2410C' : 'transparent',
+        dotBorder: s === 'u' ? '1.5px solid #8E8A80' : today ? '1.5px dashed #2E7D4F' : '0'
+      });
+    }
+    function day(date, kcal, norm, bju, flag, kind) {
+      return {
+        date: date, kcal: kcal.toLocaleString('ru-RU') + ' / ' + norm.toLocaleString('ru-RU'),
+        w: Math.min(kcal / norm * 100, 100).toFixed(1) + '%',
+        bar: kind === 'o' ? '#C2410C' : kind === 'u' ? '#8E8A80' : '#2E7D4F',
+        bju: bju, flag: flag,
+        flagColor: kind === 'o' ? '#C2410C' : kind === 'u' ? '#4A4740' : '#1F5E3A',
+        copyLabel: 'Скопировать план за ' + date + ' на сегодня'
+      };
+    }
+    return {
+      cells: cells,
+      days: [
+        day('Сб, 14 ноября', 2352, 2400, 'Б 128 · Ж 84 · У 262 г', 'Жиры +4 г', 'o'),
+        day('Пт, 13 ноября', 2518, 2400, 'Б 126 · Ж 79 · У 296 г', '+118 ккал', 'o'),
+        day('Чт, 12 ноября', 2290, 2400, 'Б 124 · Ж 74 · У 258 г', 'В норме', 'g'),
+        day('Ср, 11 ноября', 1980, 2400, 'Б 104 · Ж 66 · У 221 г', '−420 ккал', 'u')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

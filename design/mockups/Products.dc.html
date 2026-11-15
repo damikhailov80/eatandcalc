@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Продукты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1120px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 20px 20px 0; display: flex; flex-direction: column; gap: 12px">
+  <div style="display: flex; align-items: center; gap: 10px">
+    <h1 style="flex: 1; margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.4px">Продукты</h1>
+    <a href="ProductEdit.dc.html" style="height: 44px; padding: 0 16px; border-radius: 14px; background: #2E7D4F; color: #FFFFFF; display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 14px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Добавить</a>
+  </div>
+  <label style="height: 48px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E2D8; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: #67635A">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <input type="search" aria-label="Поиск продуктов" placeholder="Поиск среди 48 продуктов" style="flex: 1; border: 0; outline: none; background: transparent; font-family: inherit; font-size: 15px; color: #1D1C19">
+  </label>
+</header>
+<div style="margin-top: 12px; padding: 0 20px; display: flex; gap: 6px; overflow-x: auto">
+  <sc-for list="{{cats}}" as="c" hint-placeholder-count="8">
+    <button onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 999px; border: {{c.border}}; background: {{c.bg}}; font-family: inherit; font-size: 13px; font-weight: 600; color: {{c.fg}}">{{c.label}}</button>
+  </sc-for>
+</div>
+
+<main style="padding: 14px 20px 110px">
+  <section style="background: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <sc-for list="{{items}}" as="p" hint-placeholder-count="10">
+      <div style="position: relative; border-top: {{p.border}}; overflow: hidden">
+        <sc-if value="{{p.swiped}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 164px; display: flex">
+            <a href="ProductEdit.dc.html" style="flex: 1; background: #EDEAE2; color: #1D1C19; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; font-size: 12px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Изменить</a>
+            <button style="flex: 1; border: 0; background: #B4320A; color: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-family: inherit; font-size: 12px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"></path></svg>Удалить</button>
+          </div>
+        </sc-if>
+        <a href="ProductEdit.dc.html" style="position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FFFFFF; text-decoration: none; color: #1D1C19; transform: translateX({{p.shift}})">
+          <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; background: {{p.tileBg}}; color: {{p.tileFg}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">{{p.abbr}}</span>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; font-weight: 600">{{p.name}}</div>
+            <div style="font-size: 12px; color: #67635A">{{p.bju}}</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px">
+            <span style="font-size: 15px; font-weight: 700">{{p.kcal}}</span>
+            <span style="font-size: 11px; color: #67635A">{{p.basis}}</span>
+          </div>
+        </a>
+      </div>
+    </sc-for>
+  </section>
+</main>
+
+<nav aria-label="Разделы" style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; box-sizing: border-box; padding: 8px 6px 24px; background: #FFFFFF; border-top: 1px solid #E6E2D8; display: flex">
+  <a href="Main.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>День</a>
+  <a href="CookingHistory.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"></path><path d="M2 10h20M9 6.5c0-1.2 1.2-2.5 3-2.5s3 1.3 3 2.5"></path></svg></span>Готовка</a>
+  <a href="Recipes.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h10a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg></span>Рецепты</a>
+  <a href="Products.dc.html" aria-current="page" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #1F5E3A; font-size: 11px; font-weight: 700"><span style="display: flex; padding: 3px 16px; border-radius: 999px; background: #E3F0E7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.5c-3-2-8-1-8 4.5 0 5 3 9 5 9 1 0 2-.5 3-.5s2 .5 3 .5c2 0 5-4 5-9 0-5.5-5-6.5-8-4.5z"></path><path d="M12 7.5c0-2 1-3.8 3-4.5"></path></svg></span>Продукты</a>
+  <a href="Family.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.5-3.5 3.2-6 6.5-6s6 2.5 6.5 6"></path><circle cx="17" cy="9" r="2.5"></circle><path d="M17 14c2.5 0 4.3 2 4.6 5"></path></svg></span>Семья</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { cat: 'all' }; }
+  renderVals() {
+    var self = this;
+    var CATS = [
+      { id: 'all', label: 'Все' }, { id: 'meat', label: 'Мясо', abbr: 'Мя', bg: '#F6E1DC', fg: '#8A2E1A' },
+      { id: 'fish', label: 'Рыба', abbr: 'Ры', bg: '#DCE8F6', fg: '#24497F' },
+      { id: 'veg', label: 'Овощи', abbr: 'Ов', bg: '#E3F0E7', fg: '#1F5E3A' },
+      { id: 'fruit', label: 'Фрукты', abbr: 'Фр', bg: '#FBEBD3', fg: '#7A440B' },
+      { id: 'milk', label: 'Молочные', abbr: 'Мо', bg: '#ECE7F6', fg: '#4F3A7F' },
+      { id: 'grain', label: 'Крупы', abbr: 'Кр', bg: '#F1EADB', fg: '#5E4A1E' },
+      { id: 'oil', label: 'Масла', abbr: 'Ма', bg: '#F6F0CF', fg: '#5F5310' },
+      { id: 'other', label: 'Яйца и бакалея', abbr: 'Ба', bg: '#EDEAE2', fg: '#4A4740' }
+    ];
+    var byId = {}; CATS.forEach(function (c) { byId[c.id] = c; });
+    function one(x) { return (Math.round(x * 10) / 10).toFixed(1).replace('.', ','); }
+    function P(cat, name, basis, k, p, f, c, swiped) { return { cat: cat, name: name, basis: basis, k: k, p: p, f: f, c: c, swiped: !!swiped }; }
+    var all = [
+      P('meat', 'Куриная грудка', 'на 100 г', 110, 23.1, 1.2, 0),
+      P('veg', 'Брокколи', 'на 100 г', 34, 2.8, 0.4, 6.6),
+      P('oil', 'Оливковое масло', 'на 100 г · есть ст. л.', 899, 0, 99.9, 0),
+      P('other', 'Яйцо куриное', 'на 1 шт', 86, 7, 6, 0.4),
+      P('milk', 'Творог 5%', 'на 100 г', 121, 17.2, 5, 1.8),
+      P('milk', 'Сметана 15%', 'на 100 г', 162, 2.6, 15, 3, true),
+      P('grain', 'Гречка', 'на 100 г сухой', 313, 12.6, 3.3, 62.1),
+      P('veg', 'Морковь', 'на 100 г', 41, 0.9, 0.2, 9.6),
+      P('fish', 'Лосось', 'на 100 г', 208, 20, 13, 0),
+      P('other', 'Сахар', 'на 1 ч. л.', 20, 0, 0, 5),
+      P('fruit', 'Банан', 'на 1 шт', 115, 1.8, 0.6, 25.2),
+      P('grain', 'Овсяные хлопья', 'на 100 г', 352, 12.3, 6.1, 59.5),
+      P('veg', 'Картофель', 'на 100 г', 77, 2, 0.4, 16.3)
+    ];
+    var cat = this.state.cat;
+    var list = all.filter(function (x) { return cat === 'all' || x.cat === cat; });
+    return {
+      cats: CATS.map(function (c) {
+        var on = c.id === cat;
+        return { label: c.label, pressed: on ? 'true' : 'false', bg: on ? '#1D1C19' : '#FFFFFF', fg: on ? '#FFFFFF' : '#1D1C19', border: on ? '0' : '1px solid #E6E2D8',
+          pick: function () { self.setState({ cat: c.id }); } };
+      }),
+      items: list.map(function (x, i) {
+        var c = byId[x.cat];
+        return { name: x.name, basis: x.basis, kcal: x.k + ' ккал', bju: 'Б ' + one(x.p) + ' · Ж ' + one(x.f) + ' · У ' + one(x.c),
+          abbr: c.abbr, tileBg: c.bg, tileFg: c.fg, border: i === 0 ? '0' : '1px solid #EFECE4',
+          swiped: x.swiped && cat === 'all', shift: x.swiped && cat === 'all' ? '-164px' : '0px' };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

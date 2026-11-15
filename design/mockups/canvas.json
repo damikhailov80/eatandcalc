@@ -1,0 +1,27 @@
+{"v":3,"createdOnFiles":{"v":1,"at":"2026-11-15T15:20:00Z"},"title":"Питание семьи — мобильное приложение","launch":{"view":"canvas"},"pages":[],
+"boards":{
+"Main.dc.html":{"x":0,"y":0,"w":390,"h":1640,"title":"День · план питания семьи","is_interactive":true,"radius":28},
+"MemberStats.dc.html":{"x":470,"y":0,"w":390,"h":1280,"title":"День · статистика Дениса","is_interactive":true,"radius":28},
+"AddDish.dc.html":{"x":940,"y":0,"w":390,"h":844,"title":"Добавить блюдо в приём пищи","is_interactive":true,"radius":28},
+"Distribute.dc.html":{"x":1410,"y":0,"w":390,"h":1040,"title":"Распределение блюда","is_interactive":true,"radius":28},
+"History.dc.html":{"x":1880,"y":0,"w":390,"h":1180,"title":"История питания","is_interactive":true,"radius":28},
+"CookingHistory.dc.html":{"x":0,"y":2060,"w":390,"h":1120,"title":"Готовка · история","is_interactive":true,"radius":28},
+"CookingEdit.dc.html":{"x":470,"y":2060,"w":390,"h":1460,"title":"Готовка по рецепту · редактирование","is_interactive":true,"radius":28},
+"WeightPad.dc.html":{"x":940,"y":2060,"w":390,"h":844,"title":"Быстрый ввод веса","is_interactive":true,"radius":28},
+"Recipes.dc.html":{"x":0,"y":3940,"w":390,"h":1120,"title":"Рецепты · библиотека","is_interactive":true,"radius":28},
+"RecipeEdit.dc.html":{"x":470,"y":3940,"w":390,"h":1360,"title":"Рецепт · создание","is_interactive":true,"radius":28},
+"Products.dc.html":{"x":1020,"y":3940,"w":390,"h":1120,"title":"Продукты · база","is_interactive":true,"radius":28},
+"ProductEdit.dc.html":{"x":1490,"y":3940,"w":390,"h":1180,"title":"Продукт · редактирование","is_interactive":true,"radius":28},
+"Family.dc.html":{"x":0,"y":5720,"w":390,"h":1000,"title":"Семья","is_interactive":true,"radius":28},
+"MemberEdit.dc.html":{"x":470,"y":5720,"w":390,"h":1040,"title":"Профиль члена семьи","is_interactive":true,"radius":28}
+},
+"order":["Main.dc.html","MemberStats.dc.html","AddDish.dc.html","Distribute.dc.html","History.dc.html","CookingHistory.dc.html","CookingEdit.dc.html","WeightPad.dc.html","Recipes.dc.html","RecipeEdit.dc.html","Products.dc.html","ProductEdit.dc.html","Family.dc.html","MemberEdit.dc.html"],
+"notes":{
+"t_day":{"x":0,"y":-260,"text":"Ежедневное питание — главный сценарий","kind":"title1","maxW":2270},
+"t_cook":{"x":0,"y":1800,"text":"Готовка","kind":"title1","maxW":1330},
+"t_rec":{"x":0,"y":3680,"text":"Рецепты","kind":"title1","maxW":860},
+"t_prod":{"x":1020,"y":3680,"text":"Продукты","kind":"title1","maxW":860},
+"t_fam":{"x":0,"y":5460,"text":"Члены семьи","kind":"title1","maxW":860},
+"n_model":{"x":1410,"y":2060,"w":420,"text":"Три сущности:\nРецепт — шаблон состава, не меняется при готовке.\nГотовка — конкретная кастрюля в конкретный день: свой состав, вес готового блюда, остаток.\nПотребление — граммы этой готовки, которые съел конкретный человек.\n\nКБЖУ потребления = КБЖУ готовки ÷ вес готового блюда × съеденные граммы.","fill":"green","size":"m"}
+},
+"designSystems":[]}

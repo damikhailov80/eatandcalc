@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Добавить блюдо в ужин</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #8E8A80; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+  <div aria-hidden="true" style="position: absolute; left: 20px; right: 20px; top: 24px; height: 40px; display: flex; align-items: center; color: #F6F4EF; font-family: Manrope, Inter, sans-serif; font-size: 22px; font-weight: 800; opacity: 0.6">15 ноября</div>
+
+  <section aria-label="Добавить блюдо" style="position: absolute; left: 0; right: 0; top: 84px; bottom: 0; background: #F6F4EF; border-radius: 24px 24px 0 0; display: flex; flex-direction: column">
+    <div style="display: flex; justify-content: center; padding-top: 8px"><span style="width: 40px; height: 5px; border-radius: 999px; background: #D5D0C4"></span></div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px 0 20px">
+      <div style="flex: 1">
+        <div style="font-size: 12px; color: #67635A">Вс, 15 ноября</div>
+        <h1 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 20px; font-weight: 800">Добавить в «Ужин»</h1>
+      </div>
+      <a href="Main.dc.html" aria-label="Закрыть" style="width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #1D1C19"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+    </div>
+
+    <div style="padding: 12px 20px 0; display: flex; flex-direction: column; gap: 12px">
+      <label style="height: 48px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E2D8; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: #67635A">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input type="search" aria-label="Поиск блюда или рецепта" placeholder="Блюдо или рецепт" style="flex: 1; border: 0; outline: none; background: transparent; font-family: inherit; font-size: 15px; color: #1D1C19">
+      </label>
+      <div role="tablist" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: #EDEAE2">
+        <button role="tab" aria-selected="{{cookSel}}" onClick="{{showCook}}" style="height: 38px; border: 0; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600; background: {{cookBg}}; color: #1D1C19; box-shadow: {{cookShadow}}">Готовки</button>
+        <button role="tab" aria-selected="{{recSel}}" onClick="{{showRec}}" style="height: 38px; border: 0; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600; background: {{recBg}}; color: #1D1C19; box-shadow: {{recShadow}}">Рецепты</button>
+      </div>
+    </div>
+
+    <div style="flex: 1; overflow: hidden; padding: 14px 20px 0; display: flex; flex-direction: column; gap: 10px">
+      <sc-if value="{{isCook}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 12px; font-weight: 600; color: #67635A; text-transform: uppercase; letter-spacing: 0.6px">Есть остатки</div>
+          <sc-for list="{{leftovers}}" as="c" hint-placeholder-count="3">
+            <a href="Distribute.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #1D1C19">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <div style="font-size: 15px; font-weight: 600">{{c.name}}</div>
+                <div style="font-size: 12px; color: #67635A">{{c.meta}}</div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px">
+                <span style="font-size: 12px; font-weight: 700; color: #1F5E3A; background: #E3F0E7; border-radius: 8px; padding: 3px 8px">{{c.left}}</span>
+              </div>
+            </a>
+          </sc-for>
+          <div style="font-size: 12px; font-weight: 600; color: #67635A; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 6px">Недавние готовки</div>
+          <sc-for list="{{recent}}" as="c" hint-placeholder-count="3">
+            <a href="CookingEdit.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #1D1C19">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <div style="font-size: 15px; font-weight: 600">{{c.name}}</div>
+                <div style="font-size: 12px; color: #67635A">{{c.meta}}</div>
+              </div>
+              <span style="display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: #1F5E3A"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5"></path><path d="M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"></path></svg>Повторить</span>
+            </a>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{isRec}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 13px; color: #4A4740; background: #E3F0E7; border-radius: 14px; padding: 12px 14px">Из рецепта создаётся готовка на сегодня. Её состав и вес можно поменять, а сам рецепт останется прежним.</div>
+          <sc-for list="{{recipes}}" as="r" hint-placeholder-count="5">
+            <a href="CookingEdit.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #1D1C19">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <div style="font-size: 15px; font-weight: 600">{{r.name}}</div>
+                <div style="font-size: 12px; color: #67635A">{{r.meta}}</div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px"><span style="font-size: 14px; font-weight: 600">{{r.kcal}}</span><span style="font-size: 11px; color: #67635A">на порцию</span></div>
+            </a>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="padding: 12px 20px 28px; background: #F6F4EF; border-top: 1px solid #E6E2D8">
+      <a href="CookingEdit.dc.html" style="height: 52px; border-radius: 16px; background: #2E7D4F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 15px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Новая готовка</a>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'cook' }; }
+  renderVals() {
+    var self = this;
+    var cook = this.state.tab === 'cook';
+    return {
+      isCook: cook, isRec: !cook,
+      cookSel: cook ? 'true' : 'false', recSel: cook ? 'false' : 'true',
+      cookBg: cook ? '#FFFFFF' : 'transparent', recBg: cook ? 'transparent' : '#FFFFFF',
+      cookShadow: cook ? '0 1px 2px rgba(29,28,25,0.12)' : 'none',
+      recShadow: cook ? 'none' : '0 1px 2px rgba(29,28,25,0.12)',
+      showCook: function () { self.setState({ tab: 'cook' }); },
+      showRec: function () { self.setState({ tab: 'rec' }); },
+      leftovers: [
+        { name: 'Курица с овощами', meta: 'Сегодня · 102 ккал / 100 г', left: 'осталось 200 г' },
+        { name: 'Гречка отварная', meta: '14 ноя · 114 ккал / 100 г', left: 'осталось 300 г' },
+        { name: 'Сырники', meta: 'Сегодня · 210 ккал / 100 г', left: 'осталось 130 г' }
+      ],
+      recent: [
+        { name: 'Лосось с картофелем', meta: '12 ноя · 1 400 г · 142 ккал / 100 г' },
+        { name: 'Омлет с овощами', meta: '11 ноя · 520 г · 118 ккал / 100 г' },
+        { name: 'Плов с курицей', meta: '10 ноя · 2 100 г · 156 ккал / 100 г' }
+      ],
+      recipes: [
+        { name: 'Курица с овощами', meta: '4 ингредиента · 310 г · 1 порция', kcal: '309 ккал' },
+        { name: 'Сырники', meta: '5 ингредиентов · 600 г · 4 порции', kcal: '315 ккал' },
+        { name: 'Гречка отварная', meta: '2 ингредиента · 900 г · 4 порции', kcal: '257 ккал' },
+        { name: 'Овсяная каша на молоке', meta: '3 ингредиента · 900 г · 4 порции', kcal: '229 ккал' },
+        { name: 'Куриный суп с лапшой', meta: '6 ингредиентов · 3 200 г · 8 порций', kcal: '192 ккал' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

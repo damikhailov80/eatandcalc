@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Профиль — Анна</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1040px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 16px 16px 0; display: flex; align-items: center; gap: 8px">
+  <a href="Family.dc.html" aria-label="Назад" style="width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #1D1C19"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></a>
+  <h1 style="flex: 1; margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 20px; font-weight: 800">Профиль</h1>
+</header>
+
+<main style="padding: 12px 20px 120px; display: flex; flex-direction: column; gap: 14px">
+  <div style="display: flex; align-items: center; gap: 14px">
+    <span style="width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%; background: {{color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: Manrope, Inter, sans-serif; font-size: 26px; font-weight: 800">А</span>
+    <label style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 13px; font-weight: 600; color: #4A4740">Имя</span>
+      <input type="text" value="Анна" style="height: 48px; border-radius: 14px; border: 1px solid #D5D0C4; background: #FFFFFF; padding: 0 14px; font-family: inherit; font-size: 17px; font-weight: 600; color: #1D1C19; outline: none; box-sizing: border-box; width: 100%">
+    </label>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 12px">
+    <div role="radiogroup" aria-label="Пол" style="flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 3px; border-radius: 12px; background: #EDEAE2">
+      <button role="radio" aria-checked="false" style="height: 38px; border: 0; border-radius: 9px; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: #1D1C19">Мужской</button>
+      <button role="radio" aria-checked="true" style="height: 38px; border: 0; border-radius: 9px; background: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 600; color: #1D1C19; box-shadow: 0 1px 2px rgba(29,28,25,0.12)">Женский</button>
+    </div>
+    <div role="radiogroup" aria-label="Цвет профиля" style="display: flex; gap: 4px">
+      <sc-for list="{{swatches}}" as="s" hint-placeholder-count="4">
+        <button role="radio" aria-checked="{{s.checked}}" aria-label="{{s.label}}" onClick="{{s.pick}}" style="width: 36px; height: 36px; border-radius: 50%; border: 3px solid {{s.ring}}; padding: 0; background: {{s.c}}; box-sizing: border-box"></button>
+      </sc-for>
+    </div>
+  </div>
+
+  <section style="background: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <div style="padding: 14px 16px 8px; display: flex; flex-direction: column; gap: 2px">
+      <h2 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 16px; font-weight: 700">Дневные нормы</h2>
+      <span style="font-size: 12px; color: #67635A">Укажите значения от врача, диетолога или своего расчёта</span>
+    </div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+      <div style="padding: 10px 8px 10px 16px; border-top: 1px solid #EFECE4; display: flex; align-items: center; gap: 10px">
+        <span style="width: 10px; height: 10px; border-radius: 3px; background: {{r.color}}"></span>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 15px; font-weight: 600">{{r.label}}</span>
+          <span style="font-size: 12px; color: #67635A">{{r.sub}}</span>
+        </div>
+        <div style="display: flex; align-items: center; border-radius: 12px; background: #F6F4EF; height: 44px">
+          <button onClick="{{r.minus}}" aria-label="{{r.minusLabel}}" style="width: 38px; height: 44px; border: 0; background: transparent; color: #1D1C19; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+          <label style="display: flex; align-items: baseline; gap: 3px">
+            <input type="number" inputmode="numeric" aria-label="{{r.label}}" value="{{r.v}}" onChange="{{r.onInput}}" style="width: {{r.w}}; border: 0; background: transparent; text-align: right; font-family: inherit; font-size: 17px; font-weight: 700; color: #1D1C19; padding: 0; outline: none">
+            <span style="font-size: 12px; color: #67635A">{{r.unit}}</span>
+          </label>
+          <button onClick="{{r.plus}}" aria-label="{{r.plusLabel}}" style="width: 38px; height: 44px; border: 0; background: transparent; color: #1D1C19; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="background: #FFFFFF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <div style="display: flex; align-items: baseline; gap: 6px">
+      <span style="flex: 1; font-size: 14px; font-weight: 600">Энергия из БЖУ</span>
+      <span style="font-size: 15px; font-weight: 700">{{fromMacros}} ккал</span>
+    </div>
+    <div style="display: flex; height: 10px; border-radius: 999px; overflow: hidden; gap: 2px">
+      <div style="width: {{pW}}; background: #3566B0"></div>
+      <div style="width: {{fW}}; background: #B7791F"></div>
+      <div style="width: {{cW}}; background: #7A5AB0"></div>
+    </div>
+    <div style="display: flex; gap: 12px; font-size: 12px; color: #4A4740">
+      <span>Белки {{pP}}</span><span>Жиры {{fP}}</span><span>Углеводы {{cP}}</span>
+    </div>
+    <div style="font-size: 12px; font-weight: 600; color: {{diffColor}}; background: {{diffBg}}; border-radius: 10px; padding: 8px 10px">{{diffText}}</div>
+  </section>
+
+  <div style="display: flex; justify-content: center">
+    <button style="height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: #B4320A">Удалить из семьи</button>
+  </div>
+</main>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 20px 28px; background: #F6F4EF; border-top: 1px solid #E6E2D8">
+  <a href="Family.dc.html" style="height: 52px; border-radius: 16px; background: #2E7D4F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; font-weight: 600">Сохранить</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1040}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { k: 1800, p: 90, f: 60, c: 220, color: '#A3456F' }; }
+  renderVals() {
+    var self = this, s = this.state;
+    function set(key, v) { var o = {}; o[key] = Math.max(0, Math.min(9999, v)); self.setState(o); }
+    function row(key, label, unit, step, color, sub) {
+      return { label: label, unit: unit, color: color, sub: sub, v: String(s[key]), w: key === 'k' ? '48px' : '34px',
+        minusLabel: label + ': меньше', plusLabel: label + ': больше',
+        minus: function () { set(key, self.state[key] - step); }, plus: function () { set(key, self.state[key] + step); },
+        onInput: function (e) { var v = parseInt(e.target.value, 10); set(key, isNaN(v) ? 0 : v); } };
+    }
+    var e = s.p * 4 + s.f * 9 + s.c * 4;
+    var tot = e || 1;
+    var diff = s.k - e;
+    var close = Math.abs(diff) <= s.k * 0.03;
+    var cols = [['#A3456F','Малиновый'],['#2F5D9E','Синий'],['#2E7D4F','Зелёный'],['#9A6416','Охра']];
+    return {
+      color: s.color,
+      swatches: cols.map(function (c) { var on = c[0] === s.color; return { c: c[0], label: c[1], checked: on ? 'true' : 'false', ring: on ? '#1D1C19' : '#FFFFFF', pick: function () { self.setState({ color: c[0] }); } }; }),
+      rows: [
+        row('k', 'Калории', 'ккал', 50, '#2E7D4F', 'в день'),
+        row('p', 'Белки', 'г', 5, '#3566B0', Math.round(s.p * 4) + ' ккал'),
+        row('f', 'Жиры', 'г', 5, '#B7791F', Math.round(s.f * 9) + ' ккал'),
+        row('c', 'Углеводы', 'г', 5, '#7A5AB0', Math.round(s.c * 4) + ' ккал')
+      ],
+      fromMacros: e.toLocaleString('ru-RU'),
+      pW: (s.p * 4 / tot * 100).toFixed(1) + '%', fW: (s.f * 9 / tot * 100).toFixed(1) + '%', cW: (s.c * 4 / tot * 100).toFixed(1) + '%',
+      pP: Math.round(s.p * 4 / tot * 100) + '%', fP: Math.round(s.f * 9 / tot * 100) + '%', cP: Math.round(s.c * 4 / tot * 100) + '%',
+      diffText: close ? 'Нормы согласованы: разница с калориями ' + Math.abs(diff) + ' ккал' : 'БЖУ дают на ' + Math.abs(diff) + ' ккал ' + (diff > 0 ? 'меньше' : 'больше') + ', чем норма калорий',
+      diffColor: close ? '#1F5E3A' : '#8A4A0B', diffBg: close ? '#E3F0E7' : '#FBEBD3'
+    };
+  }
+}
+</script>
+</body>
+</html>

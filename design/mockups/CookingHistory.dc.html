@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Готовка — история</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1120px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 20px 20px 0; display: flex; flex-direction: column; gap: 12px">
+  <div style="display: flex; align-items: center; gap: 10px">
+    <h1 style="flex: 1; margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.4px">Готовка</h1>
+    <a href="CookingEdit.dc.html" style="height: 44px; padding: 0 16px; border-radius: 14px; background: #2E7D4F; color: #FFFFFF; display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 14px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Новая</a>
+  </div>
+  <label style="height: 48px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E2D8; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: #67635A">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <input type="search" aria-label="Поиск по готовкам" placeholder="Поиск по блюдам" style="flex: 1; border: 0; outline: none; background: transparent; font-family: inherit; font-size: 15px; color: #1D1C19">
+  </label>
+  <div style="display: flex; gap: 6px">
+    <button aria-pressed="false" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Все</button>
+    <button aria-pressed="true" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #1D1C19; font-family: inherit; font-size: 13px; font-weight: 600; color: #FFFFFF">С остатками · 3</button>
+    <button aria-pressed="false" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #1D1C19">Без рецепта</button>
+  </div>
+</header>
+
+<main style="padding: 8px 20px 110px; display: flex; flex-direction: column; gap: 10px">
+  <sc-for list="{{groups}}" as="grp" hint-placeholder-count="3">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 10px 4px 0; font-size: 13px; font-weight: 600; color: #67635A">{{grp.title}}</h2>
+      <sc-for list="{{grp.items}}" as="c" hint-placeholder-count="2">
+        <article style="background: #FFFFFF; border-radius: 18px; padding: 14px 14px 10px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+          <a href="CookingEdit.dc.html" style="display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: #1D1C19">
+            <div style="display: flex; align-items: flex-start; gap: 10px">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <div style="font-size: 16px; font-weight: 600">{{c.name}}</div>
+                <div style="font-size: 12px; color: #67635A">{{c.source}}</div>
+              </div>
+              <span style="font-size: 12px; font-weight: 700; border-radius: 8px; padding: 3px 8px; color: {{c.tagFg}}; background: {{c.tagBg}}">{{c.tag}}</span>
+            </div>
+            <div style="display: flex; gap: 14px; font-size: 13px; color: #4A4740">
+              <span><b style="color: #1D1C19">{{c.weight}}</b></span>
+              <span>{{c.per100}}</span>
+              <span>{{c.portions}}</span>
+            </div>
+            <div style="height: 6px; border-radius: 999px; background: #EDEAE2; overflow: hidden"><div style="height: 6px; width: {{c.eatenW}}; background: #7FB394; border-radius: 999px"></div></div>
+          </a>
+          <div style="display: flex; gap: 4px; margin-left: -8px">
+            <button style="height: 36px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; font-family: inherit; font-size: 13px; font-weight: 600; color: #1F5E3A; display: flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5"></path><path d="M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"></path></svg>Повторить сегодня</button>
+            <a href="CookingEdit.dc.html" style="height: 36px; padding: 0 10px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #1F5E3A; display: flex; align-items: center; gap: 6px; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>Копировать и изменить</a>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </sc-for>
+</main>
+
+<nav aria-label="Разделы" style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; box-sizing: border-box; padding: 8px 6px 24px; background: #FFFFFF; border-top: 1px solid #E6E2D8; display: flex">
+  <a href="Main.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>День</a>
+  <a href="CookingHistory.dc.html" aria-current="page" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #1F5E3A; font-size: 11px; font-weight: 700"><span style="display: flex; padding: 3px 16px; border-radius: 999px; background: #E3F0E7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"></path><path d="M2 10h20M9 6.5c0-1.2 1.2-2.5 3-2.5s3 1.3 3 2.5"></path></svg></span>Готовка</a>
+  <a href="Recipes.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h10a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg></span>Рецепты</a>
+  <a href="Products.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.5c-3-2-8-1-8 4.5 0 5 3 9 5 9 1 0 2-.5 3-.5s2 .5 3 .5c2 0 5-4 5-9 0-5.5-5-6.5-8-4.5z"></path><path d="M12 7.5c0-2 1-3.8 3-4.5"></path></svg></span>Продукты</a>
+  <a href="Family.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.5-3.5 3.2-6 6.5-6s6 2.5 6.5 6"></path><circle cx="17" cy="9" r="2.5"></circle><path d="M17 14c2.5 0 4.3 2 4.6 5"></path></svg></span>Семья</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function c(name, source, weight, total, left, per100, portions) {
+      var has = left > 0;
+      return {
+        name: name, source: source,
+        weight: weight, per100: per100, portions: portions,
+        tag: has ? 'осталось ' + left + ' г' : 'съедено',
+        tagFg: has ? '#1F5E3A' : '#4A4740', tagBg: has ? '#E3F0E7' : '#EDEAE2',
+        eatenW: ((total - left) / total * 100).toFixed(1) + '%'
+      };
+    }
+    return {
+      groups: [
+        { title: 'Сегодня, 15 ноября', items: [
+          c('Курица с овощами', 'По рецепту · изменено 2 ингредиента', '1 150 г', 1150, 200, '102 ккал / 100 г', '4 порции'),
+          c('Сырники', 'По рецепту', '600 г', 600, 130, '210 ккал / 100 г', '4 порции')
+        ]},
+        { title: 'Суббота, 14 ноября', items: [
+          c('Гречка отварная', 'По рецепту', '900 г', 900, 300, '114 ккал / 100 г', '4 порции'),
+          c('Куриный суп с лапшой', 'По рецепту', '3 200 г', 3200, 0, '48 ккал / 100 г', '8 порций')
+        ]},
+        { title: 'Четверг, 12 ноября', items: [
+          c('Лосось с картофелем', 'Без рецепта', '1 400 г', 1400, 0, '142 ккал / 100 г', '4 порции')
+        ]}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

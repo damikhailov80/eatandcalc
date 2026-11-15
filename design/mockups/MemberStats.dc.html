@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Статистика дня — Денис</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E7D4F}a:hover{color:#1F5E3A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1280px; overflow: hidden; background: #F6F4EF; font-family: Inter, system-ui, sans-serif; color: #1D1C19; font-variant-numeric: tabular-nums">
+
+<header style="padding: 16px 16px 0; display: flex; align-items: center; gap: 8px">
+  <a href="Main.dc.html" aria-label="Назад к плану дня" style="width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #1D1C19"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></a>
+  <div style="flex: 1; display: flex; flex-direction: column">
+    <h1 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 20px; font-weight: 800">Итоги дня</h1>
+    <div style="font-size: 12px; color: #67635A">Вс, 15 ноября</div>
+  </div>
+</header>
+
+<div role="tablist" aria-label="Член семьи" style="margin: 12px 20px 0; display: flex; gap: 6px">
+  <button role="tab" aria-selected="true" style="height: 40px; padding: 0 14px 0 4px; border-radius: 999px; border: 0; background: #1D1C19; color: #FFFFFF; display: flex; align-items: center; gap: 8px; font-family: inherit; font-size: 14px; font-weight: 600"><span style="width: 32px; height: 32px; border-radius: 50%; background: #2F5D9E; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">Д</span>Денис</button>
+  <button role="tab" aria-selected="false" style="height: 40px; padding: 0 12px 0 4px; border-radius: 999px; border: 1px solid #E6E2D8; background: #FFFFFF; color: #1D1C19; display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 14px; font-weight: 500"><span style="width: 30px; height: 30px; border-radius: 50%; background: #A3456F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">А</span>Анна</button>
+  <button role="tab" aria-selected="false" aria-label="Миша" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #E6E2D8; background: #FFFFFF; padding: 0; display: flex; align-items: center; justify-content: center"><span style="width: 30px; height: 30px; border-radius: 50%; background: #2E7D4F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">М</span></button>
+  <button role="tab" aria-selected="false" aria-label="Соня" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #E6E2D8; background: #FFFFFF; padding: 0; display: flex; align-items: center; justify-content: center"><span style="width: 30px; height: 30px; border-radius: 50%; background: #9A6416; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">С</span></button>
+</div>
+
+<main style="padding: 16px 20px 110px; display: flex; flex-direction: column; gap: 12px">
+
+  <section style="background: #FFFFFF; border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 20px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <div style="position: relative; width: 132px; height: 132px; flex-shrink: 0">
+      <svg width="132" height="132" viewBox="0 0 132 132" role="img" aria-label="Калории: 82% дневной нормы">
+        <circle cx="66" cy="66" r="56" fill="none" stroke="#EDEAE2" stroke-width="12"></circle>
+        <circle cx="66" cy="66" r="56" fill="none" stroke="#2E7D4F" stroke-width="12" stroke-linecap="round" stroke-dasharray="288.5 351.9" transform="rotate(-90 66 66)"></circle>
+      </svg>
+      <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center">
+        <div style="font-family: Manrope, Inter, sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.5px">1 962</div>
+        <div style="font-size: 12px; color: #67635A">из 2 400 ккал</div>
+      </div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+      <div>
+        <div style="font-size: 12px; color: #67635A">Осталось</div>
+        <div style="font-size: 22px; font-weight: 700; color: #1F5E3A">438 ккал</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: #FCE9DC">
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #C2410C"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v4M12 17.5v.5"></path></svg>Превышено</div>
+        <div style="font-size: 13px; color: #7A2E0B">Белки на 8 г</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background: #FFFFFF; border-radius: 20px; padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <h2 style="margin: 0; font-family: Manrope, Inter, sans-serif; font-size: 16px; font-weight: 700">Белки, жиры, углеводы</h2>
+    <sc-for list="{{macros}}" as="m" hint-placeholder-count="3">
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: baseline; gap: 8px">
+          <span style="width: 10px; height: 10px; border-radius: 3px; background: {{m.color}}"></span>
+          <span style="flex: 1; font-size: 14px; font-weight: 600">{{m.name}}</span>
+          <span style="font-size: 14px; font-weight: 600">{{m.eaten}}</span>
+          <span style="font-size: 13px; color: #67635A">/ {{m.norm}}</span>
+        </div>
+        <div style="position: relative; height: 10px; border-radius: 999px; background: #EDEAE2; overflow: hidden">
+          <div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{m.w}}; border-radius: 999px; background: {{m.bar}}"></div>
+        </div>
+        <div style="font-size: 12px; font-weight: 600; color: {{m.noteColor}}">{{m.note}}</div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="background: #FFFFFF; border-radius: 20px; padding: 6px 0; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px">
+      <thead>
+        <tr style="color: #67635A; font-size: 12px">
+          <th scope="col" style="text-align: left; font-weight: 500; padding: 10px 0 8px 20px">Показатель</th>
+          <th scope="col" style="text-align: right; font-weight: 500; padding: 10px 0 8px">Норма</th>
+          <th scope="col" style="text-align: right; font-weight: 500; padding: 10px 0 8px">Съедено</th>
+          <th scope="col" style="text-align: right; font-weight: 500; padding: 10px 20px 8px 0">Остаток</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-top: 1px solid #EFECE4"><th scope="row" style="text-align: left; font-weight: 600; padding: 11px 0 11px 20px">Калории</th><td style="text-align: right">2 400</td><td style="text-align: right">1 962</td><td style="text-align: right; padding-right: 20px; font-weight: 600; color: #1F5E3A">438</td></tr>
+        <tr style="border-top: 1px solid #EFECE4"><th scope="row" style="text-align: left; font-weight: 600; padding: 11px 0 11px 20px">Белки, г</th><td style="text-align: right">130</td><td style="text-align: right">138</td><td style="text-align: right; padding-right: 20px; font-weight: 700; color: #C2410C">−8</td></tr>
+        <tr style="border-top: 1px solid #EFECE4"><th scope="row" style="text-align: left; font-weight: 600; padding: 11px 0 11px 20px">Жиры, г</th><td style="text-align: right">80</td><td style="text-align: right">70</td><td style="text-align: right; padding-right: 20px; font-weight: 600; color: #1F5E3A">10</td></tr>
+        <tr style="border-top: 1px solid #EFECE4"><th scope="row" style="text-align: left; font-weight: 600; padding: 11px 0 11px 20px">Углеводы, г</th><td style="text-align: right">270</td><td style="text-align: right">189</td><td style="text-align: right; padding-right: 20px; font-weight: 600; color: #1F5E3A">81</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <h2 style="margin: 8px 4px 0; font-family: Manrope, Inter, sans-serif; font-size: 16px; font-weight: 700">По приёмам пищи</h2>
+  <section style="background: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 2px rgba(29,28,25,0.05)">
+    <sc-for list="{{meals}}" as="meal" hint-placeholder-count="4">
+      <div style="padding: 14px 20px; border-top: {{meal.border}}; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; align-items: baseline; gap: 8px">
+          <span style="flex: 1; font-size: 15px; font-weight: 700">{{meal.name}}</span>
+          <span style="font-size: 15px; font-weight: 700">{{meal.kcal}}</span>
+        </div>
+        <sc-for list="{{meal.items}}" as="it" hint-placeholder-count="2">
+          <div style="display: flex; gap: 8px; font-size: 13px; color: #4A4740">
+            <span style="flex: 1">{{it.name}}</span>
+            <span style="color: #67635A">{{it.g}}</span>
+            <span style="width: 64px; text-align: right">{{it.kcal}}</span>
+          </div>
+        </sc-for>
+        <div style="font-size: 12px; color: #67635A">{{meal.bju}}</div>
+      </div>
+    </sc-for>
+  </section>
+</main>
+
+<nav aria-label="Разделы" style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; box-sizing: border-box; padding: 8px 6px 24px; background: #FFFFFF; border-top: 1px solid #E6E2D8; display: flex">
+  <a href="Main.dc.html" aria-current="page" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #1F5E3A; font-size: 11px; font-weight: 700"><span style="display: flex; padding: 3px 16px; border-radius: 999px; background: #E3F0E7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>День</a>
+  <a href="CookingHistory.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"></path><path d="M2 10h20M9 6.5c0-1.2 1.2-2.5 3-2.5s3 1.3 3 2.5"></path></svg></span>Готовка</a>
+  <a href="Recipes.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h10a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg></span>Рецепты</a>
+  <a href="Products.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.5c-3-2-8-1-8 4.5 0 5 3 9 5 9 1 0 2-.5 3-.5s2 .5 3 .5c2 0 5-4 5-9 0-5.5-5-6.5-8-4.5z"></path><path d="M12 7.5c0-2 1-3.8 3-4.5"></path></svg></span>Продукты</a>
+  <a href="Family.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #67635A; font-size: 11px; font-weight: 500"><span style="display: flex; padding: 3px 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.5-3.5 3.2-6 6.5-6s6 2.5 6.5 6"></path><circle cx="17" cy="9" r="2.5"></circle><path d="M17 14c2.5 0 4.3 2 4.6 5"></path></svg></span>Семья</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function macro(name, color, eaten, norm) {
+      var over = eaten > norm;
+      return {
+        name: name, color: color,
+        eaten: eaten + ' г', norm: norm + ' г',
+        w: Math.min(eaten / norm * 100, 100).toFixed(1) + '%',
+        bar: over ? '#C2410C' : color,
+        note: over ? 'Превышено на ' + (eaten - norm) + ' г' : 'Осталось ' + (norm - eaten) + ' г · ' + Math.round(eaten / norm * 100) + '%',
+        noteColor: over ? '#C2410C' : '#67635A'
+      };
+    }
+    return {
+      macros: [
+        macro('Белки', '#3566B0', 138, 130),
+        macro('Жиры', '#B7791F', 70, 80),
+        macro('Углеводы', '#7A5AB0', 189, 270)
+      ],
+      meals: [
+        { name: 'Завтрак', kcal: '602 ккал', border: '0', bju: 'Б 39 · Ж 23 · У 49 г', items: [
+          { name: 'Овсяная каша на молоке', g: '300 г', kcal: '306 ккал' },
+          { name: 'Творог со сметаной', g: '200 г', kcal: '296 ккал' } ] },
+        { name: 'Обед', kcal: '444 ккал', border: '1px solid #EFECE4', bju: 'Б 24 · Ж 12 · У 62 г', items: [
+          { name: 'Куриный суп с лапшой', g: '450 г', kcal: '216 ккал' },
+          { name: 'Гречка отварная', g: '200 г', kcal: '228 ккал' } ] },
+        { name: 'Ужин', kcal: '601 ккал', border: '1px solid #EFECE4', bju: 'Б 52 · Ж 21 · У 51 г', items: [
+          { name: 'Курица с овощами', g: '350 г', kcal: '356 ккал' },
+          { name: 'Картофельное пюре', g: '250 г', kcal: '245 ккал' } ] },
+        { name: 'Перекус', kcal: '315 ккал', border: '1px solid #EFECE4', bju: 'Б 23 · Ж 14 · У 27 г', items: [
+          { name: 'Сырники', g: '150 г', kcal: '315 ккал' } ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
