@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 
 /**
- * API base URL. Builds get it from EXPO_PUBLIC_API_URL (eas.json). In development without it,
+ * API base URL. Builds and OTA updates get it from EXPO_PUBLIC_API_URL (EAS env). In development without it,
  * use the Metro host (the Mac's LAN IP) on port 3000, where `npm run dev:api` listens.
  */
 function resolveApiUrl(): string {

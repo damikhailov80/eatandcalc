@@ -49,6 +49,20 @@
     },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "5a10384b-28c4-4c02-aee5-4f0535dbb15a"
+      }
+    },
+    "owner": "d.a.mikhailov80",
+    "updates": {
+      "url": "https://u.expo.dev/5a10384b-28c4-4c02-aee5-4f0535dbb15a"
     }
   }
 }

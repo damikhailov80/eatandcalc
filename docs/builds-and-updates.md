@@ -45,13 +45,14 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 ### Release APK (native shell + JS bundle)
 
 - `npm run release:android` (`apps/web/scripts/release-android.mjs`): EAS cloud build with profile `production` (`apps/mobile/eas.json`) → downloads the APK → uploads `android/eatandcalc.apk` and `android/latest.json` to Vercel Blob → the landing page shows version, date and the download button.
-- The production APK contains the JS bundle, `EXPO_PUBLIC_API_URL=https://eatandcalc-api.vercel.app`, and is signed with the EAS-managed keystore. `versionCode` is incremented by EAS (`appVersionSource: remote`, `autoIncrement`).
+- Step-by-step setup, release checklist and troubleshooting: [production-release.md](production-release.md).
+- The production APK contains the JS bundle, `EXPO_PUBLIC_API_URL=https://eat-and-calc-api.vercel.app` (EAS env `production`), and is signed with the EAS-managed keystore. `versionCode` is incremented by EAS (`appVersionSource: remote`, `autoIncrement`).
 - Phones install it from the landing page once (allow installs from the browser).
 
 ### Over-the-air updates (JS only)
 
 ```
-edit TS → npx eas-cli update --channel production --message "…"
+edit TS → npx eas-cli update --channel production --environment production --message "…"
         → EAS uploads the new bundle
         → app checks for updates on launch, downloads in background
         → next app start runs the new bundle

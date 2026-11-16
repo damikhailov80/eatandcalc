@@ -23,9 +23,6 @@
       "android": {
         "buildType": "apk"
       },
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://eatandcalc-api.vercel.app"
-      },
       "environment": "production"
     }
   }

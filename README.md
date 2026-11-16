@@ -75,8 +75,8 @@ Postponed until the app is ready; the code is in place.
 
 | What | How |
 |---|---|
-| API | Vercel project `eatandcalc-api`, Root Directory `apps/api`; deploys on push to `main` |
-| Landing | Vercel project `eatandcalc`, Root Directory `apps/web` |
+| API | Vercel project `eat-and-calc-api`, Root Directory `apps/api`; deploys on push to `main` |
+| Landing | Vercel project `eat-and-calc-web`, Root Directory `apps/web` |
 | DB migrations | GitHub Action `migrate.yml` runs `prisma migrate deploy` on push to `main` when `packages/db/prisma/**` changes |
 | Android APK | `npm run release:android`: EAS production build → Vercel Blob → link on the landing |
 | JS-only fixes | `cd apps/mobile && npx eas-cli update --channel production` (OTA, no reinstall) |
@@ -85,17 +85,17 @@ Postponed until the app is ready; the code is in place.
 
 | Value | Where |
 |---|---|
-| `DATABASE_URL` (Neon pooled), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS` | Vercel env, project `eatandcalc-api`; locally `apps/api/.env.local` |
+| `DATABASE_URL` (Neon pooled), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS` | Vercel env, project `eat-and-calc-api`; locally `apps/api/.env.local` |
 | `DIRECT_URL` (Neon unpooled) | GitHub → Settings → Environments → `production` secret |
-| `BLOB_READ_WRITE_TOKEN` | Vercel env, project `eatandcalc` (auto from Blob store); locally `apps/web/.env.local` for releases |
-| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_API_URL` | not secret (in the bundle): EAS env / `eas.json` |
+| `BLOB_READ_WRITE_TOKEN` | Vercel env, project `eat-and-calc-web` (auto from Blob store); locally `apps/web/.env.local` for releases |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_API_URL` | not secret (in the bundle): EAS env, environment `production` |
 | Android keystore | dev: `apps/mobile/credentials/debug.keystore` (gitignored); prod: EAS managed credentials |
 
 `.env*.local` files are gitignored. Keep master copies in a password manager.
 
 ## One-time setup
 
-Detailed guides: [docs/google-oauth.md](docs/google-oauth.md) (sign-in, troubleshooting), [docs/builds-and-updates.md](docs/builds-and-updates.md) (dev build, hot reload, release APK, over-the-air updates).
+Detailed guides: [docs/google-oauth.md](docs/google-oauth.md) (sign-in, troubleshooting), [docs/builds-and-updates.md](docs/builds-and-updates.md) (dev build, hot reload, release APK, over-the-air updates), [docs/production-release.md](docs/production-release.md) (production setup, releasing the APK, OTA, troubleshooting).
 
 ### Local (now)
 
@@ -112,7 +112,7 @@ Detailed guides: [docs/google-oauth.md](docs/google-oauth.md) (sign-in, troubles
 ### Production (later)
 
 1. **Google Cloud**: one more Android client with the SHA-1 of the EAS keystore (`npx eas-cli credentials -p android`).
-2. **Expo**: `cd apps/mobile && npx eas-cli login && npx eas-cli init && npx eas-cli update:configure`; `npx eas-cli env:create --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value <id> --visibility plaintext --environment production --environment development`.
-3. **Vercel**: import the GitHub repo twice — `eatandcalc-api` (Root Directory `apps/api`) and `eatandcalc` (Root Directory `apps/web`). In `eatandcalc-api`: Storage → Neon (region Frankfurt), then add the API env vars above with `BETTER_AUTH_URL=https://eatandcalc-api.vercel.app`. In `eatandcalc`: Storage → Blob.
+2. **Expo**: `cd apps/mobile && npx eas-cli login && npx eas-cli init && npx eas-cli update:configure`; `npx eas-cli env:create --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value <id> --visibility plaintext --environment production --environment development` and `EXPO_PUBLIC_API_URL=https://eat-and-calc-api.vercel.app` for `production`.
+3. **Vercel**: import the GitHub repo twice — `eat-and-calc-api` (Root Directory `apps/api`) and `eat-and-calc-web` (Root Directory `apps/web`). In `eat-and-calc-api`: Storage → Neon (region Frankfurt), then add the API env vars above with `BETTER_AUTH_URL=https://eat-and-calc-api.vercel.app`. In `eat-and-calc-web`: Storage → Blob.
 4. **GitHub**: environment `production` with secret `DIRECT_URL` = Neon `DATABASE_URL_UNPOOLED`. Run the "Migrate database" workflow once.
 5. `npm run release:android` and open the landing page.

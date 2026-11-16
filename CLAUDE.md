@@ -11,7 +11,7 @@ Decided: Android only; Google sign-in only, allowlist `ALLOWED_EMAILS` (two fami
 ## Rules
 
 - **Answer in the language of the user's request.** Docs, code and comments in English. **All UI strings in Russian**; don't translate them.
-- **Documentation:** `README.md` (idea + how to run), `CLAUDE.md`, `ROADMAP.md`, plus guides the user asked for in `docs/`: `google-oauth.md` (OAuth setup), `builds-and-updates.md` (dev build, hot reload, release APK, EAS Update). Keep them in sync when the flow changes. Never create other `.md` files unless the user explicitly asks; put new info into the existing ones.
+- **Documentation:** `README.md` (idea + how to run), `CLAUDE.md`, `ROADMAP.md`, plus guides the user asked for in `docs/`: `google-oauth.md` (OAuth setup), `builds-and-updates.md` (dev build, hot reload, release APK, EAS Update), `production-release.md` (prod setup, APK release, OTA, troubleshooting). Keep them in sync when the flow changes. Never create other `.md` files unless the user explicitly asks; put new info into the existing ones.
 - **Git:** never run `git add`, `git rm`, `git commit`, `git push` or anything else that changes the index/history without the user's explicit approval. Delete files with plain `rm`.
 - **Package manager:** npm only, workspaces. In `apps/mobile` add packages with `npx expo install <pkg>`; elsewhere `npm install <pkg> -w @eatandcalc/<name>`. Keep `react` / `react-dom` versions identical in all apps.
 
@@ -116,5 +116,5 @@ Components to build as needed: Chip, SegmentedControl, SearchField, NumberField,
 | `packages/shared/src/` | `domain`, `api` (zod), `nutrition`, `format`, `tokens` |
 | `docker-compose.yml` | local Postgres 17 (+ shadow DB) |
 | `.github/workflows/` | `check` (typecheck, lint), `migrate` (prod migrations) |
-| `docs/` | guides: Google OAuth setup, builds & OTA updates |
+| `docs/` | guides: Google OAuth setup, builds & OTA updates, production release |
 | `design/mockups/` | Claude Design sources |

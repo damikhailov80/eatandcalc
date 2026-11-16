@@ -45,8 +45,8 @@ Code: `apps/mobile/src/lib/auth.ts` (client), `apps/api/src/lib/auth.ts` (server
 ## Production setup (at release)
 
 1. **Android client for the release key.** EAS signs production APKs with its own keystore: `cd apps/mobile && npx eas-cli credentials -p android` → copy its SHA-1 → Clients → Create client → **Android**, package `com.eatandcalc.app`, that SHA-1. Keep the dev client as well (one Android client per signing key).
-2. **Web client is reused.** Put the same ID/secret into Vercel env of `eatandcalc-api`: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, plus `BETTER_AUTH_SECRET` (a new one, not the local), `BETTER_AUTH_URL=https://eatandcalc-api.vercel.app`, `ALLOWED_EMAILS`.
-3. **App.** `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` goes into EAS env (`npx eas-cli env:create … --environment production`); `EXPO_PUBLIC_API_URL` is in `apps/mobile/eas.json`.
+2. **Web client is reused.** Put the same ID/secret into Vercel env of `eat-and-calc-api`: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, plus `BETTER_AUTH_SECRET` (a new one, not the local), `BETTER_AUTH_URL=https://eat-and-calc-api.vercel.app`, `ALLOWED_EMAILS`.
+3. **App.** `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` goes into EAS env (`npx eas-cli env:create … --environment production`); `EXPO_PUBLIC_API_URL` too.
 4. **Consent screen** can stay in Testing for a family app. Testing-mode refresh tokens expire after 7 days, but we don't use Google refresh tokens: the app keeps its own Better Auth session (90 days).
 5. Rotate the Web client secret before production if it was ever shared (Clients → `eatandcalc web` → Reset secret), then update Vercel and `apps/api/.env.local`.
 
