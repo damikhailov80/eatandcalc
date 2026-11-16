@@ -16,7 +16,7 @@
     "db:studio": "npm run studio -w @eatandcalc/db",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "release:android": "npm run release:android -w @eatandcalc/web",
+    "release:android": "npm run release:android -w @eatandcalc/web --",
     "dev": "npm run db:up && concurrently -k -n api,web,mobile -c green,blue,magenta npm:dev:api npm:dev:web npm:dev:mobile",
     "android:dev": "npm run android:dev -w @eatandcalc/mobile",
     "android:sha1": "npm run android:sha1 -w @eatandcalc/mobile"

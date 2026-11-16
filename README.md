@@ -87,7 +87,7 @@ Postponed until the app is ready; the code is in place.
 |---|---|
 | `DATABASE_URL` (Neon pooled), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS` | Vercel env, project `eat-and-calc-api`; locally `apps/api/.env.local` |
 | `DIRECT_URL` (Neon unpooled) | GitHub → Settings → Environments → `production` secret |
-| `BLOB_READ_WRITE_TOKEN` | Vercel env, project `eat-and-calc-web` (auto from Blob store); locally `apps/web/.env.local` for releases |
+| `BLOB_STORE_ID` / `BLOB_READ_WRITE_TOKEN` | Vercel env, project `eat-and-calc-web` (auto from the connected Blob store); locally the read-write token in `apps/web/.env.local` for releases |
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_API_URL` | not secret (in the bundle): EAS env, environment `production` |
 | Android keystore | dev: `apps/mobile/credentials/debug.keystore` (gitignored); prod: EAS managed credentials |
 

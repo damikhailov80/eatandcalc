@@ -4,7 +4,9 @@
  *   android/eatandcalc.apk  — the APK (overwritten every release)
  *   android/latest.json     — { version, build, publishedAt, apkUrl }
  *
- * Usage (from repo root): npm run release:android
+ * Usage (from repo root):
+ *   npm run release:android                       — new EAS build, then publish
+ *   npm run release:android -- --build <build-id> — publish an existing finished build
  * Needs: `eas login` done, BLOB_READ_WRITE_TOKEN in apps/web/.env.local.
  */
 import { execFileSync } from 'node:child_process';
@@ -20,13 +22,29 @@ if (!process.env.BLOB_READ_WRITE_TOKEN) {
   process.exit(1);
 }
 
-console.log('Building on EAS (profile "production")…');
-const output = execFileSync(
-  'npx',
-  ['eas-cli', 'build', '--platform', 'android', '--profile', 'production', '--non-interactive', '--wait', '--json'],
-  { cwd: mobileDir, encoding: 'utf8', stdio: ['inherit', 'pipe', 'inherit'] },
-);
-const [build] = JSON.parse(output);
+const buildFlag = process.argv.indexOf('--build');
+const existingBuildId = buildFlag === -1 ? undefined : process.argv[buildFlag + 1];
+if (buildFlag !== -1 && !existingBuildId) {
+  console.error('Usage: npm run release:android -- --build <build-id>');
+  process.exit(1);
+}
+
+const eas = (args) =>
+  execFileSync('npx', ['eas-cli', ...args], {
+    cwd: mobileDir,
+    encoding: 'utf8',
+    stdio: ['inherit', 'pipe', 'inherit'],
+  });
+
+let build;
+if (existingBuildId) {
+  console.log(`Using existing EAS build ${existingBuildId}…`);
+  build = JSON.parse(eas(['build:view', existingBuildId, '--json']));
+} else {
+  console.log('Building on EAS (profile "production")…');
+  const args = ['build', '--platform', 'android', '--profile', 'production'];
+  [build] = JSON.parse(eas([...args, '--non-interactive', '--wait', '--json']));
+}
 const buildUrl = build?.artifacts?.buildUrl ?? build?.artifacts?.applicationArchiveUrl;
 if (build?.status !== 'FINISHED' || !buildUrl) {
   console.error('Build did not finish or has no artifact:', build?.status);

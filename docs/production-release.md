@@ -65,8 +65,8 @@ The order matters only where noted. Everything below is already configured; repe
 ### 3. Landing and Blob (`eat-and-calc-web`)
 
 - Import the repo again, Root Directory `apps/web`.
-- Storage → Create → Blob → connect to `eat-and-calc-web`. Vercel adds `BLOB_READ_WRITE_TOKEN` to the project; Redeploy.
-- Copy the same token (starts with `vercel_blob_rw_`) into `apps/web/.env.local` as `BLOB_READ_WRITE_TOKEN=…`: the release script runs on the Mac and uploads with it.
+- Storage → Create → Blob with **public** access (the landing links straight to the APK file; a private store rejects the upload) → connect to `eat-and-calc-web`. Vercel adds `BLOB_STORE_ID` to the project (newer stores authenticate the deployment via OIDC; older ones add `BLOB_READ_WRITE_TOKEN`). `apps/web/src/release.ts` works with either; Redeploy.
+- Copy the store's read-write token (store → `.env.local` tab, starts with `vercel_blob_rw_`) into `apps/web/.env.local` as `BLOB_READ_WRITE_TOKEN=…`: the release script runs on the Mac and uploads with it.
 - Workspace packages the web app imports must be listed in `apps/web/package.json` (`@eatandcalc/shared`), otherwise Vercel fails with "Module not found".
 
 ### 4. EAS project
@@ -129,10 +129,12 @@ Needed for the first install and after any native change (new native module, `ap
    4. uploads `android/eatandcalc.apk` and `android/latest.json` to Vercel Blob;
    5. prints `Published <version> (<build>): <url>`.
 
+   If the build finished but publishing failed (Blob token, network), don't spend another build: `npm run release:android -- --build <build-id>` publishes an existing finished build (ID from the script output or expo.dev → Builds).
+
 4. **Check the landing.** https://eat-and-calc-web.vercel.app shows the new version and date within about a minute (`latest.json` is cached for 60 s).
 5. **Install on the phones.** Open the landing on each phone → "Скачать APK" → allow installs from the browser on the first time. A new APK installs over the previous release (same EAS key, the session is kept). The release app "Eat And Calc" lives next to the dev build "Eat And Calc (dev)" with its own data and session.
 
-Build logs and past builds: https://expo.dev → project `eatandcalc` → Builds. A build can also be started without publishing: `cd apps/mobile && npx eas-cli build -p android --profile production`.
+Build logs and past builds: https://expo.dev/accounts/d.a.mikhailov80/projects/eatandcalc/builds (personal account `d.a.mikhailov80`, not the team). A build can also be started without publishing: `cd apps/mobile && npx eas-cli build -p android --profile production`.
 
 ## Shipping JS-only changes (OTA)
 
@@ -164,4 +166,7 @@ npx eas-cli update --channel production --environment production --message "what
 | 401 `INVALID_TOKEN` from the API | `GOOGLE_CLIENT_ID` in Vercel differs from `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in EAS. |
 | Sign-in rejected for an account | The email isn't in `ALLOWED_EMAILS` (Vercel) or isn't a test user on the Google consent screen. |
 | Release app calls the wrong server / crashes with `EXPO_PUBLIC_API_URL is not set` | Check `eas env:list --environment production`. The value is baked into the JS bundle: fix it, then publish an OTA update with `--environment production` (or rebuild). |
+| `Cannot use public access on a private store` | The Blob store was created as private. Create a new store with public access, connect it to `eat-and-calc-web` (disconnect the old one), update the token in `apps/web/.env.local`, Redeploy, then `npm run release:android -- --build <build-id>`. |
+| Landing download button stays grey after a successful release | The deployment can't read the store: check that it's connected to `eat-and-calc-web` (`BLOB_STORE_ID` in its env vars), Redeploy, and look for "Failed to read the Android release manifest" in Vercel → Logs. |
+| `BlobStoreNotFoundError: This store does not exist` | `apps/web/.env.local` still holds the token of a deleted store. Copy the token of the current one. |
 | Landing still shows the old version | Wait 60 s (cache) or check `android/latest.json` in the Blob store. |
