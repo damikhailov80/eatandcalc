@@ -1,0 +1,29 @@
+# Applies Prisma migrations to the production Neon database on every push to main
+# that changes the schema. Secret: DIRECT_URL (Neon unpooled connection string).
+name: Migrate database
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/db/prisma/**
+  workflow_dispatch:
+
+concurrency:
+  group: migrate-prod
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci --workspace @eatandcalc/db --include-workspace-root
+      - run: npm run migrate:deploy -w @eatandcalc/db
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}

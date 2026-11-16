@@ -39,5 +39,15 @@ yarn-error.*
 example
 
 # generated native folders
-/ios
-/android
+/apps/mobile/ios
+/apps/mobile/android
+
+# Next.js / Vercel
+.next/
+next-env.d.ts
+.vercel
+
+# Prisma generated client
+packages/db/src/generated/
+/apps/mobile/dist
+/apps/mobile/credentials

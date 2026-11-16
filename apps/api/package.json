@@ -1,0 +1,26 @@
+{
+  "name": "@eatandcalc/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eatandcalc/db": "*",
+    "@eatandcalc/shared": "*",
+    "@better-auth/expo": "^1.7.25",
+    "better-auth": "^1.7.25",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "~19.3.0",
+    "typescript": "~6.0.3"
+  }
+}

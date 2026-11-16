@@ -1,6 +1,6 @@
 # eatandcalc
 
-Mobile app (iOS / Android) for planning and tracking a family's nutrition. UI is in Russian.
+Android app for planning and tracking a family's nutrition. UI is in Russian.
 
 ## Idea
 
@@ -18,22 +18,101 @@ The chain is: **products → recipes → cooking sessions → who ate how much**
 
 Three entities are kept separate: **Recipe** (template, e.g. chicken 200 g + rice 100 g), **Cooking session** (800 g cooked on Nov 15, maybe modified), **Consumption** (Anna ate 150 g of it). A person's intake = session nutrients ÷ cooked weight × grams eaten.
 
-Accounts: Google sign-in, data in an external PostgreSQL database, several accounts share one household, online-first with a local cache.
+Accounts: Google sign-in only, limited to the family's accounts (allowlist); data in Neon PostgreSQL; all accounts share one household. The app is online-only.
 
 UX priorities: minimal taps to add a dish, easy weight editing with the numeric keyboard, automatic recalculation, quick access to frequent products and recipes, easy date switching. Visual style: light warm background, green accents, rounded cards, progress rings and bars.
 
 Design: [Claude Design canvas](https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR), 14 screens; local copy in `design/mockups/`.
 Development plan: [ROADMAP.md](ROADMAP.md).
 
-## Run
+## Architecture
 
-Requires Node.js LTS and the Expo Go app on a phone (or an iOS simulator / Android emulator).
+```
+apps/mobile      Expo app (Android), Google sign-in, talks only to apps/api
+apps/api         Next.js Route Handlers on Vercel: Better Auth + Prisma → Neon
+apps/web         Next.js landing page: APK download (locally the dev APK)
+packages/db      Prisma schema, migrations, client
+packages/shared  domain types, API zod schemas, nutrition math, formatting, design tokens
+```
+
+Stack: Expo SDK 58 · React Native 0.88 · React 19 · TypeScript · expo-router · Next.js 16 · Better Auth · Prisma 7 · PostgreSQL 17 (Docker locally, Neon in prod) · Vercel · EAS Build / Update.
+
+## Run locally
+
+Requires Node.js LTS, Docker, Android Studio (its SDK and JDK are used by the build scripts), Android phones on the same Wi-Fi as the Mac with the **development build** installed (Expo Go can't do native Google sign-in), and the Google OAuth clients from "One-time setup → Local".
 
 ```bash
 npm install
-npm start            # Expo dev server; press i / a, or scan the QR code with Expo Go
-npm run typecheck    # tsc --noEmit
-npx expo-doctor      # dependency / config check
+cp packages/db/.env.example packages/db/.env.local   # Docker URLs
+cp apps/api/.env.example    apps/api/.env.local      # + BETTER_AUTH_SECRET, Google Web client id/secret
+cp apps/mobile/.env.example apps/mobile/.env.local   # + EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+cp apps/web/.env.example    apps/web/.env.local      # optional, Blob token
+
+npm run db:up          # Postgres 17 in Docker on localhost:5434
+npm run db:migrate     # prisma migrate dev
+npm run db:seed        # optional: create the household
+npm run dev:api        # API on 0.0.0.0:3000
+npm run dev:mobile     # Metro on :8081 for the dev build; the app calls http://<Mac LAN IP>:3000
+npm run dev:web        # landing on :3001 (+ dev APK download for phones)
+npm run dev            # db:up + api, web and mobile in one terminal (Ctrl+C stops all)
+npm run db:studio      # Prisma Studio on :5555
+npm run android:dev    # build the dev APK on this Mac, install on USB phones (only after native changes)
+npm run android:sha1   # SHA-1 of the dev signing key, for Google Cloud
 ```
 
-Stack: Expo SDK 58 · React Native 0.88 · React 19 · TypeScript · expo-router.
+**Installing the dev build on a phone:** with `npm run dev` running, open `http://localhost:3001` on the Mac and scan the QR code with the phone (or open `http://<Mac LAN IP>:3001` on the phone) → "Скачать APK" → install. Under `next dev` the landing's download card serves the dev APK from `apps/mobile/dist` (built by `npm run android:dev`); in production it serves the published release.
+
+**Connecting to Metro:** the dev build's launcher lists the Metro server found on the Wi-Fi; tap it once, later launches reopen it. Alternatively Enter URL manually → `http://<Mac LAN IP>:8081`. Metro's interactive keys (`r` reload) are unavailable inside `npm run dev`; run `npm run dev:mobile` in its own terminal when you need them.
+
+The dev build only needs rebuilding (`npm run android:dev`) after adding a native library or changing `app.json`; JS changes arrive through Metro. It is signed with `apps/mobile/credentials/debug.keystore` (gitignored, created on first run): keep it, Google Cloud knows its SHA-1.
+
+Checks: `npm run typecheck`, `npm run lint`, `cd apps/mobile && npx expo-doctor`.
+
+## Deploy (later)
+
+Postponed until the app is ready; the code is in place.
+
+
+| What | How |
+|---|---|
+| API | Vercel project `eatandcalc-api`, Root Directory `apps/api`; deploys on push to `main` |
+| Landing | Vercel project `eatandcalc`, Root Directory `apps/web` |
+| DB migrations | GitHub Action `migrate.yml` runs `prisma migrate deploy` on push to `main` when `packages/db/prisma/**` changes |
+| Android APK | `npm run release:android`: EAS production build → Vercel Blob → link on the landing |
+| JS-only fixes | `cd apps/mobile && npx eas-cli update --channel production` (OTA, no reinstall) |
+
+## Secrets
+
+| Value | Where |
+|---|---|
+| `DATABASE_URL` (Neon pooled), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS` | Vercel env, project `eatandcalc-api`; locally `apps/api/.env.local` |
+| `DIRECT_URL` (Neon unpooled) | GitHub → Settings → Environments → `production` secret |
+| `BLOB_READ_WRITE_TOKEN` | Vercel env, project `eatandcalc` (auto from Blob store); locally `apps/web/.env.local` for releases |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_API_URL` | not secret (in the bundle): EAS env / `eas.json` |
+| Android keystore | dev: `apps/mobile/credentials/debug.keystore` (gitignored); prod: EAS managed credentials |
+
+`.env*.local` files are gitignored. Keep master copies in a password manager.
+
+## One-time setup
+
+Detailed guides: [docs/google-oauth.md](docs/google-oauth.md) (sign-in, troubleshooting), [docs/builds-and-updates.md](docs/builds-and-updates.md) (dev build, hot reload, release APK, over-the-air updates).
+
+### Local (now)
+
+1. **Google Cloud** (console.cloud.google.com):
+   - New project `eatandcalc`.
+   - Google Auth Platform → Get started: app name `eatandcalc`, your support email, Audience **External**, contact email.
+   - Audience → Test users → add both family accounts. Stay in **Testing**: only test users can sign in.
+   - Clients → Create client → **Web application** (`eatandcalc web`, no redirect URIs). Client ID → `GOOGLE_CLIENT_ID` (`apps/api/.env.local`) and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (`apps/mobile/.env.local`); secret → `GOOGLE_CLIENT_SECRET`.
+   - Clients → Create client → **Android**: package `com.eatandcalc.app`, SHA-1 from `npm run android:sha1`. Nothing to copy back; Google matches the app by package + SHA-1.
+2. `BETTER_AUTH_SECRET` in `apps/api/.env.local`: `openssl rand -base64 32`.
+3. `npm run android:dev` (installs over USB if a phone is connected).
+4. `npm run dev`, install the dev APK from the landing page on each phone (allow installs from the browser), open Eat And Calc (dev), tap the Metro server, sign in.
+
+### Production (later)
+
+1. **Google Cloud**: one more Android client with the SHA-1 of the EAS keystore (`npx eas-cli credentials -p android`).
+2. **Expo**: `cd apps/mobile && npx eas-cli login && npx eas-cli init && npx eas-cli update:configure`; `npx eas-cli env:create --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value <id> --visibility plaintext --environment production --environment development`.
+3. **Vercel**: import the GitHub repo twice — `eatandcalc-api` (Root Directory `apps/api`) and `eatandcalc` (Root Directory `apps/web`). In `eatandcalc-api`: Storage → Neon (region Frankfurt), then add the API env vars above with `BETTER_AUTH_URL=https://eatandcalc-api.vercel.app`. In `eatandcalc`: Storage → Blob.
+4. **GitHub**: environment `production` with secret `DIRECT_URL` = Neon `DATABASE_URL_UNPOOLED`. Run the "Migrate database" workflow once.
+5. `npm run release:android` and open the landing page.

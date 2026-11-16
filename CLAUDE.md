@@ -2,40 +2,54 @@
 
 ## Project
 
-Expo / React Native app for family nutrition planning: products, recipes (templates), cooking sessions (concrete pots), per-member consumption, daily planner with norms. The idea is in `README.md`, stages in `ROADMAP.md`, design in `design/mockups/`.
+Monorepo (npm workspaces): Expo / React Native Android app for family nutrition planning, a Next.js API and a Next.js landing page: products, recipes (templates), cooking sessions (concrete pots), per-member consumption, daily planner with norms. The idea is in `README.md`, stages in `ROADMAP.md`, design in `design/mockups/`.
 
-Current stage: **0 done (boilerplate)**. Next: **Stage 1, backend & auth** (Google sign-in + PostgreSQL, shared household, online-first + cache). The backend tech is not chosen yet; don't add persistence/auth/state libraries until it is.
+Current stage: **1 (backend & auth) built; local development only** (Docker DB, local API, dev build on two phones over Wi-Fi; Google OAuth setup in README "One-time setup → Local"). Vercel, Neon, EAS and the APK landing are **postponed to the final release**; don't push work toward them unless asked. Next: **Stage 2, products**.
+
+Decided: Android only; Google sign-in only, allowlist `ALLOWED_EMAILS` (two family accounts), one shared household; the app is **online-only** (TanStack Query is a request cache, no offline writes); domains `*.vercel.app` for now.
 
 ## Rules
 
 - **Answer in the language of the user's request.** Docs, code and comments in English. **All UI strings in Russian**; don't translate them.
-- **Documentation is exactly three files:** `README.md` (idea + how to run), `CLAUDE.md`, `ROADMAP.md`. Never create new `.md` files unless the user explicitly asks for one; put new info into these three.
+- **Documentation:** `README.md` (idea + how to run), `CLAUDE.md`, `ROADMAP.md`, plus guides the user asked for in `docs/`: `google-oauth.md` (OAuth setup), `builds-and-updates.md` (dev build, hot reload, release APK, EAS Update). Keep them in sync when the flow changes. Never create other `.md` files unless the user explicitly asks; put new info into the existing ones.
 - **Git:** never run `git add`, `git rm`, `git commit`, `git push` or anything else that changes the index/history without the user's explicit approval. Delete files with plain `rm`.
-- **Package manager:** npm only. Add packages with `npx expo install <pkg>`.
+- **Package manager:** npm only, workspaces. In `apps/mobile` add packages with `npx expo install <pkg>`; elsewhere `npm install <pkg> -w @eatandcalc/<name>`. Keep `react` / `react-dom` versions identical in all apps.
 
 ## Commands
 
 ```bash
 npm install
-npm start               # expo start
-npm run typecheck       # tsc --noEmit (run before declaring work done)
-npx expo lint
-npx expo-doctor
+npm run db:up           # Postgres in Docker, localhost:5434
+npm run db:migrate      # prisma migrate dev (new migration: add --name in packages/db)
+npm run dev:api         # Next API on :3000
+npm run dev:mobile      # Expo (dev build, not Expo Go)
+npm run dev:web         # landing on :3001
+npm run dev             # db:up + api + web + mobile together (concurrently)
+npm run db:studio       # Prisma Studio on :5555
+npm run android:dev     # local dev APK build + install over USB (only after native changes)
+npm run android:sha1    # SHA-1 of apps/mobile/credentials/debug.keystore for Google Cloud
+npm run typecheck       # all workspaces (run before declaring work done)
+npm run lint
+cd apps/mobile && npx expo-doctor
 ```
 
 ## Conventions
 
 - **Expo SDK 58.** Expo APIs change every SDK; check https://docs.expo.dev/versions/v58.0.0/ or https://docs.expo.dev/llms.txt instead of relying on memory.
-- **Routing:** expo-router, routes only in `src/app/`. Non-route code lives outside `src/app/`. Import alias `@/` → `src/`.
+- **Workspaces:** `apps/mobile`, `apps/api`, `apps/web`, `packages/db` (Prisma), `packages/shared` (types, zod API schemas, nutrition, format, tokens). Packages ship TS sources (no build step); Next apps list them in `transpilePackages`.
+- **Routing (mobile):** expo-router, routes only in `apps/mobile/src/app/`. Non-route code lives outside `src/app/`. Import alias `@/` → `apps/mobile/src/` (same alias in each Next app → its own `src/`).
+- **Auth:** every screen except `sign-in` sits behind `Stack.Protected` in the root layout. Mobile signs in with a native Google ID token → Better Auth (`apps/api/src/lib/auth.ts`); allowlist + household assignment happen in Better Auth DB hooks.
+- **API:** mobile never talks to the DB. Every route handler is wrapped in `withUser` (`apps/api/src/lib/session.ts`) and filters by `householdId`. Request/response shapes are zod schemas in `packages/shared/src/api.ts`; the client calls through `apps/mobile/src/lib/api.ts`.
+- **DB:** Prisma 7 with `@prisma/adapter-pg`; import `prisma` from `@eatandcalc/db` (server only — never in mobile/web). Schema changes = new migration in `packages/db/prisma/migrations`, backward compatible (old app versions keep working). Tables `snake_case` via `@@map`/`@map`.
 - **UI:** own components in `src/components/ui/`. No react-native-paper or other UI kits. Colors, radii, spacing and fonts come only from `@/theme`; no hard-coded hex values in screens. Use `Text` from the UI kit, not RN `Text`.
-- **Design fidelity:** match `design/mockups/` (screen table below). Touch targets ≥ 44, tabular figures, ru-RU number formatting via `@/lib/format` (`1 435`, `13,2`).
+- **Design fidelity:** match `design/mockups/` (screen table below). Touch targets ≥ 44, tabular figures, ru-RU number formatting via `@eatandcalc/shared` (`format.ts`) (`1 435`, `13,2`).
 - **Numeric input:** `keyboardType="decimal-pad"`; accept both `,` and `.`.
-- **Nutrition math:** only through `@/lib/nutrition` (pure functions). Don't compute KBJU inline in components.
-- Don't edit `ios/` / `android/` (generated). Native config goes in `app.json`. Native modules not in Expo Go need a dev build.
+- **Nutrition math:** only through `@eatandcalc/shared` (`nutrition.ts`, pure functions). Don't compute KBJU inline in components.
+- Don't edit `apps/mobile/android/` (generated). Native config goes in `app.json`; `app.config.ts` only adds per-variant tweaks (`APP_VARIANT=development` → name "Eat And Calc (dev)"). App icons are in `apps/mobile/assets/images/` (green apple on `primarySoft`). Native modules not in Expo Go need a dev build.
 
 ## Data model
 
-Types: `src/types/domain.ts`. Everything belongs to a **Household**; several accounts share one household.
+Types: `packages/shared/src/domain.ts`; DB schema: `packages/db/prisma/schema.prisma` (so far auth tables + `household`, `household_user`; domain tables arrive with their stages). Everything belongs to a **Household**; several accounts share one household.
 
 ```
 Household ─┬─ FamilyMember (norms)
@@ -61,7 +75,7 @@ Household ─┬─ FamilyMember (norms)
 
 ## Design
 
-Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mockups/*.dc.html`, reference only, never imported). Phone frame 390 pt. Tokens in `src/theme/tokens.ts`: warm bg `#F6F4EF`, white cards (radius 20), primary green `#2E7D4F` / dark `#1F5E3A` / soft `#E3F0E7`, exceeded `#C2410C`, macro colors kcal green, protein `#3566B0`, fat `#B7791F`, carbs `#7A5AB0`, member avatar colors. Fonts: Manrope 700/800 headings, Inter body. Icons: `MaterialCommunityIcons` outline.
+Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mockups/*.dc.html`, reference only, never imported). Phone frame 390 pt. Tokens in `packages/shared/src/tokens.ts` (mobile imports via `@/theme`, web maps them to CSS variables): warm bg `#F6F4EF`, white cards (radius 20), primary green `#2E7D4F` / dark `#1F5E3A` / soft `#E3F0E7`, exceeded `#C2410C`, macro colors kcal green, protein `#3566B0`, fat `#B7791F`, carbs `#7A5AB0`, member avatar colors. Fonts: Manrope 700/800 headings, Inter body. Icons: `MaterialCommunityIcons` outline.
 
 | Mockup | Screen | Key elements |
 |---|---|---|
@@ -86,12 +100,21 @@ Components to build as needed: Chip, SegmentedControl, SearchField, NumberField,
 
 | Path | Role |
 |---|---|
-| `src/app/_layout.tsx` | root Stack, font loading, splash, SafeAreaProvider |
-| `src/app/(tabs)/_layout.tsx` | bottom tabs (День, Готовка, Рецепты, Продукты, Семья) |
-| `src/app/(tabs)/*.tsx` | tab screens (placeholders now) |
-| `src/components/ui/` | Screen, Text, Card, Button, Placeholder |
-| `src/theme/tokens.ts` | design tokens |
-| `src/types/domain.ts` | domain types |
-| `src/lib/nutrition.ts` | nutrition calculations |
-| `src/lib/format.ts` | number formatting |
+| `apps/mobile/src/app/_layout.tsx` | root Stack, fonts, splash, auth guard, QueryClientProvider |
+| `apps/mobile/src/app/sign-in.tsx` | Google sign-in screen |
+| `apps/mobile/src/app/(tabs)/` | tab screens (День, Готовка, Рецепты, Продукты, Семья) |
+| `apps/mobile/src/components/ui/` | Screen, Text, Card, Button, Placeholder, StateMessage |
+| `apps/mobile/src/lib/` | `config` (API URL), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` |
+| `apps/mobile/scripts/` | `android-dev` (local Gradle build → `dist/eatandcalc-dev.apk` + `dist/dev.json`), `android-sha1`, `android-env` (JDK/SDK, keystore) |
+| `apps/mobile/eas.json` | build profiles (development / production APK), update channels |
+| `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `household`, `env` |
+| `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `health` |
+| `apps/web/src/app/page.tsx` | landing: headline + QR to itself, download card; under `next dev` the same card serves the local dev APK |
+| `apps/web/src/dev-build.ts`, `app/download/dev/` | local-only dev APK info and download (404 in production) |
+| `apps/web/scripts/release-android.mjs` | EAS build → Vercel Blob (`android/eatandcalc.apk`, `android/latest.json`) |
+| `packages/db/prisma/` | `schema.prisma`, `migrations/`, `seed.ts`; config `packages/db/prisma.config.ts` |
+| `packages/shared/src/` | `domain`, `api` (zod), `nutrition`, `format`, `tokens` |
+| `docker-compose.yml` | local Postgres 17 (+ shadow DB) |
+| `.github/workflows/` | `check` (typecheck, lint), `migrate` (prod migrations) |
+| `docs/` | guides: Google OAuth setup, builds & OTA updates |
 | `design/mockups/` | Claude Design sources |

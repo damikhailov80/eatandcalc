@@ -1,0 +1,63 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: #F6F4EF; /* fallback before tokens apply; same as colors.bg */
+  color: #1D1C19;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 32px 16px 48px;
+}
+
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-heading); font-weight: 800; font-size: 18px; }
+.logo {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--primary-soft); color: var(--primary-dark);
+  display: grid; place-items: center; font-size: 22px;
+}
+
+h1 {
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: clamp(30px, 6vw, 44px); line-height: 1.08; letter-spacing: -0.02em;
+  margin: 12px 0 0; text-wrap: balance;
+}
+.lead { font-size: 17px; line-height: 1.5; color: var(--text-secondary); margin: 0; max-width: 560px; }
+
+.card { background: var(--surface); border-radius: var(--radius-card); padding: 20px; box-shadow: 0 1px 2px rgba(29, 28, 25, 0.05); }
+
+.hero { display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: center; }
+.hero h1 { margin-bottom: 14px; }
+
+.download { display: block; }
+.download h2 { font-family: var(--font-heading); font-weight: 700; font-size: 20px; margin: 0 0 6px; }
+.meta { color: var(--text-muted); font-size: 13px; margin: 0 0 16px; }
+
+.button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 0 22px; border-radius: var(--radius-control);
+  background: var(--primary); color: var(--on-primary);
+  font-weight: 600; font-size: 16px; text-decoration: none;
+}
+.button:hover { background: var(--primary-dark); }
+.button[aria-disabled='true'] { opacity: 0.45; pointer-events: none; }
+.hint { color: var(--text-muted); font-size: 13px; line-height: 1.45; margin: 14px 0 0; }
+
+.qr { width: 132px; height: 132px; border-radius: 12px; border: 1px solid var(--border); padding: 6px; background: #fff; }
+.qr svg { display: block; width: 100%; height: 100%; }
+.qr-caption { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 6px; }
+
+@media (max-width: 600px) {
+  .hero { grid-template-columns: 1fr; }
+  .qr-block { display: none; } /* on the phone itself the button is enough */
+  .button { width: 100%; }
+  }

@@ -1,0 +1,9 @@
+import { prisma } from '@eatandcalc/db';
+
+export const dynamic = 'force-dynamic';
+
+/** Liveness + DB check. Public. */
+export async function GET() {
+  await prisma.$queryRaw`SELECT 1`;
+  return Response.json({ ok: true });
+}
