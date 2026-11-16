@@ -13,5 +13,16 @@ function createClient() {
 // One client per process: serverless instances and Next dev hot reload reuse it.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-export const prisma = globalForPrisma.prisma ?? createClient();
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+function getClient(): PrismaClient {
+  globalForPrisma.prisma ??= createClient();
+  return globalForPrisma.prisma;
+}
+
+/** Created on first use (not at import), so `next build` works without DATABASE_URL. */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getClient();
+    const value = Reflect.get(client, prop, client);
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+});

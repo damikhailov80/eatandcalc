@@ -1,7 +1,7 @@
 import { prisma } from '@eatandcalc/db';
 import { NOT_ALLOWED_ERROR } from '@eatandcalc/shared';
 
-import { auth } from './auth';
+import { getAuth } from './auth';
 import { isAllowedEmail } from './env';
 
 export type RequestUser = {
@@ -20,7 +20,7 @@ export class HttpError extends Error {
 
 /** Resolves the signed-in user and their household; throws HttpError 401/403 otherwise. */
 export async function requireUser(request: Request): Promise<RequestUser> {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getAuth().api.getSession({ headers: request.headers });
   if (!session) throw new HttpError(401, 'UNAUTHORIZED');
 
   const { user } = session;
