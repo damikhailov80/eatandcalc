@@ -23,14 +23,15 @@ async function main() {
     ids.add(id);
   }
 
+  // Wake a suspended cloud DB (Neon) first: its cold start can exceed the transaction's 2 s default wait.
+  await prisma.$queryRaw`SELECT 1`;
   await prisma.$transaction(
-    CATALOG.map(({ id, fdcId: _fdcId, ...data }) =>
-      prisma.product.upsert({
-        where: { id },
-        create: { id, householdId: null, ...data },
-        update: data,
-      }),
-    ),
+    async (tx) => {
+      for (const { id, fdcId: _fdcId, ...data } of CATALOG) {
+        await tx.product.upsert({ where: { id }, create: { id, householdId: null, ...data }, update: data });
+      }
+    },
+    { maxWait: 30_000, timeout: 300_000 },
   );
   console.log(`Catalog: ${CATALOG.length} products upserted.`);
 
