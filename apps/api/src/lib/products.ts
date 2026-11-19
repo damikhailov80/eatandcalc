@@ -13,6 +13,7 @@ import {
 import { randomUUID } from 'node:crypto';
 
 import { HttpError } from './http';
+import { recipesUsing } from './recipes';
 import type { RequestUser } from './session';
 
 /** Catalog values or own product values of a row. Invalid stored units are dropped rather than failing the list. */
@@ -140,8 +141,12 @@ export async function setHidden(me: RequestUser, id: string, hidden: boolean): P
   return getProduct(me, id);
 }
 
-/** Deletes the family's own product for good (its state and favorites cascade). Catalog products → 404. */
+/**
+ * Deletes the family's own product for good (its state and favorites cascade). Catalog products → 404;
+ * a product used in the family's recipes → 409 `PRODUCT_IN_USE` (the recipes would lose an ingredient).
+ */
 export async function deleteProduct(me: RequestUser, id: string): Promise<void> {
+  if ((await recipesUsing(me.householdId, id)).length > 0) throw new HttpError(409, ApiErrors.productInUse);
   const { count } = await prisma.product.deleteMany({ where: { id, householdId: me.householdId } });
   if (count === 0) throw new HttpError(404, ApiErrors.notFound);
 }

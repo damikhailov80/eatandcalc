@@ -55,8 +55,8 @@ Decisions:
 
 Steps (each one ends with a test on the phones, then commit):
 1. [x] Catalog + read-only list: migration, shared schemas, `recipeTotals`, recipe catalog seed, `GET /api/recipes`, Recipes tab with search and filters Свои / Все.
-2. [ ] Editor & own recipes: recipe editor with product picker, units, totals; create own / edit / override catalog / reset; filters Добавленные / Изменённые; product delete ban.
-3. [ ] Hide & favorites: hide / restore catalog recipes, delete own, ♥; filters Скрытые / Избранное.
+2. [x] Editor & own recipes: recipe editor with product picker, units (switching a unit keeps the weight), totals; create own / edit / delete own / override catalog / reset; filters Добавленные / Изменённые; product delete ban (409 `PRODUCT_IN_USE`, the app names the recipes).
+3. [ ] Hide & favorites: hide / restore catalog recipes, ♥; filters Скрытые / Избранное.
 4. [ ] Join / leave: merge with conflict picker, copy on leave.
 
 ## Open questions

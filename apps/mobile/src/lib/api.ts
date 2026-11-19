@@ -18,6 +18,7 @@ import {
   type MeResponse,
   type ProductData,
   type ProductDto,
+  type RecipeData,
   type RecipeDto,
   type SyncResponse,
 } from '@eatandcalc/shared';
@@ -178,4 +179,24 @@ export const api = {
   recipes: async (): Promise<RecipeDto[]> => (await apiRequest('/api/recipes', RecipesResponseSchema)).recipes,
   recipe: async (id: string): Promise<RecipeDto> =>
     (await apiRequest(`/api/recipes/${encodeURIComponent(id)}`, RecipeResponseSchema)).recipe,
+  createRecipe: async (input: RecipeData): Promise<RecipeDto> =>
+    (await apiRequest('/api/recipes', RecipeResponseSchema, { method: 'POST', json: input })).recipe,
+  /** Own recipe: edited; catalog recipe: saved as the family's version. */
+  updateRecipe: async (id: string, input: RecipeData): Promise<RecipeDto> =>
+    (
+      await apiRequest(`/api/recipes/${encodeURIComponent(id)}`, RecipeResponseSchema, {
+        method: 'PATCH',
+        json: input,
+      })
+    ).recipe,
+  resetRecipe: async (id: string): Promise<RecipeDto> =>
+    (
+      await apiRequest(`/api/recipes/${encodeURIComponent(id)}/override`, RecipeResponseSchema, {
+        method: 'DELETE',
+      })
+    ).recipe,
+  /** Own recipe only, for good. */
+  deleteRecipe: async (id: string): Promise<void> => {
+    await apiRequest(`/api/recipes/${encodeURIComponent(id)}`, OkResponseSchema, { method: 'DELETE' });
+  },
 };

@@ -11,6 +11,7 @@ const messages: Record<string, string> = {
   [ApiErrors.cannotRemoveSelf]: 'Нельзя удалить свой аккаунт.',
   [ApiErrors.notFound]: 'Не найдено. Возможно, уже удалено.',
   [ApiErrors.validation]: 'Проверьте введённые данные.',
+  [ApiErrors.productInUse]: 'Продукт есть в рецептах. Сначала уберите его оттуда.',
 };
 
 /** Russian message for a failed family/household request. */

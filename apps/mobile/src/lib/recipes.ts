@@ -26,7 +26,7 @@ export const formatAmount = (item: Pick<RecipeItem, 'amount' | 'unit'>) =>
   `${formatNumberInput(item.amount, 2)} ${unitShort[item.unit]}`;
 
 /** "Капуста белокочанная 300 г, яйцо куриное 1 шт (сред.), …" */
-function ingredientsLine(items: readonly RecipeItem[], products: ProductsById) {
+export function ingredientsLine(items: readonly RecipeItem[], products: ProductsById) {
   return items
     .map((item, i) => {
       const name = products.get(item.productId)?.name ?? 'продукт удалён';

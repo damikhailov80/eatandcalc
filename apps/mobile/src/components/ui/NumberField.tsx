@@ -13,17 +13,19 @@ export type NumberFieldProps = {
   unit?: string;
   placeholder?: string;
   invalid?: boolean;
+  autoFocus?: boolean;
   style?: ViewStyle;
 };
 
 /** Compact numeric input with a unit suffix: decimal pad, accepts "," and ".". */
-export function NumberField({ value, onChangeText, label, unit, placeholder, invalid, style }: NumberFieldProps) {
+export function NumberField({ value, onChangeText, label, unit, placeholder, invalid, autoFocus, style }: NumberFieldProps) {
   return (
     <View style={[styles.root, invalid && styles.invalid, style]}>
       <TextInput
         accessibilityLabel={label}
         keyboardType="decimal-pad"
         selectTextOnFocus
+        autoFocus={autoFocus}
         value={value}
         placeholder={placeholder}
         placeholderTextColor={colors.textDisabled}

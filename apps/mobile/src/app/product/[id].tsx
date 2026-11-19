@@ -1,4 +1,4 @@
-import type { ProductData, ProductDto } from '@eatandcalc/shared';
+import type { ProductData, ProductDto, RecipeDto } from '@eatandcalc/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -58,11 +58,20 @@ function Editor({ product, initial }: { product: ProductDto | null; initial: Pro
     },
     onError,
   });
-  const confirmDelete = () =>
+  const confirmDelete = () => {
+    // The server refuses too (PRODUCT_IN_USE); the cache lets us name the recipes.
+    const usedIn = (queryClient.getQueryData<RecipeDto[]>(queryKeys.recipes) ?? []).filter((r) =>
+      r.items.some((i) => i.productId === productId),
+    );
+    if (usedIn.length > 0) {
+      Alert.alert('Продукт есть в рецептах', usedIn.map((r) => `«${r.name}»`).join(', '));
+      return;
+    }
     Alert.alert(`Удалить «${productName}»?`, undefined, [
       { text: 'Отмена', style: 'cancel' },
       { text: 'Удалить', style: 'destructive', onPress: () => remove.mutate() },
     ]);
+  };
 
   const busy = save.isPending || reset.isPending || remove.isPending;
   const [showOriginal, setShowOriginal] = useState(false);
