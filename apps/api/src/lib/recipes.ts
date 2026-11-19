@@ -277,7 +277,7 @@ export async function mergeRecipesOnJoin(tx: Tx, fromId: string, toId: string, k
 /**
  * An account leaves (or is removed): the family keeps everything, the account's new household gets a copy of
  * own recipes (new ids, ♥ move to the copies), edits and hiding. Ingredients point to the copied own products
- * (`productIds`: old → new, from `copyProductsOnLeave`).
+ * (`productIds`: old → new, from `copyProductsOnLeave`). Returns the own recipe ids, old → new.
  */
 export async function copyRecipesOnLeave(
   tx: Tx,
@@ -285,7 +285,7 @@ export async function copyRecipesOnLeave(
   toId: string,
   userId: string,
   productIds: ReadonlyMap<string, string>,
-) {
+): Promise<Map<string, string>> {
   const remap = (d: RecipeData): RecipeData =>
     canonical({ ...d, items: d.items.map((i) => ({ ...i, productId: productIds.get(i.productId) ?? i.productId })) });
 
@@ -320,4 +320,5 @@ export async function copyRecipesOnLeave(
     });
     await tx.recipeFavorite.deleteMany({ where: { userId, recipeId: { in: favorites.map((f) => f.recipeId) } } });
   }
+  return newId;
 }

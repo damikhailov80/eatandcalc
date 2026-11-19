@@ -9,7 +9,7 @@ Development goes in stages; each stage ends with a working app.
 | 2 | Products | Shared catalog + per-family edits / hiding / own products, per-account favorites, search, filters, units → grams, merge on join | ✅ done (plan below) |
 | 3 | Recipes | Shared catalog + own recipes, editor (products in their units), totals / per 100 g, hide / ♥ / delete, merge on join | ✅ done (plan below) |
 | 4 | Family | Members list, profile editor, norms, macro-energy check; account roles (owner/member), invite link + code, join/leave/remove | ✅ done (today's eaten = 0 until stage 6) |
-| 5 | Cooking | Session from a recipe, a copy or blank; editor (multiplier, frozen product copies, pot and gross weight → per 100 g); history by day with search; delete, cook again; join / leave | 🔧 in progress (plan below) |
+| 5 | Cooking | Session from a recipe, a copy or blank; editor (multiplier, frozen product copies, pot and gross weight → per 100 g); history by day with search; delete, cook again; join / leave | ✅ done (plan below; leftovers with stage 6) |
 | 6 | Daily planner | Date strip, meals, add dish (leftovers / history / recipe), distribution between members, member rings | |
 | 7 | Stats & history | Member day stats, history calendar, copy a day's plan | |
 | 8 | Polish | Frequent items, empty states, haptics, performance | |
@@ -74,7 +74,7 @@ Decisions:
 Steps (each one ends with a test on the phones, then commit):
 1. [x] Model + list + editor: migration `cooking_session`, shared schemas and `cookingTotals`, `/api/cooking` CRUD, Cooking tab (by day, search), new cooking from a recipe or blank, editor (name, date, rows, ×N, comparison, weights, totals).
 2. [x] Delete, "Приготовить снова" (copy dated today), new cooking as a copy of a session, "Приготовить" from a recipe.
-3. [ ] Join / leave: move on join, copy on leave.
+3. [x] Join / leave: move on join (`moveCookingOnJoin`), copy on leave (`copyCookingOnLeave`).
 
 ## Open questions
 

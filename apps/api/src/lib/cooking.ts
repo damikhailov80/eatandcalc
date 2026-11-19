@@ -8,6 +8,8 @@ import {
   type CookingItemDto,
 } from '@eatandcalc/shared';
 
+import { randomUUID } from 'node:crypto';
+
 import { HttpError } from './http';
 import type { RequestUser } from './session';
 
@@ -110,4 +112,45 @@ export async function updateCooking(me: RequestUser, id: string, data: CookingDa
 export async function deleteCooking(me: RequestUser, id: string): Promise<void> {
   await findOwn(me, id);
   await prisma.cookingSession.delete({ where: { id } });
+}
+
+type Tx = Prisma.TransactionClient;
+
+/** Join: the joiner's sessions move into the family as they are (own products and recipes keep their ids). */
+export async function moveCookingOnJoin(tx: Tx, fromId: string, toId: string) {
+  await tx.cookingSession.updateMany({ where: { householdId: fromId }, data: { householdId: toId } });
+}
+
+/**
+ * Leave / removal: the family keeps its sessions, the account's new household gets copies (new ids). Rows, the
+ * recipe and the origin point to the copies (`productIds`, `recipeIds`: old → new; catalog ids stay).
+ */
+export async function copyCookingOnLeave(
+  tx: Tx,
+  fromId: string,
+  toId: string,
+  productIds: ReadonlyMap<string, string>,
+  recipeIds: ReadonlyMap<string, string>,
+) {
+  const sessions = await tx.cookingSession.findMany({ where: { householdId: fromId }, orderBy: { createdAt: 'asc' } });
+  if (!sessions.length) return;
+  const newId = new Map(sessions.map((s) => [s.id, randomUUID()]));
+  // One INSERT: Postgres checks the self-reference (`copiedFromId`) at the end of the statement.
+  await tx.cookingSession.createMany({
+    data: sessions.map((s) => ({
+      id: newId.get(s.id)!,
+      householdId: toId,
+      date: s.date,
+      name: s.name,
+      recipeId: s.recipeId ? (recipeIds.get(s.recipeId) ?? s.recipeId) : null,
+      recipeScale: s.recipeScale,
+      copiedFromId: s.copiedFromId ? (newId.get(s.copiedFromId) ?? null) : null,
+      items: canonicalItems(
+        rowItems(s).map((i) => ({ ...i, productId: i.productId ? (productIds.get(i.productId) ?? i.productId) : null })),
+      ) as Prisma.InputJsonValue,
+      potWeightG: s.potWeightG,
+      grossWeightG: s.grossWeightG,
+      createdAt: s.createdAt,
+    })),
+  });
 }

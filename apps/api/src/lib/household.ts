@@ -9,6 +9,7 @@ import {
 } from '@eatandcalc/shared';
 import { randomInt } from 'node:crypto';
 
+import { copyCookingOnLeave, moveCookingOnJoin } from './cooking';
 import { HttpError } from './http';
 import { copyProductsOnLeave, joinConflicts, mergeProductsOnJoin } from './products';
 import { copyRecipesOnLeave, joinRecipeConflicts, mergeRecipesOnJoin } from './recipes';
@@ -37,13 +38,14 @@ export async function ensureHouseholdMembership(userId: string) {
 
 /**
  * Moves an account out of its household into a new own one (leave / removed by the owner).
- * The family keeps its data; the account takes a copy of the products and recipes along.
+ * The family keeps its data; the account takes a copy of the products, recipes and cooking sessions along.
  */
 async function moveToFreshHousehold(tx: Tx, userId: string) {
   const { householdId: fromId } = await tx.householdUser.delete({ where: { userId } });
   const toId = await createOwnHousehold(tx, userId);
   const productIds = await copyProductsOnLeave(tx, fromId, toId, userId);
-  await copyRecipesOnLeave(tx, fromId, toId, userId, productIds);
+  const recipeIds = await copyRecipesOnLeave(tx, fromId, toId, userId, productIds);
+  await copyCookingOnLeave(tx, fromId, toId, productIds, recipeIds);
   return toId;
 }
 
@@ -138,7 +140,8 @@ export async function previewJoin(me: RequestUser, code: string): Promise<JoinPr
 
 /**
  * Joins the household of an invite. Allowed only when the account is alone in its current household.
- * Its products and recipes move into the family (`mergeProductsOnJoin`, `mergeRecipesOnJoin`); the old household (with its family profiles)
+ * Its products, recipes and cooking sessions move into the family (`mergeProductsOnJoin`, `mergeRecipesOnJoin`,
+ * `moveCookingOnJoin`); the old household (with its family profiles)
  * is deleted, since nobody else uses it.
  */
 export async function joinHousehold(
@@ -150,6 +153,7 @@ export async function joinHousehold(
     const targetId = await joinTarget(tx, me, code);
     await mergeProductsOnJoin(tx, me.householdId, targetId, keep.products ?? []);
     await mergeRecipesOnJoin(tx, me.householdId, targetId, keep.recipes ?? []);
+    await moveCookingOnJoin(tx, me.householdId, targetId);
     await tx.householdUser.update({
       where: { userId: me.user.id },
       data: { householdId: targetId, role: 'member' satisfies HouseholdRole },
