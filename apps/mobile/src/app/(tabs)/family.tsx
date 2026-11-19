@@ -1,16 +1,22 @@
+import { formatDayMonth, pluralRu, ZERO } from '@eatandcalc/shared';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Placeholder, Screen, StateMessage, Text } from '@/components/ui';
+import { AccountsCard } from '@/components/family/AccountsCard';
+import { MemberCard } from '@/components/family/MemberCard';
+import { Button, Screen, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 import { queryClient, queryKeys } from '@/lib/query';
-import { colors, memberColors, radii, spacing } from '@/theme';
+import { colors, fonts, radii, spacing } from '@/theme';
 
 export default function FamilyScreen() {
   const me = useQuery({ queryKey: queryKeys.me, queryFn: api.me });
+  const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
 
-  if (me.isPending) {
+  if (me.isPending || members.isPending) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.primary} />
@@ -18,14 +24,17 @@ export default function FamilyScreen() {
     );
   }
 
-  if (me.isError) {
+  if (me.isError || members.isError) {
     return (
       <StateMessage
         icon="wifi-off"
         title="Нет связи с сервером"
         text="Приложение работает только онлайн. Проверьте интернет."
         actionTitle="Повторить"
-        onAction={() => me.refetch()}
+        onAction={() => {
+          me.refetch();
+          members.refetch();
+        }}
       />
     );
   }
@@ -35,43 +44,50 @@ export default function FamilyScreen() {
     queryClient.clear();
   };
 
+  const count = members.data.length;
+  const today = `сегодня, ${formatDayMonth(new Date())}`;
+  const subtitle = count
+    ? `${count} ${pluralRu(count, ['человек', 'человека', 'человек'])} · ${today}`
+    : 'Добавьте, чьё питание считаем';
+
   return (
-    <Screen title="Семья" subtitle={me.data.household.name}>
-      <Card style={styles.accounts}>
-        <Text variant="h3">Аккаунты</Text>
-        {me.data.members.map((m, i) => (
-          <View key={m.id} style={styles.row}>
-            <View style={[styles.avatar, { backgroundColor: memberColors[i % memberColors.length] }]}>
-              <Text variant="bodyStrong" color={colors.onPrimary}>
-                {m.name.slice(0, 1).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.rowText}>
-              <Text variant="bodyStrong">
-                {m.name}
-                {m.id === me.data.user.id ? ' (вы)' : ''}
-              </Text>
-              <Text variant="caption">{m.email}</Text>
-            </View>
-          </View>
-        ))}
-      </Card>
-      <Placeholder text="Члены семьи и их дневные нормы калорий, белков, жиров и углеводов." />
-      <Button title="Выйти" variant="danger" onPress={onSignOut} />
+    <Screen title="Семья" subtitle={subtitle} subtitleBelow>
+      {members.data.map((m) => (
+        <MemberCard
+          key={m.id}
+          member={m}
+          // Daily planner (Stage 6) will supply today's consumption.
+          eaten={ZERO}
+          onEdit={() => router.push({ pathname: '/member/[id]', params: { id: m.id } })}
+        />
+      ))}
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.push({ pathname: '/member/[id]', params: { id: 'new' } })}
+        style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
+        <MaterialCommunityIcons name="plus" size={18} color={colors.text} />
+        <Text style={styles.addText}>Добавить члена семьи</Text>
+      </Pressable>
+
+      <AccountsCard me={me.data} />
+      <Button title="Выйти из аккаунта" variant="danger" onPress={onSignOut} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
-  accounts: { gap: spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 44 },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.pill,
+  add: {
+    height: 52,
+    borderRadius: radii.lg,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.dashed,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
   },
-  rowText: { flex: 1, gap: 2 },
+  pressed: { opacity: 0.6 },
+  addText: { fontSize: 14, fontFamily: fonts.bodySemibold },
 });

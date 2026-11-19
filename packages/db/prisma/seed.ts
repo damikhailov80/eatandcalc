@@ -1,4 +1,7 @@
-/** Local development seed: one household. Accounts are created by signing in with Google. */
+/**
+ * Local development seed. Households are created by accounts on first sign-in (the account becomes the owner),
+ * so there is nothing to seed yet; the shared product catalog will go here (Stage 2).
+ */
 import { PrismaPg } from '@prisma/adapter-pg';
 import { config } from 'dotenv';
 
@@ -11,13 +14,8 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const existing = await prisma.household.findFirst();
-  if (existing) {
-    console.log(`Household already exists: ${existing.name} (${existing.id})`);
-    return;
-  }
-  const household = await prisma.household.create({ data: { name: 'Семья' } });
-  console.log(`Created household ${household.id}`);
+  const households = await prisma.household.count();
+  console.log(`Nothing to seed yet (${households} household(s) in the database).`);
 }
 
 main().finally(() => prisma.$disconnect());

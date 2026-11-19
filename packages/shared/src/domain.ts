@@ -24,6 +24,9 @@ export type Household = {
   name: string;
 };
 
+/** Account role in a household: the owner manages access (invites, removing accounts); everyone edits data. */
+export type HouseholdRole = 'owner' | 'member';
+
 // ---------- Products ----------
 
 export type ProductCategory =
@@ -127,6 +130,7 @@ export type FamilyMember = {
   color: string;
   /** Daily norms. */
   norms: Nutrients;
+  archived?: boolean;
 };
 
 // ---------- Daily planner ----------

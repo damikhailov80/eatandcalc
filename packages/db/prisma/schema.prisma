@@ -81,20 +81,74 @@ model Verification {
 model Household {
   id        String          @id @default(cuid())
   name      String
-  createdAt DateTime        @default(now()) @map("created_at")
+  createdAt DateTime          @default(now()) @map("created_at")
   users     HouseholdUser[]
+  invites   HouseholdInvite[]
+  members   FamilyMember[]
 
   @@map("household")
 }
 
+enum HouseholdRole {
+  owner
+  member
+
+  @@map("household_role")
+}
+
 /// Which household an account belongs to. One account — one household.
+/// The owner manages access (invites, removing accounts); everyone edits data.
 model HouseholdUser {
-  userId      String    @id @map("user_id")
-  householdId String    @map("household_id")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  userId      String        @id @map("user_id")
+  householdId String        @map("household_id")
+  role        HouseholdRole @default(member)
+  createdAt   DateTime      @default(now()) @map("created_at")
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   @@index([householdId])
   @@map("household_user")
+}
+
+/// Invite link/code to join a household. One active invite per household; reusable until it expires or is revoked.
+model HouseholdInvite {
+  code        String    @id
+  householdId String    @map("household_id")
+  createdById String    @map("created_by_id")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("household_invite")
+}
+
+// ---------- Family ----------
+
+enum Sex {
+  male
+  female
+
+  @@map("sex")
+}
+
+/// A person whose nutrition is tracked (not an account: kids have profiles without accounts).
+/// Deleting archives (`archived_at`) so consumption history keeps its member.
+model FamilyMember {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  name        String
+  sex         Sex
+  color       String
+  kcal        Float
+  protein     Float
+  fat         Float
+  carbs       Float
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  archivedAt  DateTime? @map("archived_at")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("family_member")
 }

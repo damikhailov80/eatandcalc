@@ -49,10 +49,14 @@ export default function RootLayout() {
           {/* Nothing in the app is reachable without a Google sign-in. */}
           <Stack.Protected guard={signedIn}>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="member/[id]" />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn}>
             <Stack.Screen name="sign-in" />
           </Stack.Protected>
+          {/* Invite deep link: reachable signed out too, the screen asks to sign in first. */}
+          <Stack.Screen name="join/index" />
+          <Stack.Screen name="join/[code]" />
         </Stack>
       </SafeAreaProvider>
     </QueryClientProvider>

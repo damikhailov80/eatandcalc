@@ -9,4 +9,9 @@ export const queryClient = new QueryClient({
 
 export const queryKeys = {
   me: ['me'] as const,
+  invite: ['invite'] as const,
+  familyMembers: ['family-members'] as const,
 };
+
+/** After joining/leaving/removing the household everything cached belongs to another family. */
+export const resetHouseholdData = () => queryClient.invalidateQueries();

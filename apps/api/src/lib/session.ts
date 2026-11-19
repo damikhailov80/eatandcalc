@@ -1,22 +1,17 @@
 import { prisma } from '@eatandcalc/db';
-import { NOT_ALLOWED_ERROR } from '@eatandcalc/shared';
+import { NOT_ALLOWED_ERROR, type HouseholdRole } from '@eatandcalc/shared';
 
 import { getAuth } from './auth';
 import { isAllowedEmail } from './env';
+import { HttpError } from './http';
+
+export { HttpError, parseBody } from './http';
 
 export type RequestUser = {
   user: { id: string; email: string; name: string; image: string | null };
   householdId: string;
+  role: HouseholdRole;
 };
-
-export class HttpError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
 
 /** Resolves the signed-in user and their household; throws HttpError 401/403 otherwise. */
 export async function requireUser(request: Request): Promise<RequestUser> {
@@ -32,6 +27,7 @@ export async function requireUser(request: Request): Promise<RequestUser> {
   return {
     user: { id: user.id, email: user.email, name: user.name, image: user.image ?? null },
     householdId: membership.householdId,
+    role: membership.role,
   };
 }
 

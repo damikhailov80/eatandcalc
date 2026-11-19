@@ -18,7 +18,7 @@ The chain is: **products → recipes → cooking sessions → who ate how much**
 
 Three entities are kept separate: **Recipe** (template, e.g. chicken 200 g + rice 100 g), **Cooking session** (800 g cooked on Nov 15, maybe modified), **Consumption** (Anna ate 150 g of it). A person's intake = session nutrients ÷ cooked weight × grams eaten.
 
-Accounts: Google sign-in only, limited to the family's accounts (allowlist); data in Neon PostgreSQL; all accounts share one household. The app is online-only.
+Accounts: Google sign-in only, limited to the family's accounts (allowlist); data in Neon PostgreSQL. Each account starts with its own household and becomes its **owner**; the owner invites the second adult with a link/code (Семья → «Пригласить в семью»), who joins as a **member**. Everyone edits data; only the owner manages invites and removes accounts. The app is online-only.
 
 UX priorities: minimal taps to add a dish, easy weight editing with the numeric keyboard, automatic recalculation, quick access to frequent products and recipes, easy date switching. Visual style: light warm background, green accents, rounded cards, progress rings and bars.
 
@@ -50,7 +50,7 @@ cp apps/web/.env.example    apps/web/.env.local      # optional, Blob token
 
 npm run db:up          # Postgres 17 in Docker on localhost:5434
 npm run db:migrate     # prisma migrate dev
-npm run db:seed        # optional: create the household
+npm run db:seed        # optional, nothing to seed yet (households are created on first sign-in)
 npm run dev:api        # API on 0.0.0.0:3000
 npm run dev:mobile     # Metro on :8081 for the dev build; the app calls http://<Mac LAN IP>:3000
 npm run dev:web        # landing on :3001 (+ dev APK download for phones)
@@ -65,6 +65,8 @@ npm run android:sha1   # SHA-1 of the dev signing key, for Google Cloud
 **Connecting to Metro:** the dev build's launcher lists the Metro server found on the Wi-Fi; tap it once, later launches reopen it. Alternatively Enter URL manually → `http://<Mac LAN IP>:8081`. Metro's interactive keys (`r` reload) are unavailable inside `npm run dev`; run `npm run dev:mobile` in its own terminal when you need them.
 
 The dev build only needs rebuilding (`npm run android:dev`) after adding a native library or changing `app.json`; JS changes arrive through Metro. It is signed with `apps/mobile/credentials/debug.keystore` (gitignored, created on first run): keep it, Google Cloud knows its SHA-1.
+
+**Inviting the second phone locally:** sign in on phone A (owner) → Семья → «Пригласить в семью» → «Поделиться ссылкой». The link is `http://<Mac LAN IP>:3000/invite/<code>` (the API), so phone B must be on the same Wi-Fi; the page opens the app at `eatandcalc://join/<code>`, or type the code in Семья → «Присоединиться по коду». The account must still be in `ALLOWED_EMAILS`. Joining deletes the joiner's own (empty) household.
 
 Checks: `npm run typecheck`, `npm run lint`, `cd apps/mobile && npx expo-doctor`.
 
@@ -104,7 +106,7 @@ Detailed guides: [docs/google-oauth.md](docs/google-oauth.md) (sign-in, troubles
    - Google Auth Platform → Get started: app name `eatandcalc`, your support email, Audience **External**, contact email.
    - Audience → Test users → add both family accounts. Stay in **Testing**: only test users can sign in.
    - Clients → Create client → **Web application** (`eatandcalc web`, no redirect URIs). Client ID → `GOOGLE_CLIENT_ID` (`apps/api/.env.local`) and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (`apps/mobile/.env.local`); secret → `GOOGLE_CLIENT_SECRET`.
-   - Clients → Create client → **Android**: package `com.eatandcalc.app`, SHA-1 from `npm run android:sha1`. Nothing to copy back; Google matches the app by package + SHA-1.
+   - Clients → Create client → **Android**: package `com.eatandcalc.app.dev` (the dev build; production is `com.eatandcalc.app`, so both install side by side), SHA-1 from `npm run android:sha1`. Nothing to copy back; Google matches the app by package + SHA-1.
 2. `BETTER_AUTH_SECRET` in `apps/api/.env.local`: `openssl rand -base64 32`.
 3. `npm run android:dev` (installs over USB if a phone is connected).
 4. `npm run dev`, install the dev APK from the landing page on each phone (allow installs from the browser), open Eat And Calc (dev), tap the Metro server, sign in.
