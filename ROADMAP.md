@@ -7,7 +7,7 @@ Development goes in stages; each stage ends with a working app.
 | 0 | Boilerplate | Expo SDK 58 + expo-router, 5 tabs, theme tokens, base UI kit, domain types, nutrition math | ✅ done |
 | 1 | Backend & auth | Monorepo; Next.js API on Vercel, Better Auth (Google, allowlist), Prisma + Neon, household, `/api/me`; sign-in screen and guard; landing with APK download; CI migrations | 🔧 code done; local dev setup (Google OAuth) pending |
 | 2 | Products | Shared catalog + per-family edits / hiding / own products, per-account favorites, search, filters, units → grams, merge on join | ✅ done (plan below) |
-| 3 | Recipes | List, editor with steppers, totals / per portion / per 100 g, copy, delete | |
+| 3 | Recipes | Shared catalog + own recipes, editor (products in their units), totals / per 100 g, hide / ♥ / delete, merge on join | ✅ done (plan below) |
 | 4 | Family | Members list, profile editor, norms, macro-energy check; account roles (owner/member), invite link + code, join/leave/remove | ✅ done (today's eaten = 0 until stage 6) |
 | 5 | Cooking | Session from recipe or blank, editor (multiplier, cooked weight), quick weight pad, history with leftovers, repeat/copy | |
 | 6 | Daily planner | Date strip, meals, add dish (leftovers / history / recipe), distribution between members, member rings | |
@@ -58,6 +58,8 @@ Steps (each one ends with a test on the phones, then commit):
 2. [x] Editor & own recipes: recipe editor with product picker, units (switching a unit keeps the weight), totals; create own / edit / delete own / override catalog / reset; filters Добавленные / Изменённые; product delete ban (409 `PRODUCT_IN_USE`, the app names the recipes).
 3. [x] Hide & favorites: hide / restore catalog recipes, ♥ (list and editor, optimistic); filters Избранное / Скрытые; reset / restore buttons in Изменённые / Скрытые.
 4. [x] Join / leave: merge with conflict picker, copy on leave.
+
+Not done on purpose: "copy a recipe" (a new own recipe based on another; not needed). "Cook today" from a recipe card arrives with Stage 5 (cooking sessions).
 
 ## Open questions
 

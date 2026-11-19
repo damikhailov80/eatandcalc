@@ -4,7 +4,7 @@
 
 Monorepo (npm workspaces): Expo / React Native Android app for family nutrition planning, a Next.js API and a Next.js landing page: products, recipes (templates), cooking sessions (concrete pots), per-member consumption, daily planner with norms. The idea is in `README.md`, stages in `ROADMAP.md`, design in `design/mockups/`.
 
-Current stage: **1 (backend & auth) built; local development only** (Docker DB, local API, dev build on two phones over Wi-Fi; Google OAuth setup in README "One-time setup → Local"). Vercel, Neon, EAS and the APK landing are **postponed to the final release**; don't push work toward them unless asked. Stage 4 (family, roles, invites) is built ahead of order. Stage 2 (products) is done (decisions in `ROADMAP.md` → "Stage 2 plan"); Stage 3 (recipes) is in progress (`ROADMAP.md` → "Stage 3 plan").
+Current stage: **1 (backend & auth) built; local development only** (Docker DB, local API, dev build on two phones over Wi-Fi; Google OAuth setup in README "One-time setup → Local"). Vercel, Neon, EAS and the APK landing are **postponed to the final release**; don't push work toward them unless asked. Stage 4 (family, roles, invites) is built ahead of order. Stages 2 (products) and 3 (recipes) are done (decisions in `ROADMAP.md` → "Stage 2 plan", "Stage 3 plan").
 
 Decided: Android only; Google sign-in only, allowlist `ALLOWED_EMAILS` filters who can sign in; each account starts with its own household as **owner**, others join by **invite** (link/code/QR, valid until the owner revokes or replaces it) as **member**; everyone edits data, only the owner invites/removes accounts, a member can leave; the app is **online-only** (TanStack Query is a request cache, no offline writes); domains `*.vercel.app` for now.
 
@@ -93,7 +93,7 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 | `CookingHistory` | Cooking tab | filters Все / С остатками / Без рецепта; by date; eaten progress, leftover; "Повторить сегодня", "Копировать и изменить" |
 | `CookingEdit` | Session editor | recipe multiplier; ingredient steppers vs. recipe; cooked weight; portions; totals, per 100 g, per portion; "В рецепт…", "Сохранить и распределить" |
 | `WeightPad` | Amount entry (sheet) | frequent products; unit switch (г / ст. л. / ч. л.); keypad; live kcal |
-| `Recipes` | Recipes tab | search (name or product); filter chips as in Products; card with kcal per dish, ingredients, macro bar, weight, kcal/100 g; menu: cook today, edit, copy, delete |
+| `Recipes` | Recipes tab | search (name or product); filter chips as in Products; card with kcal per dish, ingredients, macro bar, weight, kcal/100 g; menu: edit, delete (no "copy": not needed); "cook today" comes with Stage 5 |
 | `RecipeEdit` | Recipe editor | ingredients in their units; weight = sum of ingredients (no total-weight field, no portions); per dish / 100 g |
 | `Products` | Products tab | search; category chips; rows with category tile, macros, basis; swipe edit/delete |
 | `ProductEdit` | Product editor | category; KBJU per 100 g (the basis switch is dropped); macro check; units with grams; hide / reset note |

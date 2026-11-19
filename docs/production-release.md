@@ -44,7 +44,7 @@ The order matters only where noted. Everything below is already configured; repe
 - A cloud Postgres (e.g. Neon, region Frankfurt). The pooled connection string is the API's `DATABASE_URL`; with Neon add `?sslmode=require`.
 - `localhost` URLs do not work from Vercel.
 - Schema: GitHub → Settings → Environments → `production` → secret `DIRECT_URL` (unpooled connection string), then Actions → "Migrate database" → Run workflow once. Later migrations run automatically on push.
-- Product catalog: not seeded by the workflow yet. After the migrations are applied, run from the repo root with the unpooled URL (Neon console → Connect, or Vercel → `eat-and-calc-api` → Settings → Environment Variables → `DATABASE_URL_UNPOOLED`):
+- Product and recipe catalogs: not seeded by the workflow yet. After the migrations are applied (and again whenever `catalog.ts` / `recipes.ts` change), run from the repo root with the unpooled URL (Neon console → Connect, or Vercel → `eat-and-calc-api` → Settings → Environment Variables → `DATABASE_URL_UNPOOLED`):
 
   ```bash
    DATABASE_URL='postgresql://…?sslmode=require' npm run db:seed
