@@ -20,7 +20,7 @@
     "dev:build": "node apps/mobile/scripts/android-dev.mjs",
     "prod:release": "node --env-file-if-exists=apps/web/.env.local apps/web/scripts/release-android.mjs",
     "prod:update": "cd apps/mobile && sh -c 'npx eas-cli update --platform android --channel production --environment production --message \"${1:-$(git log -1 --format=%s)}\"' --",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "allowScripts": {
     "prisma@7.10.1": true,
