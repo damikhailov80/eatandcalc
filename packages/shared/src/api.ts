@@ -247,8 +247,6 @@ export type CookingData = z.infer<typeof CookingDataSchema>;
 export const CookingSchema = CookingDataSchema.extend({
   id: z.string(),
   createdAt: z.string(),
-  /** Grams of it served in all meals (leftover = cooked weight − eaten). Missing from older servers. */
-  eatenG: z.number().min(0).default(0),
 });
 export type CookingDto = z.infer<typeof CookingSchema>;
 

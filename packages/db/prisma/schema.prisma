@@ -346,7 +346,7 @@ model Meal {
 
 /// A dish served in a meal: a frozen copy of a cooking session or a product (name, KBJU per 100 g, weight), so
 /// later edits or deletes of the source never change the history. `session_id` / `product_id` are kept only to
-/// count leftovers and suggest "как в прошлый раз".
+/// suggest "как в прошлый раз".
 model MealDish {
   id           String          @id @default(cuid())
   mealId       String          @map("meal_id")

@@ -26,7 +26,7 @@ export function rowItems(s: CookingSession): CookingItemDto[] {
 export const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 export const dbDate = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
-export const toCookingDto = (s: CookingSession, eatenG = 0): CookingDto =>
+export const toCookingDto = (s: CookingSession): CookingDto =>
   CookingSchema.parse({
     id: s.id,
     createdAt: s.createdAt.toISOString(),
@@ -38,7 +38,6 @@ export const toCookingDto = (s: CookingSession, eatenG = 0): CookingDto =>
     items: rowItems(s),
     potWeightG: s.potWeightG,
     grossWeightG: s.grossWeightG,
-    eatenG,
   });
 
 /** Stable JSON form of the rows (only known keys) for storing. */
@@ -52,33 +51,14 @@ const canonicalItems = (items: readonly CookingItemDto[]) =>
     unit,
   }));
 
-/** Grams of each session served in the household's meals (by session id). */
-async function eatenBySession(householdId: string, sessionId?: string): Promise<Map<string, number>> {
-  const rows = await prisma.$queryRaw<{ session_id: string; grams: number }[]>`
-    SELECT d.session_id, COALESCE(SUM(c.grams), 0)::float8 AS grams
-    FROM meal_dish d
-    JOIN meal m ON m.id = d.meal_id
-    JOIN consumption c ON c.dish_id = d.id
-    WHERE m.household_id = ${householdId} AND d.session_id IS NOT NULL
-      AND (${sessionId ?? null}::text IS NULL OR d.session_id = ${sessionId ?? null})
-    GROUP BY d.session_id`;
-  return new Map(rows.map((r) => [r.session_id, Number(r.grams)]));
-}
-
 /** Newest days first; within a day the latest cooked first. */
 export async function listCooking(me: RequestUser): Promise<CookingDto[]> {
-  const [rows, eaten] = await Promise.all([
-    prisma.cookingSession.findMany({
-      where: { householdId: me.householdId },
-      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
-    }),
-    eatenBySession(me.householdId),
-  ]);
-  return rows.map((s) => toCookingDto(s, eaten.get(s.id)));
+  const rows = await prisma.cookingSession.findMany({
+    where: { householdId: me.householdId },
+    orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+  });
+  return rows.map(toCookingDto);
 }
-
-const withEaten = async (householdId: string, s: CookingSession) =>
-  toCookingDto(s, (await eatenBySession(householdId, s.id)).get(s.id));
 
 async function findOwn(me: RequestUser, id: string) {
   const s = await prisma.cookingSession.findFirst({ where: { id, householdId: me.householdId } });
@@ -87,7 +67,7 @@ async function findOwn(me: RequestUser, id: string) {
 }
 
 export async function getCooking(me: RequestUser, id: string): Promise<CookingDto> {
-  return withEaten(me.householdId, await findOwn(me, id));
+  return toCookingDto(await findOwn(me, id));
 }
 
 /** The recipe must be one the family sees, the origin one of its sessions; otherwise 400. */
@@ -126,7 +106,7 @@ export async function updateCooking(me: RequestUser, id: string, data: CookingDa
   if (data.copiedFromId === id) throw new HttpError(400, ApiErrors.validation);
   await checkLinks(me, data);
   const s = await prisma.cookingSession.update({ where: { id }, data: rowData(data) });
-  return withEaten(me.householdId, s);
+  return toCookingDto(s);
 }
 
 export async function deleteCooking(me: RequestUser, id: string): Promise<void> {

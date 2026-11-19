@@ -144,7 +144,7 @@ export type Consumption = {
 
 /**
  * A dish served in a meal: a frozen copy of a cooking session or a product (name, KBJU per 100 g, weight).
- * Edits or deletes of the source never change it; the source ids only count leftovers.
+ * Edits or deletes of the source never change it; the source ids only help suggest "как в прошлый раз".
  */
 export type MealDish = {
   id: Id;

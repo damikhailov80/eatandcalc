@@ -153,9 +153,6 @@ export function eatenByMember(meals: readonly Pick<Meal, 'dishes'>[]): Map<Id, N
   return eaten;
 }
 
-/** Cooking leftover: cooked (or raw) weight minus everything served; negative = more served than cooked. */
-export const leftover = (weightG: number, eatenG: number) => weightG - eatenG;
-
 /** Norm minus eaten; negative values mean the norm is exceeded. */
 export function remaining(norm: Nutrients, eaten: Nutrients): Nutrients {
   return subtract(norm, eaten);

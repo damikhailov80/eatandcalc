@@ -11,7 +11,7 @@ The chain is: **products → recipes → cooking sessions → who ate how much**
 | Section (tab) | What it does |
 |---|---|
 | **День** (main screen) | Pick a date; meals (breakfast, lunch, dinner, snacks) with several dishes each. One cooked dish is shared between members, each with their own grams. Rings and bars show eaten / remaining / exceeded per member. Switch dates, edit past days, copy a previous day's plan, view history. |
-| **Готовка** | A cooking session is one concrete pot on a date, usually from a recipe. Change ingredients, weights, portions, and weigh the finished dish; nutrition recalculates. History with leftovers; repeat or copy a session. Never changes the recipe. |
+| **Готовка** | A cooking session is one concrete pot on a date, usually from a recipe. Change ingredients, weights, portions, and weigh the finished dish; nutrition recalculates. History by day; repeat or copy a session. Never changes the recipe. |
 | **Рецепты** | Templates: ingredient list with amounts, total weight, portions, nutrition per dish / portion / 100 g. Create, edit, copy, delete, search. |
 | **Продукты** | Product database with kcal / P / F / C per 100 g, per piece, per tsp / tbsp or a custom unit, plus extra units with gram weight (1 tbsp oil = 13.5 g). Search, category filter, CRUD. |
 | **Семья** | Members with sex and daily norms (kcal, protein, fat, carbs); per-member stats. |
