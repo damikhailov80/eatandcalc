@@ -60,7 +60,10 @@ function Editor({ product, initial }: { product: ProductDto | null; initial: Pro
     onSuccess: done,
     onError,
   });
-  const reset = useMutation({ mutationFn: () => api.resetProduct(product!.id), onSuccess: done, onError });
+  // No `product!.x` in closures: React Compiler reads such member paths during render as memo deps.
+  const productId = product?.id;
+  const productName = product?.name;
+  const reset = useMutation({ mutationFn: () => api.resetProduct(productId ?? ''), onSuccess: done, onError });
 
   const confirmReset = () =>
     Alert.alert('Вернуть стандартные значения?', undefined, [
@@ -69,16 +72,16 @@ function Editor({ product, initial }: { product: ProductDto | null; initial: Pro
     ]);
 
   const remove = useMutation({
-    mutationFn: () => api.deleteProduct(product!.id),
+    mutationFn: () => api.deleteProduct(productId ?? ''),
     onSuccess: () => {
       router.back();
-      queryClient.setQueryData<ProductDto[]>(queryKeys.products, (list) => list?.filter((p) => p.id !== product!.id));
+      queryClient.setQueryData<ProductDto[]>(queryKeys.products, (list) => list?.filter((p) => p.id !== productId));
       queryClient.invalidateQueries({ queryKey: queryKeys.products, exact: true });
     },
     onError,
   });
   const confirmDelete = () =>
-    Alert.alert(`Удалить «${product!.name}»?`, undefined, [
+    Alert.alert(`Удалить «${productName}»?`, undefined, [
       { text: 'Отмена', style: 'cancel' },
       { text: 'Удалить', style: 'destructive', onPress: () => remove.mutate() },
     ]);
