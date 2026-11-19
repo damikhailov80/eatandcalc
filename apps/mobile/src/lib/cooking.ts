@@ -10,6 +10,8 @@ import {
   type ProductDto,
   type RecipeDto,
   type RecipeItem,
+  todayISO,
+  type CookingData,
 } from '@eatandcalc/shared';
 
 import type { ProductsById } from '@/lib/recipes';
@@ -85,6 +87,18 @@ export function recipeDiff(
   changes += items.filter((i) => !i.productId || !inRecipe.has(i.productId)).length;
   return { baseGrams, changes };
 }
+
+/** "Приготовить снова": the same rows (frozen copies as they are), weights and origin, cooked today. */
+export const copyOfSession = (s: CookingDto): CookingData => ({
+  name: s.name,
+  date: todayISO(),
+  recipeId: s.recipeId,
+  recipeScale: s.recipeScale,
+  copiedFromId: s.id,
+  items: s.items,
+  potWeightG: s.potWeightG,
+  grossWeightG: s.grossWeightG,
+});
 
 /** What a cooking card shows. */
 export type CookingView = {

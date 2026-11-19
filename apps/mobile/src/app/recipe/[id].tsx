@@ -104,6 +104,13 @@ function Editor({
     <View style={styles.actions}>
       {badge}
       <IconButton
+        icon="pot-steam-outline"
+        variant="plain"
+        color={colors.primaryDark}
+        label="Приготовить"
+        onPress={() => router.push({ pathname: '/cooking/[id]', params: { id: 'new', recipe: recipe.id } })}
+      />
+      <IconButton
         icon={recipe.favorite ? 'heart' : 'heart-outline'}
         variant="plain"
         color={recipe.favorite ? colors.danger : colors.textMuted}

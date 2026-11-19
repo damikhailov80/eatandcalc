@@ -13,9 +13,9 @@ import {
 } from '@/components/cooking/CookingForm';
 import { familyErrorMessage } from '@/components/family/errors';
 import { ProductPicker } from '@/components/recipes/ProductPicker';
-import { Button, Screen, StateMessage, StickyFooter } from '@/components/ui';
+import { Button, IconButton, Screen, StateMessage, StickyFooter } from '@/components/ui';
 import { api } from '@/lib/api';
-import { rowsFromRecipe, snapshotOf } from '@/lib/cooking';
+import { copyOfSession, rowsFromRecipe, snapshotOf } from '@/lib/cooking';
 import { queryClient, queryKeys } from '@/lib/query';
 import { productsById, type ProductsById } from '@/lib/recipes';
 import { colors } from '@/theme';
@@ -38,6 +38,9 @@ function newDraft(recipe: RecipeDto | undefined, products: ProductsById): Cookin
   });
 }
 
+/** A copy of the session dated today; the editor replaces the current screen. */
+const cookAgain = (from: string) => router.replace({ pathname: '/cooking/[id]', params: { id: NEW, from } });
+
 function Editor({
   session,
   initial,
@@ -57,14 +60,31 @@ function Editor({
   const data = fromCookingDraft(value);
 
   const sessionId = session?.id;
+  const sessionName = session?.name;
+  const onError = (e: unknown) => Alert.alert('Не получилось', familyErrorMessage(e));
   const save = useMutation({
     mutationFn: (input: CookingData) => (sessionId ? api.updateCooking(sessionId, input) : api.createCooking(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cooking });
       router.back();
     },
-    onError: (e) => Alert.alert('Не получилось', familyErrorMessage(e)),
+    onError,
   });
+  const remove = useMutation({
+    mutationFn: () => api.deleteCooking(sessionId ?? ''),
+    onSuccess: () => {
+      router.back();
+      queryClient.setQueryData<CookingDto[]>(queryKeys.cooking, (list) => list?.filter((s) => s.id !== sessionId));
+      queryClient.invalidateQueries({ queryKey: queryKeys.cooking, exact: true });
+    },
+    onError,
+  });
+  const confirmDelete = () =>
+    Alert.alert(`Удалить «${sessionName}»?`, undefined, [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить', style: 'destructive', onPress: () => remove.mutate() },
+    ]);
+  const busy = save.isPending || remove.isPending;
 
   const pick = useCallback((p: ProductDto) => {
     const row = toRowDraft(snapshotOf(p, 1, 'g'), '');
@@ -80,9 +100,31 @@ function Editor({
     <Screen
       title={session ? 'Готовка' : 'Новая готовка'}
       onBack={() => router.back()}
+      actions={
+        session ? (
+          <View style={styles.actions}>
+            <IconButton
+              icon="repeat"
+              variant="plain"
+              color={colors.primaryDark}
+              label="Приготовить снова"
+              disabled={busy}
+              onPress={() => cookAgain(session.id)}
+            />
+            <IconButton
+              icon="trash-can-outline"
+              variant="plain"
+              color={colors.textMuted}
+              label="Удалить"
+              disabled={busy}
+              onPress={confirmDelete}
+            />
+          </View>
+        ) : undefined
+      }
       footer={
         <StickyFooter>
-          <Button title="Сохранить" large disabled={!data || save.isPending} onPress={() => data && save.mutate(data)} />
+          <Button title="Сохранить" large disabled={!data || busy} onPress={() => data && save.mutate(data)} />
         </StickyFooter>
       }>
       <CookingForm
@@ -98,19 +140,28 @@ function Editor({
 }
 
 export default function CookingEditScreen() {
-  const { id, recipe: recipeId } = useLocalSearchParams<{ id: string; recipe?: string }>();
+  const { id, recipe: recipeId, from } = useLocalSearchParams<{ id: string; recipe?: string; from?: string }>();
   const isNew = id === NEW;
+  const listed = (sessionId: string) =>
+    queryClient.getQueryData<CookingDto[]>(queryKeys.cooking)?.find((s) => s.id === sessionId);
 
   const session = useQuery({
     queryKey: [...queryKeys.cooking, id],
     queryFn: () => api.cooking(id),
     enabled: !isNew,
-    initialData: () => queryClient.getQueryData<CookingDto[]>(queryKeys.cooking)?.find((s) => s.id === id),
+    initialData: () => listed(id),
+  });
+  // "Приготовить снова": the session the new one copies.
+  const origin = useQuery({
+    queryKey: [...queryKeys.cooking, from],
+    queryFn: () => api.cooking(from ?? ''),
+    enabled: isNew && !!from,
+    initialData: () => (from ? listed(from) : undefined),
   });
   const products = useQuery({ queryKey: queryKeys.products, queryFn: api.products });
   const recipes = useQuery({ queryKey: queryKeys.recipes, queryFn: api.recipes });
 
-  if ((!isNew && session.isPending) || products.isPending || recipes.isPending) {
+  if ((!isNew && session.isPending) || (isNew && from && origin.isPending) || products.isPending || recipes.isPending) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.primary} />
@@ -128,6 +179,28 @@ export default function CookingEditScreen() {
           if (products.isError) products.refetch();
           if (recipes.isError) recipes.refetch();
         }}
+      />
+    );
+  }
+  if (isNew && from) {
+    if (origin.isError || !origin.data) {
+      return (
+        <StateMessage
+          icon="pot-steam-outline"
+          title="Готовка не найдена"
+          text={familyErrorMessage(origin.error)}
+          actionTitle="Назад"
+          onAction={() => router.back()}
+        />
+      );
+    }
+    return (
+      <Editor
+        key={`from-${origin.data.id}`}
+        session={null}
+        initial={toCookingDraft(copyOfSession(origin.data))}
+        products={products.data}
+        recipes={recipes.data}
       />
     );
   }
@@ -165,5 +238,6 @@ export default function CookingEditScreen() {
 }
 
 const styles = StyleSheet.create({
+  actions: { flexDirection: 'row', alignItems: 'center' },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
 });

@@ -13,6 +13,8 @@ import { productsById } from '@/lib/recipes';
 import { colors, spacing } from '@/theme';
 
 const onRowPress = (v: CookingView) => router.push({ pathname: '/cooking/[id]', params: { id: v.session.id } });
+const onRepeat = (v: CookingView) =>
+  router.push({ pathname: '/cooking/[id]', params: { id: 'new', from: v.session.id } });
 const keyExtractor = (row: CookingListRow) => (row.kind === 'day' ? `day-${row.date}` : row.view.session.id);
 const Separator = () => <View style={styles.separator} />;
 
@@ -37,7 +39,7 @@ export default function CookingScreen() {
       item.kind === 'day' ? (
         <Text variant="h3" style={styles.day}>{formatDayTitle(item.date, today)}</Text>
       ) : (
-        <CookingRow view={item.view} onPress={onRowPress} />
+        <CookingRow view={item.view} onPress={onRowPress} onRepeat={onRepeat} />
       ),
     [today],
   );

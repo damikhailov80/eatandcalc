@@ -59,7 +59,7 @@ Steps (each one ends with a test on the phones, then commit):
 3. [x] Hide & favorites: hide / restore catalog recipes, ♥ (list and editor, optimistic); filters Избранное / Скрытые; reset / restore buttons in Изменённые / Скрытые.
 4. [x] Join / leave: merge with conflict picker, copy on leave.
 
-Not done on purpose: "copy a recipe" (a new own recipe based on another; not needed). "Cook today" from a recipe card arrives with Stage 5 (cooking sessions).
+Not done on purpose: "copy a recipe" (a new own recipe based on another; not needed). "Приготовить" (new cooking from the recipe) is in the recipe editor (Stage 5).
 
 ## Stage 5 plan: cooking
 
@@ -73,7 +73,7 @@ Decisions:
 
 Steps (each one ends with a test on the phones, then commit):
 1. [x] Model + list + editor: migration `cooking_session`, shared schemas and `cookingTotals`, `/api/cooking` CRUD, Cooking tab (by day, search), new cooking from a recipe or blank, editor (name, date, rows, ×N, comparison, weights, totals).
-2. [ ] Delete, "Приготовить снова" (copy dated today), new cooking as a copy of a session, "Приготовить" from a recipe.
+2. [x] Delete, "Приготовить снова" (copy dated today), new cooking as a copy of a session, "Приготовить" from a recipe.
 3. [ ] Join / leave: move on join, copy on leave.
 
 ## Open questions
