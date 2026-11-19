@@ -1,4 +1,6 @@
+import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
+import * as Updates from 'expo-updates';
 import { useSyncExternalStore } from 'react';
 
 /**
@@ -110,6 +112,14 @@ let installed = false;
 export function installDiagnosticsCapture() {
   if (installed || !DEV_LOG_ENABLED) return;
   installed = true;
+
+  // First line of every launch: proves the app (and which bundle) started.
+  diag(
+    'app',
+    `запуск ${Constants.expoConfig?.version ?? '?'}, ${__DEV__ ? 'dev' : 'release'}, ${
+      Updates.isEmbeddedLaunch ? 'встроенный bundle' : `OTA ${Updates.updateId ?? '?'}`
+    }`,
+  );
 
   console.warn = (...args: unknown[]) => {
     rawConsole.warn(...args);

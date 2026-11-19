@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, usePathname } from 'expo-router';
 import { useState } from 'react';
-import { Animated, PanResponder, StyleSheet, View } from 'react-native';
+import { Animated, PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui';
@@ -19,16 +19,14 @@ export function DevLogButton() {
   const diagnostics = useDiagnostics();
   const insets = useSafeAreaInsets();
   const [offset] = useState(() => new Animated.ValueXY());
-  // Drag moves the button; a release without movement is a tap.
+  // Taps go to the Pressable; the pan responder takes over only once the finger actually moves.
   const [responder] = useState(() =>
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderRelease: (_e, g) => {
-        offset.flattenOffset();
-        if (Math.abs(g.dx) + Math.abs(g.dy) <= 6) router.push('/diagnostics');
-      },
+      onMoveShouldSetPanResponderCapture: (_e, g) => Math.abs(g.dx) + Math.abs(g.dy) > 8,
       onPanResponderGrant: () => offset.extractOffset(),
       onPanResponderMove: Animated.event([null, { dx: offset.x, dy: offset.y }], { useNativeDriver: false }),
+      onPanResponderRelease: () => offset.flattenOffset(),
+      onPanResponderTerminate: () => offset.flattenOffset(),
     }),
   );
 
@@ -38,15 +36,17 @@ export function DevLogButton() {
   return (
     <Animated.View
       {...responder.panHandlers}
-      accessibilityRole="button"
-      accessibilityLabel="Журнал"
-      style={[
-        styles.button,
-        { top: insets.top + 120, transform: offset.getTranslateTransform() },
-      ]}>
-      <MaterialCommunityIcons name="bug-outline" size={22} color={colors.onPrimary} />
+      style={[styles.wrap, { top: insets.top + 120, transform: offset.getTranslateTransform() }]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Журнал"
+        hitSlop={8}
+        onPress={() => router.push('/diagnostics')}
+        style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
+        <MaterialCommunityIcons name="bug-outline" size={22} color={colors.onPrimary} />
+      </Pressable>
       {problems > 0 ? (
-        <View style={styles.badge}>
+        <View style={styles.badge} pointerEvents="none">
           <Text style={styles.badgeText}>{problems > 99 ? '99+' : problems}</Text>
         </View>
       ) : null}
@@ -55,9 +55,9 @@ export function DevLogButton() {
 }
 
 const styles = StyleSheet.create({
+  // Above native-stack screens on Android (they draw with elevation).
+  wrap: { position: 'absolute', right: 8, zIndex: 1000, elevation: 1000 },
   button: {
-    position: 'absolute',
-    right: 8,
     width: SIZE,
     height: SIZE,
     borderRadius: SIZE / 2,
@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pressed: { opacity: 1 },
   badge: {
     position: 'absolute',
     top: -4,
