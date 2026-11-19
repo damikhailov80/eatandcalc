@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { StyleSheet, View, type ColorValue } from 'react-native';
 
+import { useHouseholdSync } from '@/lib/sync';
 import { colors, fonts, radii } from '@/theme';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -23,6 +24,7 @@ const tab = (title: string, icon: IconName) => ({
 });
 
 export default function TabsLayout() {
+  useHouseholdSync();
   return (
     <Tabs
       screenOptions={{

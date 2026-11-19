@@ -31,6 +31,13 @@ export const MeResponseSchema = z.object({
 });
 export type MeResponse = z.infer<typeof MeResponseSchema>;
 
+/** `GET /api/sync`: changes whenever anyone writes to the household (or the account moves to another one). */
+export const SyncResponseSchema = z.object({
+  householdId: z.string(),
+  revision: z.number().int(),
+});
+export type SyncResponse = z.infer<typeof SyncResponseSchema>;
+
 // ---------- Invites ----------
 
 /** Invite codes: 8 characters from an alphabet without look-alikes (0/O, 1/I/L). */

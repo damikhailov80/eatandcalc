@@ -3,6 +3,7 @@ import { NOT_ALLOWED_ERROR, type HouseholdRole } from '@eatandcalc/shared';
 
 import { getAuth } from './auth';
 import { isAllowedEmail } from './env';
+import { bumpRevision } from './household';
 import { HttpError } from './http';
 import { authLog, requestId } from './log';
 
@@ -48,13 +49,21 @@ export async function requireUser(request: Request): Promise<RequestUser> {
   };
 }
 
-/** Wraps a route handler: maps HttpError to a JSON error response. */
+const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * Wraps a route handler: maps HttpError to a JSON error response.
+ * A successful write bumps the household revision, so other devices refetch (`/api/sync`).
+ */
 export function withUser<Ctx>(
   handler: (request: Request, me: RequestUser, ctx: Ctx) => Promise<Response>,
 ) {
   return async (request: Request, ctx: Ctx) => {
     try {
-      return await handler(request, await requireUser(request), ctx);
+      const me = await requireUser(request);
+      const response = await handler(request, me, ctx);
+      if (response.ok && !READ_METHODS.has(request.method)) await bumpRevision(me.householdId);
+      return response;
     } catch (e) {
       if (e instanceof HttpError) return Response.json({ error: e.message }, { status: e.status });
       console.error(`[api] ${request.method} ${new URL(request.url).pathname} failed`, e);

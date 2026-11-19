@@ -5,10 +5,12 @@ import {
   MeResponseSchema,
   NOT_ALLOWED_ERROR,
   OkResponseSchema,
+  SyncResponseSchema,
   type FamilyMemberDto,
   type FamilyMemberInput,
   type Invite,
   type MeResponse,
+  type SyncResponse,
 } from '@eatandcalc/shared';
 import type { z } from 'zod';
 
@@ -84,6 +86,7 @@ export const inviteUrl = (code: string) => `${WEB_URL}/invite/${code}`;
 
 export const api = {
   me: (): Promise<MeResponse> => apiRequest('/api/me', MeResponseSchema),
+  sync: (): Promise<SyncResponse> => apiRequest('/api/sync', SyncResponseSchema),
 
   invite: async (): Promise<Invite | null> =>
     (await apiRequest('/api/household/invite', InviteResponseSchema)).invite,

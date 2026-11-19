@@ -9,7 +9,7 @@ import { MemberCard } from '@/components/family/MemberCard';
 import { Button, Screen, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { signOut } from '@/lib/auth';
-import { queryClient, queryKeys } from '@/lib/query';
+import { queryClient, queryKeys, refreshAll } from '@/lib/query';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 export default function FamilyScreen() {
@@ -51,7 +51,7 @@ export default function FamilyScreen() {
     : 'Добавьте, чьё питание считаем';
 
   return (
-    <Screen title="Семья" subtitle={subtitle} subtitleBelow>
+    <Screen title="Семья" subtitle={subtitle} subtitleBelow onRefresh={refreshAll}>
       {members.data.map((m) => (
         <MemberCard
           key={m.id}

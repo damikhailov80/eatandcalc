@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { KeyboardAvoidingView, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, fonts, spacing } from '@/theme';
@@ -17,11 +17,23 @@ export type ScreenProps = {
   onBack?: () => void;
   /** Pinned under the scroll view (`StickyFooter`). */
   footer?: ReactNode;
+  /** Enables pull-to-refresh (data tabs: `refreshAll`); not for editors, a refresh could clobber the form. */
+  onRefresh?: () => Promise<unknown>;
   children?: ReactNode;
 };
 
 /** Page shell: warm background, safe area (top only — the tab bar or footer handles the bottom), scrollable body. */
-export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer, children }: ScreenProps) {
+export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer, onRefresh, children }: ScreenProps) {
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await onRefresh?.();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const sub = subtitle ? (
     <Text variant={subtitleBelow ? 'caption' : 'label'} color={colors.textMuted}>
       {subtitle}
@@ -38,7 +50,19 @@ export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer
             {actions}
           </View>
         ) : null}
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={refresh}
+                colors={[colors.primary]}
+                progressBackgroundColor={colors.surface}
+              />
+            ) : undefined
+          }>
           {title && !onBack ? (
             <View style={styles.header}>
               <View style={styles.headerText}>

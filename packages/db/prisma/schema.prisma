@@ -81,6 +81,8 @@ model Verification {
 model Household {
   id        String          @id @default(cuid())
   name      String
+  /// Bumped on every write to the household's data; clients poll it to know when to refetch.
+  revision  Int               @default(0)
   createdAt DateTime          @default(now()) @map("created_at")
   users     HouseholdUser[]
   invites   HouseholdInvite[]

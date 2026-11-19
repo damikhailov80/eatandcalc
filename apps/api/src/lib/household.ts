@@ -39,6 +39,14 @@ async function moveToFreshHousehold(tx: Tx, userId: string) {
   return createOwnHousehold(tx, userId);
 }
 
+/**
+ * Marks the household's data as changed so other devices refetch (see `/api/sync`).
+ * `updateMany`: a no-op when the household is already gone (deleted on join).
+ */
+export async function bumpRevision(householdId: string, tx: Tx | typeof prisma = prisma) {
+  await tx.household.updateMany({ where: { id: householdId }, data: { revision: { increment: 1 } } });
+}
+
 export function requireOwner(me: RequestUser) {
   if (me.role !== 'owner') throw new HttpError(409, ApiErrors.ownerOnly);
 }
@@ -120,6 +128,8 @@ export async function joinHousehold(me: RequestUser, code: string) {
       data: { householdId: invite.householdId, role: 'member' satisfies HouseholdRole },
     });
     await tx.household.delete({ where: { id: me.householdId } });
+    // The owner's devices must see the new account.
+    await bumpRevision(invite.householdId, tx);
   });
 }
 
