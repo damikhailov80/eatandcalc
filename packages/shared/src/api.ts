@@ -66,8 +66,12 @@ export type Invite = z.infer<typeof InviteSchema>;
 export const InviteResponseSchema = z.object({ invite: InviteSchema.nullable() });
 export type InviteResponse = z.infer<typeof InviteResponseSchema>;
 
+const InviteCodeSchema = z.string().transform(normalizeInviteCode).pipe(z.string().length(INVITE_CODE_LENGTH));
+
 export const JoinRequestSchema = z.object({
-  code: z.string().transform(normalizeInviteCode).pipe(z.string().length(INVITE_CODE_LENGTH)),
+  code: InviteCodeSchema,
+  /** Products edited on both sides where the family's version stays (otherwise the joiner's wins). */
+  keepFamily: z.array(z.string()).max(2000).default([]),
 });
 export type JoinRequest = z.input<typeof JoinRequestSchema>;
 
@@ -135,6 +139,14 @@ export const ProductSchema = ProductDataSchema.extend({
   original: ProductDataSchema.nullable(),
 });
 export type ProductDto = z.infer<typeof ProductSchema>;
+
+/** A catalog product the joiner's household and the family both edited, differently. */
+export const JoinConflictSchema = z.object({ id: z.string(), mine: ProductDataSchema, family: ProductDataSchema });
+export type JoinConflict = z.infer<typeof JoinConflictSchema>;
+
+/** `GET /api/household/join/preview?code=`: what joining would need decided. */
+export const JoinPreviewResponseSchema = z.object({ conflicts: z.array(JoinConflictSchema) });
+export const JoinPreviewQuerySchema = z.object({ code: InviteCodeSchema });
 
 export const ProductsResponseSchema = z.object({ products: z.array(ProductSchema) });
 export const ProductResponseSchema = z.object({ product: ProductSchema });

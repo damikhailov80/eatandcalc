@@ -1,12 +1,4 @@
-import {
-  formatInt,
-  formatNumberInput,
-  formatOne,
-  UNIT_KEYS,
-  unitShort,
-  type ProductData,
-  type ProductDto,
-} from '@eatandcalc/shared';
+import type { ProductData, ProductDto } from '@eatandcalc/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -14,7 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { familyErrorMessage } from '@/components/family/errors';
-import { blankDraft, fromDraft, ProductForm, toDraft, type ProductDraft } from '@/components/products/ProductForm';
+import { blankDraft, fromDraft, ProductForm, productSummary, toDraft, type ProductDraft } from '@/components/products/ProductForm';
 import { Button, Card, IconButton, Screen, StateMessage, StickyFooter, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useProductFlags } from '@/lib/products';
@@ -29,20 +21,6 @@ const productData = (p: ProductDto): ProductData => ({
   nutrients: p.nutrients,
   units: p.units,
 });
-
-/** "398 ккал · Б 0,0 · Ж 0,0 · У 99,7 · ст. л. 25 г, ч. л. 8 г". */
-function summary(d: ProductData) {
-  const n = d.nutrients;
-  const units = UNIT_KEYS.filter((k) => d.units[k] != null)
-    .map((k) => `${unitShort[k]} ${formatNumberInput(d.units[k]!, k === 'ml' ? 3 : 1)} г`)
-    .join(', ');
-  return [
-    `${formatInt(n.kcal)} ккал · Б ${formatOne(n.protein)} · Ж ${formatOne(n.fat)} · У ${formatOne(n.carbs)}`,
-    units,
-  ]
-    .filter(Boolean)
-    .join('\n');
-}
 
 function Editor({ product, initial }: { product: ProductDto | null; initial: ProductDraft }) {
   const [value, setValue] = useState(initial);
@@ -148,7 +126,7 @@ function Editor({ product, initial }: { product: ProductDto | null; initial: Pro
       }>
       {showOriginal && product?.original ? (
         <Card style={styles.info}>
-          <Text variant="caption">{summary(product.original)}</Text>
+          <Text variant="caption">{productSummary(product.original)}</Text>
           <Button title="Вернуть стандартные" variant="soft" disabled={busy} onPress={confirmReset} />
         </Card>
       ) : null}

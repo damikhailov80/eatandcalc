@@ -34,13 +34,14 @@ Decisions:
 - Per **account** (`product_favorite`): favorites (♥).
 - Filters: Свои (= избранное + добавленные, the quick list), Все, Избранное, Добавленные, Изменённые (reset), Скрытые (restore); category chips; instant name search on the client (case- and ё-insensitive).
 - Release note: production needs `npm run db:seed` (catalog upsert) after migrations; wire it into the `migrate` workflow at the release stage.
-- Joining a family: the joiner's own products move over, hidden sets are merged, overrides are copied; when both families edited the same catalog product the joiner picks whose version stays. Favorites stay with the account.
+- Joining a family: the joiner's own products move over, hidden sets are merged, overrides are added; when both edited the same catalog product differently the joiner picks whose version stays (their own by default). Favorites stay with the account.
+- Leaving a family (or being removed): the family keeps everything; the account's new household gets a copy of own products (new ids, its ♥ follow the copies), overrides and hiding.
 
 Steps (each one ends with a test on the phones, then commit):
 1. [x] Catalog + read-only list: migration, shared types / nutrition / schemas, catalog seed, `GET /api/products`, Products tab with search, categories, filters Свои / Все.
 2. [x] Edit & add: product editor (KBJU, energy check, units), create own product, override catalog product, reset; filters Добавленные / Изменённые.
 3. [x] Hide & favorites: hide / restore catalog products, delete own ones, ♥, filters Скрытые / Избранное, Свои as the default list.
-4. [ ] Join merge: conflict preview and picker in the join flow, merge in the join transaction.
+4. [x] Join merge: conflict preview and picker in the join flow, merge in the join transaction; copy on leave / removal.
 
 ## Open questions
 

@@ -4,11 +4,13 @@ import {
   INVITE_ALPHABET,
   INVITE_CODE_LENGTH,
   MeResponseSchema,
+  type JoinConflict,
   type MeResponse,
 } from '@eatandcalc/shared';
 import { randomInt } from 'node:crypto';
 
 import { HttpError } from './http';
+import { copyProductsOnLeave, joinConflicts, mergeProductsOnJoin } from './products';
 import type { RequestUser } from './session';
 
 const DEFAULT_HOUSEHOLD_NAME = 'Семья';
@@ -32,10 +34,15 @@ export async function ensureHouseholdMembership(userId: string) {
   return prisma.$transaction((tx) => createOwnHousehold(tx, userId));
 }
 
-/** Moves an account out of its household into a new own one (leave / removed by the owner). */
+/**
+ * Moves an account out of its household into a new own one (leave / removed by the owner).
+ * The family keeps its data; the account takes a copy of the products along.
+ */
 async function moveToFreshHousehold(tx: Tx, userId: string) {
-  await tx.householdUser.delete({ where: { userId } });
-  return createOwnHousehold(tx, userId);
+  const { householdId: fromId } = await tx.householdUser.delete({ where: { userId } });
+  const toId = await createOwnHousehold(tx, userId);
+  await copyProductsOnLeave(tx, fromId, toId, userId);
+  return toId;
 }
 
 /**
@@ -103,28 +110,40 @@ export async function revokeInvites(householdId: string) {
   await prisma.householdInvite.deleteMany({ where: { householdId } });
 }
 
+/** The household an invite leads to, if the account may join it (alone in its current household). */
+async function joinTarget(tx: Tx, me: RequestUser, code: string) {
+  const invite = await tx.householdInvite.findUnique({ where: { code } });
+  if (!invite) throw new HttpError(404, ApiErrors.inviteInvalid);
+  if (invite.householdId === me.householdId) throw new HttpError(409, ApiErrors.alreadyMember);
+
+  const others = await tx.householdUser.count({
+    where: { householdId: me.householdId, userId: { not: me.user.id } },
+  });
+  if (others > 0) throw new HttpError(409, ApiErrors.householdNotEmpty);
+  return invite.householdId;
+}
+
+/** Products edited differently on both sides: the joiner picks whose version stays. */
+export async function previewJoin(me: RequestUser, code: string): Promise<JoinConflict[]> {
+  return prisma.$transaction(async (tx) => joinConflicts(tx, me.householdId, await joinTarget(tx, me, code)));
+}
+
 /**
- * Joins the household of an invite. Allowed only when the account is alone in its current household;
- * that household (with its family profiles) is deleted, since nobody else uses it.
+ * Joins the household of an invite. Allowed only when the account is alone in its current household.
+ * Its products move into the family (`mergeProductsOnJoin`); the old household (with its family profiles)
+ * is deleted, since nobody else uses it.
  */
-export async function joinHousehold(me: RequestUser, code: string) {
+export async function joinHousehold(me: RequestUser, code: string, keepFamily: readonly string[] = []) {
   await prisma.$transaction(async (tx) => {
-    const invite = await tx.householdInvite.findUnique({ where: { code } });
-    if (!invite) throw new HttpError(404, ApiErrors.inviteInvalid);
-    if (invite.householdId === me.householdId) throw new HttpError(409, ApiErrors.alreadyMember);
-
-    const others = await tx.householdUser.count({
-      where: { householdId: me.householdId, userId: { not: me.user.id } },
-    });
-    if (others > 0) throw new HttpError(409, ApiErrors.householdNotEmpty);
-
+    const targetId = await joinTarget(tx, me, code);
+    await mergeProductsOnJoin(tx, me.householdId, targetId, keepFamily);
     await tx.householdUser.update({
       where: { userId: me.user.id },
-      data: { householdId: invite.householdId, role: 'member' satisfies HouseholdRole },
+      data: { householdId: targetId, role: 'member' satisfies HouseholdRole },
     });
     await tx.household.delete({ where: { id: me.householdId } });
     // The owner's devices must see the new account.
-    await bumpRevision(invite.householdId, tx);
+    await bumpRevision(targetId, tx);
   });
 }
 

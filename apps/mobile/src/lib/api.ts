@@ -2,6 +2,7 @@ import {
   FamilyMemberResponseSchema,
   FamilyMembersResponseSchema,
   InviteResponseSchema,
+  JoinPreviewResponseSchema,
   MeResponseSchema,
   NOT_ALLOWED_ERROR,
   OkResponseSchema,
@@ -11,6 +12,7 @@ import {
   type FamilyMemberDto,
   type FamilyMemberInput,
   type Invite,
+  type JoinConflict,
   type MeResponse,
   type ProductData,
   type ProductDto,
@@ -99,8 +101,11 @@ export const api = {
   revokeInvite: async (): Promise<void> => {
     await apiRequest('/api/household/invite', InviteResponseSchema, { method: 'DELETE' });
   },
-  join: (code: string): Promise<MeResponse> =>
-    apiRequest('/api/household/join', MeResponseSchema, { method: 'POST', json: { code } }),
+  joinPreview: async (code: string): Promise<JoinConflict[]> =>
+    (await apiRequest(`/api/household/join/preview?code=${encodeURIComponent(code)}`, JoinPreviewResponseSchema))
+      .conflicts,
+  join: (code: string, keepFamily: string[] = []): Promise<MeResponse> =>
+    apiRequest('/api/household/join', MeResponseSchema, { method: 'POST', json: { code, keepFamily } }),
   leave: (): Promise<MeResponse> =>
     apiRequest('/api/household/leave', MeResponseSchema, { method: 'POST' }),
   removeAccount: (userId: string): Promise<MeResponse> =>

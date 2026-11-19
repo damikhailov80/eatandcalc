@@ -7,8 +7,10 @@ import {
   ProductUnitsSchema,
   UNIT_KEYS,
   type ProductData,
+  type JoinConflict,
   type ProductDto,
 } from '@eatandcalc/shared';
+import { randomUUID } from 'node:crypto';
 
 import { HttpError } from './http';
 import type { RequestUser } from './session';
@@ -175,4 +177,92 @@ async function writeState(
     });
     if (!state.override && !state.hiddenAt) await tx.householdProduct.delete({ where: key });
   });
+}
+
+// ---------- Joining / leaving a family ----------
+
+type Tx = Prisma.TransactionClient;
+
+type OverrideState = { productId: string; override: ProductData };
+
+async function overridesOf(tx: Tx, householdId: string): Promise<OverrideState[]> {
+  const states = await tx.householdProduct.findMany({ where: { householdId, override: { not: Prisma.DbNull } } });
+  return states.flatMap((s) => {
+    const override = overrideData(s);
+    return override ? [{ productId: s.productId, override }] : [];
+  });
+}
+
+/** Catalog products edited both by the joiner's household (`mine`) and the family, with different values. */
+export async function joinConflicts(tx: Tx, fromId: string, toId: string): Promise<JoinConflict[]> {
+  const [mine, family] = await Promise.all([overridesOf(tx, fromId), overridesOf(tx, toId)]);
+  const familyById = new Map(family.map((s) => [s.productId, s.override]));
+  return mine
+    .flatMap(({ productId, override }) => {
+      const theirs = familyById.get(productId);
+      return theirs && !sameData(override, theirs) ? [{ id: productId, mine: override, family: theirs }] : [];
+    })
+    .sort((a, b) => compareNames(a.mine, b.mine));
+}
+
+/**
+ * Brings the joiner's products into the family (before the old household is deleted): own products move
+ * (ids and favorites survive), hiding is united, edits are added; where both edited a product differently
+ * the joiner's version wins unless its id is in `keepFamily`.
+ */
+export async function mergeProductsOnJoin(tx: Tx, fromId: string, toId: string, keepFamily: readonly string[]) {
+  await tx.product.updateMany({ where: { householdId: fromId }, data: { householdId: toId } });
+  const keep = new Set(keepFamily);
+  const [mine, family] = await Promise.all([
+    tx.householdProduct.findMany({ where: { householdId: fromId } }),
+    tx.householdProduct.findMany({ where: { householdId: toId } }),
+  ]);
+  const familyById = new Map(family.map((s) => [s.productId, s]));
+  for (const s of mine) {
+    const theirs = familyById.get(s.productId);
+    const myOverride = overrideData(s);
+    const familyOverride = overrideData(theirs);
+    const override = myOverride && !(familyOverride && keep.has(s.productId)) ? myOverride : familyOverride;
+    const data = {
+      override: override ? canonical(override) : Prisma.DbNull,
+      hiddenAt: theirs?.hiddenAt ?? s.hiddenAt,
+    };
+    await tx.householdProduct.upsert({
+      where: { householdId_productId: { householdId: toId, productId: s.productId } },
+      create: { householdId: toId, productId: s.productId, ...data },
+      update: data,
+    });
+  }
+}
+
+/**
+ * An account leaves (or is removed): the family keeps everything, the account's new household gets a copy —
+ * own products (new ids, the account's ♥ move to the copies), edits and hiding.
+ */
+export async function copyProductsOnLeave(tx: Tx, fromId: string, toId: string, userId: string) {
+  const own = await tx.product.findMany({ where: { householdId: fromId } });
+  const newId = new Map(own.map((p) => [p.id, randomUUID()]));
+  if (own.length) {
+    await tx.product.createMany({
+      data: own.map((p) => ({ ...rowFields(rowData(p)), id: newId.get(p.id)!, householdId: toId })),
+    });
+  }
+  const states = await tx.householdProduct.findMany({ where: { householdId: fromId } });
+  if (states.length) {
+    await tx.householdProduct.createMany({
+      data: states.map((s) => ({
+        householdId: toId,
+        productId: newId.get(s.productId) ?? s.productId,
+        override: s.override ?? Prisma.DbNull,
+        hiddenAt: s.hiddenAt,
+      })),
+    });
+  }
+  const favorites = await tx.productFavorite.findMany({ where: { userId, productId: { in: [...newId.keys()] } } });
+  if (favorites.length) {
+    await tx.productFavorite.createMany({
+      data: favorites.map((f) => ({ userId, productId: newId.get(f.productId)!, createdAt: f.createdAt })),
+    });
+    await tx.productFavorite.deleteMany({ where: { userId, productId: { in: favorites.map((f) => f.productId) } } });
+  }
 }

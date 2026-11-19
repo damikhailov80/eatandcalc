@@ -141,7 +141,7 @@ export function AccountsCard({ me }: { me: MeResponse }) {
   const confirmRemove = (account: Account) =>
     Alert.alert(
       `Удалить ${account.name} из семьи?`,
-      'Аккаунт потеряет доступ к данным семьи. Вернуться можно по новому приглашению.',
+      'Копия продуктов останется у аккаунта. Вернуться можно по новому приглашению.',
       [
         { text: 'Отмена', style: 'cancel' },
         { text: 'Удалить', style: 'destructive', onPress: () => remove.mutate(account.id) },
@@ -149,7 +149,7 @@ export function AccountsCard({ me }: { me: MeResponse }) {
     );
 
   const confirmLeave = () =>
-    Alert.alert('Выйти из семьи?', 'Вы потеряете доступ к данным этой семьи и начнёте с пустой.', [
+    Alert.alert('Выйти из семьи?', 'Данные останутся в семье, копия продуктов будет у вас.', [
       { text: 'Отмена', style: 'cancel' },
       { text: 'Выйти', style: 'destructive', onPress: doLeave },
     ]);

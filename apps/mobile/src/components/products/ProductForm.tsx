@@ -10,6 +10,7 @@ import {
   ProductDataSchema,
   UNIT_KEYS,
   unitLong,
+  unitShort,
   type ExtraUnit,
   type Nutrients,
   type ProductCategory,
@@ -53,6 +54,20 @@ export function toDraft(d: ProductData): ProductDraft {
     },
     units,
   };
+}
+
+/** "398 ккал · Б 0,0 · Ж 0,0 · У 99,7\nст. л. 25 г, ч. л. 8 г". */
+export function productSummary(d: ProductData) {
+  const n = d.nutrients;
+  const units = UNIT_KEYS.filter((k) => d.units[k] != null)
+    .map((k) => `${unitShort[k]} ${formatNumberInput(d.units[k]!, k === 'ml' ? 3 : 1)} г`)
+    .join(', ');
+  return [
+    `${formatInt(n.kcal)} ккал · Б ${formatOne(n.protein)} · Ж ${formatOne(n.fat)} · У ${formatOne(n.carbs)}`,
+    units,
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 export const blankDraft = (name = ''): ProductDraft => ({

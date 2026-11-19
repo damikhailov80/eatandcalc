@@ -1,4 +1,10 @@
-import { formatInviteCode, INVITE_CODE_LENGTH, normalizeInviteCode, type MeResponse } from '@eatandcalc/shared';
+import {
+  formatInviteCode,
+  INVITE_CODE_LENGTH,
+  normalizeInviteCode,
+  type JoinConflict,
+  type MeResponse,
+} from '@eatandcalc/shared';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -12,6 +18,7 @@ import { queryClient, queryKeys, resetHouseholdData } from '@/lib/query';
 import { colors, radii, spacing } from '@/theme';
 import { familyErrorMessage } from './errors';
 import { InviteScanner } from './InviteScanner';
+import { JoinConflicts } from './JoinConflicts';
 
 const goHome = () => router.replace('/family');
 const back = () => (router.canGoBack() ? router.back() : goHome());
@@ -44,18 +51,44 @@ function SignInStep() {
 function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean }) {
   const [code, setCode] = useState(formatInviteCode(normalizeInviteCode(initialCode)));
   const [scanning, setScanning] = useState(scan);
+  // Products edited differently on both sides (from the preview); null = not checked yet.
+  const [conflicts, setConflicts] = useState<JoinConflict[] | null>(null);
+  const [keepFamily, setKeepFamily] = useState<string[]>([]);
   const me = useQuery({ queryKey: queryKeys.me, queryFn: api.me });
   const join = useMutation({
-    mutationFn: () => api.join(normalizeInviteCode(code)),
+    mutationFn: (keep: string[]) => api.join(normalizeInviteCode(code), keep),
     onSuccess: (data: MeResponse) => {
       queryClient.setQueryData(queryKeys.me, data);
       resetHouseholdData();
       goHome();
     },
   });
+  const preview = useMutation({
+    mutationFn: () => api.joinPreview(normalizeInviteCode(code)),
+    onSuccess: (found) => (found.length ? setConflicts(found) : join.mutate([])),
+  });
+  const pending = preview.isPending || join.isPending;
+  const error = preview.error ?? join.error;
 
   const valid = normalizeInviteCode(code).length === INVITE_CODE_LENGTH;
   const othersInFamily = (me.data?.accounts.length ?? 1) > 1;
+
+  if (conflicts) {
+    return (
+      <>
+        <JoinConflicts conflicts={conflicts} keepFamily={keepFamily} onChange={setKeepFamily} />
+        {join.isError ? (
+          <Text variant="bodyStrong" color={colors.over}>{familyErrorMessage(join.error)}</Text>
+        ) : null}
+        <Button
+          title={join.isPending ? 'Присоединяемся…' : 'Присоединиться к семье'}
+          large
+          disabled={join.isPending}
+          onPress={() => join.mutate(keepFamily)}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -86,19 +119,17 @@ function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean })
         <Text variant="caption" style={styles.flex} color={othersInFamily ? colors.over : colors.warn}>
           {othersInFamily
             ? 'В вашей текущей семье есть другие аккаунты. Сначала выйдите из неё или удалите их.'
-            : 'Профили и данные вашей текущей семьи будут удалены — вы будете видеть данные новой семьи.'}
+            : 'Профили вашей текущей семьи будут удалены, продукты и правки перейдут в новую семью.'}
         </Text>
       </View>
 
-      {join.isError ? (
-        <Text variant="bodyStrong" color={colors.over}>{familyErrorMessage(join.error)}</Text>
-      ) : null}
+      {error ? <Text variant="bodyStrong" color={colors.over}>{familyErrorMessage(error)}</Text> : null}
 
       <Button
-        title={join.isPending ? 'Присоединяемся…' : 'Присоединиться к семье'}
+        title={pending ? 'Присоединяемся…' : 'Присоединиться к семье'}
         large
-        disabled={!valid || join.isPending || othersInFamily}
-        onPress={() => join.mutate()}
+        disabled={!valid || pending || othersInFamily}
+        onPress={() => preview.mutate()}
       />
 
       <InviteScanner
@@ -107,6 +138,7 @@ function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean })
         onCode={(scanned) => {
           setCode(formatInviteCode(scanned));
           setScanning(false);
+          preview.reset();
           join.reset();
         }}
       />
