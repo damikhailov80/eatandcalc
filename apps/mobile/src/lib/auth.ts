@@ -27,7 +27,7 @@ const FAILED = 'Не удалось войти. Проверьте интерн�
 
 /** Friendly text plus a short technical detail line, so the cause is visible on the phone. */
 function failure(detail: string): SignInResult {
-  diag('sign-in', `ошибка: ${detail}`);
+  diag('sign-in', `ошибка: ${detail}`, 'error');
   return { ok: false, message: `${FAILED}\n(${detail})` };
 }
 
@@ -46,7 +46,7 @@ export async function signInWithGoogle(): Promise<SignInResult> {
     const response = await GoogleSignin.signIn();
     if (!isSuccessResponse(response)) {
       // Also what a misconfigured client or a non-test Google user can look like on some devices.
-      diag('sign-in', `Google: ${response.type} (окно выбора закрыто без аккаунта)`);
+      diag('sign-in', `Google: ${response.type} (окно выбора закрыто без аккаунта)`, 'warn');
       return { ok: false, message: null };
     }
     idToken = response.data.idToken;
@@ -55,14 +55,14 @@ export async function signInWithGoogle(): Promise<SignInResult> {
     return failure(isErrorWithCode(e) ? `Google: ${e.code} ${e.message}` : `Google: ${describe(e)}`);
   }
   if (!idToken) {
-    diag('sign-in', 'Google не вернул idToken');
+    diag('sign-in', 'Google не вернул idToken', 'error');
     return { ok: false, message: 'Google не вернул токен. Попробуйте ещё раз.' };
   }
 
   try {
     const { data, error } = await authClient.signIn.social({ provider: 'google', idToken: { token: idToken } });
     if (error) {
-      diag('sign-in', `API /sign-in/social: ${error.status} ${error.code ?? ''} ${error.message ?? ''}`.trim());
+      diag('sign-in', `API /sign-in/social: ${error.status} ${error.code ?? ''} ${error.message ?? ''}`.trim(), 'error');
       // Let the user pick another account next time.
       await GoogleSignin.signOut();
       if (error.message === NOT_ALLOWED_ERROR || error.status === 403) {

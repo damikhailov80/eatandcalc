@@ -52,14 +52,14 @@ export async function apiRequest<S extends z.ZodType>(
       },
     });
   } catch (e) {
-    diag('api', `${method} ${path}: сеть: ${e instanceof Error ? e.message : String(e)}`);
+    diag('api', `${method} ${path}: сеть: ${e instanceof Error ? e.message : String(e)}`, 'error');
     throw e;
   }
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
     // x-vercel-id matches the server's `"tag":"auth"` log lines in Vercel → Logs.
     const line = `${method} ${path} → ${response.status} ${body?.error ?? ''} (cookie: ${cookieNames(cookie)}, id ${response.headers.get('x-vercel-id') ?? '-'})`;
-    diag('api', line);
+    diag('api', line, response.status >= 500 ? 'error' : 'warn');
     // Session gone on the server (expired, revoked, removed from allowlist) → back to sign-in.
     // Business errors (409, 404, 400) never sign out.
     if (response.status === 401 || (response.status === 403 && body?.error === NOT_ALLOWED_ERROR)) {
@@ -70,7 +70,7 @@ export async function apiRequest<S extends z.ZodType>(
   }
   const result = schema.safeParse(await response.json().catch(() => undefined));
   if (!result.success) {
-    diag('api', `${method} ${path}: ответ не прошёл схему: ${result.error.message}`);
+    diag('api', `${method} ${path}: ответ не прошёл схему: ${result.error.message}`, 'error');
     throw result.error;
   }
   return result.data;

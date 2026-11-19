@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -57,7 +56,6 @@ export default function SignInScreen() {
         <Text variant="caption" style={styles.center}>
           Доступ только для аккаунтов семьи.
         </Text>
-        <Button title="Журнал входа" variant="ghost" onPress={() => router.push('/diagnostics')} />
       </View>
     </SafeAreaView>
   );

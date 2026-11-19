@@ -7,18 +7,20 @@ import {
 import { Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { DevLogButton } from '@/components/DevLogButton';
 import { authClient } from '@/lib/auth';
-import { diag } from '@/lib/diagnostics';
+import { diag, installDiagnosticsCapture } from '@/lib/diagnostics';
 import { queryClient } from '@/lib/query';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
+installDiagnosticsCapture();
 
 export default function RootLayout() {
   const [fontsLoaded, fontsError] = useFonts({
@@ -45,6 +47,12 @@ export default function RootLayout() {
     prevSignedIn.current = signedIn;
   }, [ready, signedIn, session?.user.email]);
 
+  // Screen changes give the log its context ("what was open when it failed").
+  const pathname = usePathname();
+  useEffect(() => {
+    if (ready) diag('nav', pathname);
+  }, [ready, pathname]);
+
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
@@ -69,6 +77,7 @@ export default function RootLayout() {
           <Stack.Screen name="join/[code]" />
           <Stack.Screen name="diagnostics" />
         </Stack>
+        <DevLogButton />
       </SafeAreaProvider>
     </QueryClientProvider>
   );
