@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { TopTabs, type MaterialTopTabBarProps } from 'expo-router/js-top-tabs';
 import type { ComponentProps } from 'react';
-import { StyleSheet, View, type ColorValue } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/ui/Text';
 import { useHouseholdSync } from '@/lib/sync';
 import { colors, fonts, radii } from '@/theme';
 
@@ -11,45 +12,82 @@ const PILL_HEIGHT = 30;
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-function TabIcon({ name, color, focused }: { name: IconName; color: ColorValue; focused: boolean }) {
+const ICONS: Record<string, IconName> = {
+  index: 'calendar-blank-outline',
+  cooking: 'pot-steam-outline',
+  recipes: 'notebook-outline',
+  products: 'food-apple-outline',
+  family: 'account-group-outline',
+};
+
+/**
+ * Bottom bar for the pager-based tabs (TopTabs placed at the bottom), styled like the
+ * previous bottom tabs: icon in a pill + label.
+ */
+function TabBar({ state, descriptors, emitter, navigateToTab, insets }: MaterialTopTabBarProps) {
   return (
-    <View style={[styles.pill, focused && styles.pillActive]}>
-      <MaterialCommunityIcons name={name} size={22} color={color as string} />
+    <View style={[styles.bar, { paddingBottom: insets.bottom }]}>
+      {state.routes.map((route, index) => {
+        const focused = index === state.index;
+        const color = focused ? colors.primaryDark : colors.textMuted;
+        const title = descriptors[route.key]?.options.title ?? route.name;
+        const onPress = () => {
+          const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!focused && !event.defaultPrevented) navigateToTab(route.key);
+        };
+        return (
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            onLongPress={() => emitter.emit({ type: 'tabLongPress', target: route.key })}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: focused }}
+            accessibilityLabel={title}
+            style={styles.tab}>
+            <View style={[styles.pill, focused && styles.pillActive]}>
+              <MaterialCommunityIcons name={ICONS[route.name] ?? 'circle-outline'} size={22} color={color} />
+            </View>
+            <Text style={[styles.label, { color }]} numberOfLines={1}>
+              {title}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
-const tab = (title: string, icon: IconName) => ({
-  title,
-  tabBarIcon: ({ color, focused }: { color: ColorValue; focused: boolean }) => (
-    <TabIcon name={icon} color={color} focused={focused} />
-  ),
-});
-
 export default function TabsLayout() {
   useHouseholdSync();
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primaryDark,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontFamily: fonts.bodySemibold, fontSize: 11 },
-        // The default icon box is 24 pt wide; the pill needs room or the icon is measured to zero width.
-        tabBarIconStyle: { width: PILL_WIDTH, height: PILL_HEIGHT },
-        sceneStyle: { backgroundColor: colors.bg },
-      }}>
-      <Tabs.Screen name="index" options={tab('День', 'calendar-blank-outline')} />
-      <Tabs.Screen name="cooking" options={tab('Готовка', 'pot-steam-outline')} />
-      <Tabs.Screen name="recipes" options={tab('Рецепты', 'notebook-outline')} />
-      <Tabs.Screen name="products" options={tab('Продукты', 'food-apple-outline')} />
-      <Tabs.Screen name="family" options={tab('Семья', 'account-group-outline')} />
-    </Tabs>
+    <TopTabs
+      tabBarPosition="bottom"
+      tabBar={(props) => <TabBar {...props} />}
+      screenOptions={{ sceneStyle: { backgroundColor: colors.bg } }}>
+      <TopTabs.Screen name="index" options={{ title: 'День' }} />
+      <TopTabs.Screen name="cooking" options={{ title: 'Готовка' }} />
+      <TopTabs.Screen name="recipes" options={{ title: 'Рецепты' }} />
+      <TopTabs.Screen name="products" options={{ title: 'Продукты' }} />
+      <TopTabs.Screen name="family" options={{ title: 'Семья' }} />
+    </TopTabs>
   );
 }
 
 const styles = StyleSheet.create({
+  bar: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  tab: {
+    flex: 1,
+    minHeight: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    gap: 2,
+  },
   pill: {
     width: PILL_WIDTH,
     height: PILL_HEIGHT,
@@ -58,4 +96,5 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   pillActive: { backgroundColor: colors.primarySoft },
+  label: { fontFamily: fonts.bodySemibold, fontSize: 11 },
 });
