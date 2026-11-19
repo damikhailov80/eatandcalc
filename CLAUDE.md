@@ -30,7 +30,7 @@ npm run dev:build       # local dev APK build + install over USB (only after nat
 npm run prod:update     # OTA (EAS Update) of JS/TS to production; optional -- "msg", default = last commit subject
 npm run prod:release    # new production APK: EAS build → Vercel Blob → landing (asks for confirmation)
 node apps/mobile/scripts/android-sha1.mjs   # one-time: SHA-1 of the dev signing key for Google Cloud
-npm run typecheck       # all workspaces (run before declaring work done)
+npm run typecheck       # all workspaces (run before declaring work done; also the husky pre-commit hook)
 npm run lint
 cd apps/mobile && npx expo-doctor
 ```
@@ -122,6 +122,7 @@ Components to build as needed: Chip, SearchField, NumberField, ProgressRing, Mac
 | `packages/db/prisma/` | `schema.prisma`, `migrations/`, `seed.ts`; config `packages/db/prisma.config.ts` |
 | `packages/shared/src/` | `domain`, `api` (zod), `nutrition`, `format`, `tokens` |
 | `docker-compose.yml` | local Postgres 17 (+ shadow DB) |
+| `.husky/pre-commit` | git hook: `npm run typecheck` |
 | `.github/workflows/` | `check` (typecheck, lint), `migrate` (prod migrations) |
 | `docs/` | guides: Google OAuth setup, builds & OTA updates, production release |
 | `design/mockups/` | Claude Design sources |

@@ -68,7 +68,7 @@ The dev build only needs rebuilding (`npm run dev:build`) after adding a native 
 
 **Inviting the second phone locally:** sign in on phone A (owner) → Семья → «Пригласить в семью» → «Поделиться ссылкой». The link is `http://<Mac LAN IP>:3000/invite/<code>` (the API), so phone B must be on the same Wi-Fi; the page opens the app at `eatandcalc://join/<code>`, or type the code in Семья → «Присоединиться по коду». The account must still be in `ALLOWED_EMAILS`. Joining deletes the joiner's own (empty) household.
 
-Checks: `npm run typecheck`, `npm run lint`, `cd apps/mobile && npx expo-doctor`.
+Checks: `npm run typecheck`, `npm run lint`, `cd apps/mobile && npx expo-doctor`. A husky `pre-commit` hook (installed by `npm install`) runs `npm run typecheck`; skip once with `git commit --no-verify`.
 
 ## Deploy (later)
 
