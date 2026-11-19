@@ -21,7 +21,6 @@
       "package": "com.eatandcalc.app"
     },
     "web": {
-      "output": "server",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
