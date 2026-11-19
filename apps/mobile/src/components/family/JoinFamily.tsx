@@ -2,7 +2,7 @@ import {
   formatInviteCode,
   INVITE_CODE_LENGTH,
   normalizeInviteCode,
-  type JoinConflict,
+  type JoinPreviewResponse,
   type MeResponse,
 } from '@eatandcalc/shared';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Screen, Text, TextField } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, type JoinKeep } from '@/lib/api';
 import { authClient, signInWithGoogle } from '@/lib/auth';
 import { queryClient, queryKeys, resetHouseholdData } from '@/lib/query';
 import { colors, radii, spacing } from '@/theme';
@@ -51,12 +51,12 @@ function SignInStep() {
 function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean }) {
   const [code, setCode] = useState(formatInviteCode(normalizeInviteCode(initialCode)));
   const [scanning, setScanning] = useState(scan);
-  // Products edited differently on both sides (from the preview); null = not checked yet.
-  const [conflicts, setConflicts] = useState<JoinConflict[] | null>(null);
-  const [keepFamily, setKeepFamily] = useState<string[]>([]);
+  // Products and recipes edited differently on both sides (from the preview); null = not checked yet.
+  const [conflicts, setConflicts] = useState<JoinPreviewResponse | null>(null);
+  const [keep, setKeep] = useState<JoinKeep>({ products: [], recipes: [] });
   const me = useQuery({ queryKey: queryKeys.me, queryFn: api.me });
   const join = useMutation({
-    mutationFn: (keep: string[]) => api.join(normalizeInviteCode(code), keep),
+    mutationFn: (k: JoinKeep) => api.join(normalizeInviteCode(code), k),
     onSuccess: (data: MeResponse) => {
       queryClient.setQueryData(queryKeys.me, data);
       resetHouseholdData();
@@ -65,7 +65,10 @@ function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean })
   });
   const preview = useMutation({
     mutationFn: () => api.joinPreview(normalizeInviteCode(code)),
-    onSuccess: (found) => (found.length ? setConflicts(found) : join.mutate([])),
+    onSuccess: (found) =>
+      found.conflicts.length || found.recipeConflicts.length
+        ? setConflicts(found)
+        : join.mutate({ products: [], recipes: [] }),
   });
   const pending = preview.isPending || join.isPending;
   const error = preview.error ?? join.error;
@@ -76,7 +79,12 @@ function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean })
   if (conflicts) {
     return (
       <>
-        <JoinConflicts conflicts={conflicts} keepFamily={keepFamily} onChange={setKeepFamily} />
+        <JoinConflicts
+          products={conflicts.conflicts}
+          recipes={conflicts.recipeConflicts}
+          keep={keep}
+          onChange={setKeep}
+        />
         {join.isError ? (
           <Text variant="bodyStrong" color={colors.over}>{familyErrorMessage(join.error)}</Text>
         ) : null}
@@ -84,7 +92,7 @@ function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean })
           title={join.isPending ? 'Присоединяемся…' : 'Присоединиться к семье'}
           large
           disabled={join.isPending}
-          onPress={() => join.mutate(keepFamily)}
+          onPress={() => join.mutate(keep)}
         />
       </>
     );

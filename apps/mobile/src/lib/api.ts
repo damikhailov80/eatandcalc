@@ -14,7 +14,7 @@ import {
   type FamilyMemberDto,
   type FamilyMemberInput,
   type Invite,
-  type JoinConflict,
+  type JoinPreviewResponse,
   type MeResponse,
   type ProductData,
   type ProductDto,
@@ -94,6 +94,9 @@ export const apiErrorCode = (e: unknown) => (e instanceof ApiRequestError ? e.me
 /** Public link to share: the landing's invite page opens the app or offers to install it. */
 export const inviteUrl = (code: string) => `${WEB_URL}/invite/${code}`;
 
+/** Ids of products / recipes edited on both sides whose family version stays on join. */
+export type JoinKeep = { products: string[]; recipes: string[] };
+
 export const api = {
   me: (): Promise<MeResponse> => apiRequest('/api/me', MeResponseSchema),
   sync: (): Promise<SyncResponse> => apiRequest('/api/sync', SyncResponseSchema),
@@ -105,11 +108,13 @@ export const api = {
   revokeInvite: async (): Promise<void> => {
     await apiRequest('/api/household/invite', InviteResponseSchema, { method: 'DELETE' });
   },
-  joinPreview: async (code: string): Promise<JoinConflict[]> =>
-    (await apiRequest(`/api/household/join/preview?code=${encodeURIComponent(code)}`, JoinPreviewResponseSchema))
-      .conflicts,
-  join: (code: string, keepFamily: string[] = []): Promise<MeResponse> =>
-    apiRequest('/api/household/join', MeResponseSchema, { method: 'POST', json: { code, keepFamily } }),
+  joinPreview: (code: string): Promise<JoinPreviewResponse> =>
+    apiRequest(`/api/household/join/preview?code=${encodeURIComponent(code)}`, JoinPreviewResponseSchema),
+  join: (code: string, keep: JoinKeep = { products: [], recipes: [] }): Promise<MeResponse> =>
+    apiRequest('/api/household/join', MeResponseSchema, {
+      method: 'POST',
+      json: { code, keepFamily: keep.products, keepFamilyRecipes: keep.recipes },
+    }),
   leave: (): Promise<MeResponse> =>
     apiRequest('/api/household/leave', MeResponseSchema, { method: 'POST' }),
   removeAccount: (userId: string): Promise<MeResponse> =>

@@ -4,13 +4,14 @@ import {
   INVITE_ALPHABET,
   INVITE_CODE_LENGTH,
   MeResponseSchema,
-  type JoinConflict,
+  type JoinPreviewResponse,
   type MeResponse,
 } from '@eatandcalc/shared';
 import { randomInt } from 'node:crypto';
 
 import { HttpError } from './http';
 import { copyProductsOnLeave, joinConflicts, mergeProductsOnJoin } from './products';
+import { copyRecipesOnLeave, joinRecipeConflicts, mergeRecipesOnJoin } from './recipes';
 import type { RequestUser } from './session';
 
 const DEFAULT_HOUSEHOLD_NAME = 'Семья';
@@ -36,12 +37,13 @@ export async function ensureHouseholdMembership(userId: string) {
 
 /**
  * Moves an account out of its household into a new own one (leave / removed by the owner).
- * The family keeps its data; the account takes a copy of the products along.
+ * The family keeps its data; the account takes a copy of the products and recipes along.
  */
 async function moveToFreshHousehold(tx: Tx, userId: string) {
   const { householdId: fromId } = await tx.householdUser.delete({ where: { userId } });
   const toId = await createOwnHousehold(tx, userId);
-  await copyProductsOnLeave(tx, fromId, toId, userId);
+  const productIds = await copyProductsOnLeave(tx, fromId, toId, userId);
+  await copyRecipesOnLeave(tx, fromId, toId, userId, productIds);
   return toId;
 }
 
@@ -123,20 +125,31 @@ async function joinTarget(tx: Tx, me: RequestUser, code: string) {
   return invite.householdId;
 }
 
-/** Products edited differently on both sides: the joiner picks whose version stays. */
-export async function previewJoin(me: RequestUser, code: string): Promise<JoinConflict[]> {
-  return prisma.$transaction(async (tx) => joinConflicts(tx, me.householdId, await joinTarget(tx, me, code)));
+/** Products and recipes edited differently on both sides: the joiner picks whose version stays. */
+export async function previewJoin(me: RequestUser, code: string): Promise<JoinPreviewResponse> {
+  return prisma.$transaction(async (tx) => {
+    const targetId = await joinTarget(tx, me, code);
+    return {
+      conflicts: await joinConflicts(tx, me.householdId, targetId),
+      recipeConflicts: await joinRecipeConflicts(tx, me.householdId, targetId),
+    };
+  });
 }
 
 /**
  * Joins the household of an invite. Allowed only when the account is alone in its current household.
- * Its products move into the family (`mergeProductsOnJoin`); the old household (with its family profiles)
+ * Its products and recipes move into the family (`mergeProductsOnJoin`, `mergeRecipesOnJoin`); the old household (with its family profiles)
  * is deleted, since nobody else uses it.
  */
-export async function joinHousehold(me: RequestUser, code: string, keepFamily: readonly string[] = []) {
+export async function joinHousehold(
+  me: RequestUser,
+  code: string,
+  keep: { products?: readonly string[]; recipes?: readonly string[] } = {},
+) {
   await prisma.$transaction(async (tx) => {
     const targetId = await joinTarget(tx, me, code);
-    await mergeProductsOnJoin(tx, me.householdId, targetId, keepFamily);
+    await mergeProductsOnJoin(tx, me.householdId, targetId, keep.products ?? []);
+    await mergeRecipesOnJoin(tx, me.householdId, targetId, keep.recipes ?? []);
     await tx.householdUser.update({
       where: { userId: me.user.id },
       data: { householdId: targetId, role: 'member' satisfies HouseholdRole },

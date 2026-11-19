@@ -2,16 +2,21 @@ import { Prisma, prisma, type HouseholdRecipe, type Recipe } from '@eatandcalc/d
 import {
   ApiErrors,
   compareNames,
+  recipeTotals,
   RecipeDataSchema,
   RecipeItemSchema,
   RecipeSchema,
   type RecipeData,
   type RecipeDto,
   type RecipeItemDto,
+  type JoinRecipeConflict,
+  type JoinRecipeVersion,
+  type ProductDto,
 } from '@eatandcalc/shared';
+import { randomUUID } from 'node:crypto';
 
 import { HttpError } from './http';
-import { toProductDto } from './products';
+import { productViews, toProductDto } from './products';
 import type { RequestUser } from './session';
 
 /** Stored items of a row; invalid entries are dropped rather than failing the list. */
@@ -199,4 +204,120 @@ export async function recipesUsing(householdId: string, productId: string): Prom
       return parsed.success ? [parsed.data.name] : [];
     }),
   ];
+}
+
+// ---------- Joining / leaving a family ----------
+
+type Tx = Prisma.TransactionClient;
+
+async function recipeOverridesOf(tx: Tx, householdId: string) {
+  const states = await tx.householdRecipe.findMany({ where: { householdId, override: { not: Prisma.DbNull } } });
+  return states.flatMap((s) => {
+    const override = overrideData(s);
+    return override ? [{ recipeId: s.recipeId, override }] : [];
+  });
+}
+
+/** A recipe version with product names, weight and kcal as the household sees its products. */
+function versionOf(data: RecipeData, products: ReadonlyMap<string, ProductDto>): JoinRecipeVersion {
+  const totals = recipeTotals(data.items, products);
+  return {
+    name: data.name,
+    items: data.items.map((i) => ({ name: products.get(i.productId)?.name ?? '?', amount: i.amount, unit: i.unit })),
+    grams: totals.grams,
+    kcal: totals.nutrients.kcal,
+  };
+}
+
+/** Catalog recipes edited both by the joiner's household (`mine`) and the family, differently. */
+export async function joinRecipeConflicts(tx: Tx, fromId: string, toId: string): Promise<JoinRecipeConflict[]> {
+  const [mine, family] = await Promise.all([recipeOverridesOf(tx, fromId), recipeOverridesOf(tx, toId)]);
+  const familyById = new Map(family.map((s) => [s.recipeId, s.override]));
+  const pairs = mine.flatMap(({ recipeId, override }) => {
+    const theirs = familyById.get(recipeId);
+    return theirs && !sameData(override, theirs) ? [{ id: recipeId, mine: override, family: theirs }] : [];
+  });
+  if (pairs.length === 0) return [];
+  const [myProducts, familyProducts] = await Promise.all([productViews(tx, fromId), productViews(tx, toId)]);
+  return pairs
+    .map((c) => ({ id: c.id, mine: versionOf(c.mine, myProducts), family: versionOf(c.family, familyProducts) }))
+    .sort((a, b) => compareNames(a.mine, b.mine));
+}
+
+/**
+ * Brings the joiner's recipes into the family, after its products: own recipes move (ids, ♥ survive),
+ * hiding is united, edits are added; where both edited a recipe differently the joiner's version wins
+ * unless its id is in `keepFamily`.
+ */
+export async function mergeRecipesOnJoin(tx: Tx, fromId: string, toId: string, keepFamily: readonly string[]) {
+  await tx.recipe.updateMany({ where: { householdId: fromId }, data: { householdId: toId } });
+  const keep = new Set(keepFamily);
+  const [mine, family] = await Promise.all([
+    tx.householdRecipe.findMany({ where: { householdId: fromId } }),
+    tx.householdRecipe.findMany({ where: { householdId: toId } }),
+  ]);
+  const familyById = new Map(family.map((s) => [s.recipeId, s]));
+  for (const s of mine) {
+    const theirs = familyById.get(s.recipeId);
+    const myOverride = overrideData(s);
+    const familyOverride = overrideData(theirs);
+    const override = myOverride && !(familyOverride && keep.has(s.recipeId)) ? myOverride : familyOverride;
+    const data = {
+      override: override ? canonical(override) : Prisma.DbNull,
+      hiddenAt: theirs?.hiddenAt ?? s.hiddenAt,
+    };
+    await tx.householdRecipe.upsert({
+      where: { householdId_recipeId: { householdId: toId, recipeId: s.recipeId } },
+      create: { householdId: toId, recipeId: s.recipeId, ...data },
+      update: data,
+    });
+  }
+}
+
+/**
+ * An account leaves (or is removed): the family keeps everything, the account's new household gets a copy of
+ * own recipes (new ids, ♥ move to the copies), edits and hiding. Ingredients point to the copied own products
+ * (`productIds`: old → new, from `copyProductsOnLeave`).
+ */
+export async function copyRecipesOnLeave(
+  tx: Tx,
+  fromId: string,
+  toId: string,
+  userId: string,
+  productIds: ReadonlyMap<string, string>,
+) {
+  const remap = (d: RecipeData): RecipeData =>
+    canonical({ ...d, items: d.items.map((i) => ({ ...i, productId: productIds.get(i.productId) ?? i.productId })) });
+
+  const own = await tx.recipe.findMany({ where: { householdId: fromId } });
+  const newId = new Map(own.map((r) => [r.id, randomUUID()]));
+  if (own.length) {
+    await tx.recipe.createMany({
+      data: own.map((r) => {
+        const d = remap(rowData(r));
+        return { id: newId.get(r.id)!, householdId: toId, name: d.name, items: d.items };
+      }),
+    });
+  }
+  const states = await tx.householdRecipe.findMany({ where: { householdId: fromId } });
+  if (states.length) {
+    await tx.householdRecipe.createMany({
+      data: states.map((s) => {
+        const override = overrideData(s);
+        return {
+          householdId: toId,
+          recipeId: newId.get(s.recipeId) ?? s.recipeId,
+          override: override ? remap(override) : Prisma.DbNull,
+          hiddenAt: s.hiddenAt,
+        };
+      }),
+    });
+  }
+  const favorites = await tx.recipeFavorite.findMany({ where: { userId, recipeId: { in: [...newId.keys()] } } });
+  if (favorites.length) {
+    await tx.recipeFavorite.createMany({
+      data: favorites.map((f) => ({ userId, recipeId: newId.get(f.recipeId)!, createdAt: f.createdAt })),
+    });
+    await tx.recipeFavorite.deleteMany({ where: { userId, recipeId: { in: favorites.map((f) => f.recipeId) } } });
+  }
 }

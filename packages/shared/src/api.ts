@@ -72,6 +72,8 @@ export const JoinRequestSchema = z.object({
   code: InviteCodeSchema,
   /** Products edited on both sides where the family's version stays (otherwise the joiner's wins). */
   keepFamily: z.array(z.string()).max(2000).default([]),
+  /** The same for catalog recipes edited on both sides. */
+  keepFamilyRecipes: z.array(z.string()).max(2000).default([]),
 });
 export type JoinRequest = z.input<typeof JoinRequestSchema>;
 
@@ -144,9 +146,6 @@ export type ProductDto = z.infer<typeof ProductSchema>;
 export const JoinConflictSchema = z.object({ id: z.string(), mine: ProductDataSchema, family: ProductDataSchema });
 export type JoinConflict = z.infer<typeof JoinConflictSchema>;
 
-/** `GET /api/household/join/preview?code=`: what joining would need decided. */
-export const JoinPreviewResponseSchema = z.object({ conflicts: z.array(JoinConflictSchema) });
-export const JoinPreviewQuerySchema = z.object({ code: InviteCodeSchema });
 
 export const ProductsResponseSchema = z.object({ products: z.array(ProductSchema) });
 export const ProductResponseSchema = z.object({ product: ProductSchema });
@@ -180,6 +179,35 @@ export const RecipeSchema = RecipeDataSchema.extend({
   original: RecipeDataSchema.nullable(),
 });
 export type RecipeDto = z.infer<typeof RecipeSchema>;
+
+/**
+ * One side's version of a recipe in a join conflict, resolved on the server: the joiner can't see the family's
+ * own products yet. Weight and kcal are computed with that side's products.
+ */
+export const JoinRecipeVersionSchema = z.object({
+  name: z.string(),
+  items: z.array(z.object({ name: z.string(), amount: z.number(), unit: UnitKeySchema })),
+  grams: z.number(),
+  kcal: z.number(),
+});
+export type JoinRecipeVersion = z.infer<typeof JoinRecipeVersionSchema>;
+
+/** A catalog recipe the joiner's household and the family both edited, differently. */
+export const JoinRecipeConflictSchema = z.object({
+  id: z.string(),
+  mine: JoinRecipeVersionSchema,
+  family: JoinRecipeVersionSchema,
+});
+export type JoinRecipeConflict = z.infer<typeof JoinRecipeConflictSchema>;
+
+/** `GET /api/household/join/preview?code=`: what joining would need decided. */
+export const JoinPreviewResponseSchema = z.object({
+  conflicts: z.array(JoinConflictSchema),
+  /** Missing from servers older than recipe merging. */
+  recipeConflicts: z.array(JoinRecipeConflictSchema).default([]),
+});
+export type JoinPreviewResponse = z.infer<typeof JoinPreviewResponseSchema>;
+export const JoinPreviewQuerySchema = z.object({ code: InviteCodeSchema });
 
 export const RecipesResponseSchema = z.object({ recipes: z.array(RecipeSchema) });
 export const RecipeResponseSchema = z.object({ recipe: RecipeSchema });

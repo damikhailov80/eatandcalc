@@ -243,8 +243,14 @@ export async function mergeProductsOnJoin(tx: Tx, fromId: string, toId: string, 
 /**
  * An account leaves (or is removed): the family keeps everything, the account's new household gets a copy —
  * own products (new ids, the account's ♥ move to the copies), edits and hiding.
+ * Returns old → new ids of the copied own products (recipes are remapped with it).
  */
-export async function copyProductsOnLeave(tx: Tx, fromId: string, toId: string, userId: string) {
+export async function copyProductsOnLeave(
+  tx: Tx,
+  fromId: string,
+  toId: string,
+  userId: string,
+): Promise<ReadonlyMap<string, string>> {
   const own = await tx.product.findMany({ where: { householdId: fromId } });
   const newId = new Map(own.map((p) => [p.id, randomUUID()]));
   if (own.length) {
@@ -270,4 +276,14 @@ export async function copyProductsOnLeave(tx: Tx, fromId: string, toId: string, 
     });
     await tx.productFavorite.deleteMany({ where: { userId, productId: { in: favorites.map((f) => f.productId) } } });
   }
+  return newId;
+}
+
+/** Every product the household sees, as it sees it (with its edits). */
+export async function productViews(tx: Tx, householdId: string): Promise<ReadonlyMap<string, ProductDto>> {
+  const rows = await tx.product.findMany({
+    where: visibleTo(householdId),
+    include: { states: { where: { householdId } } },
+  });
+  return new Map(rows.map((p) => [p.id, toProductDto(p, p.states[0], false)]));
 }
