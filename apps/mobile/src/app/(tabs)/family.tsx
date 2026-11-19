@@ -1,4 +1,4 @@
-import { formatDayMonth, pluralRu, ZERO } from '@eatandcalc/shared';
+import { ZERO } from '@eatandcalc/shared';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -44,11 +44,7 @@ export default function FamilyScreen() {
     queryClient.clear();
   };
 
-  const count = members.data.length;
-  const today = `сегодня, ${formatDayMonth(new Date())}`;
-  const subtitle = count
-    ? `${count} ${pluralRu(count, ['человек', 'человека', 'человек'])} · ${today}`
-    : 'Добавьте, чьё питание считаем';
+  const subtitle = members.data.length ? undefined : 'Добавьте, чьё питание считаем';
 
   return (
     <Screen title="Семья" subtitle={subtitle} subtitleBelow onRefresh={refreshAll}>

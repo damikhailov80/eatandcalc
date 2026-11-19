@@ -4,9 +4,11 @@ import {
   type Account,
   type MeResponse,
 } from '@eatandcalc/shared';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Alert, Share, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { Button, Card, MemberAvatar, Text } from '@/components/ui';
 import { api, inviteUrl } from '@/lib/api';
@@ -101,8 +103,12 @@ function InviteBlock() {
   );
 }
 
-/** Accounts of the household with roles; the owner invites and removes, a member can leave. */
+/**
+ * Accounts of the household with roles; the owner invites and removes, a member can leave.
+ * Collapsed by default: it is rarely needed day to day.
+ */
 export function AccountsCard({ me }: { me: MeResponse }) {
+  const [open, setOpen] = useState(false);
   const isOwner = me.user.role === 'owner';
   const alone = me.accounts.length === 1;
 
@@ -131,14 +137,46 @@ export function AccountsCard({ me }: { me: MeResponse }) {
 
   return (
     <Card style={styles.card}>
-      <Text variant="h3">Аккаунты</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        onPress={() => setOpen((v) => !v)}
+        style={({ pressed }) => [styles.header, pressed && styles.pressed]}>
+        <Text variant="h3" style={styles.flex}>Аккаунты</Text>
+        <Text variant="caption" style={styles.tabular}>{me.accounts.length}</Text>
+        <MaterialCommunityIcons name={open ? 'chevron-up' : 'chevron-down'} size={22} color={colors.textSecondary} />
+      </Pressable>
+      {open ? (
+        <AccountsBody
+          me={me}
+          isOwner={isOwner}
+          alone={alone}
+          onRemove={confirmRemove}
+          onLeave={confirmLeave}
+          leaving={leave.isPending}
+        />
+      ) : null}
+    </Card>
+  );
+}
+
+function AccountsBody({ me, isOwner, alone, onRemove, onLeave, leaving }: {
+  me: MeResponse;
+  isOwner: boolean;
+  alone: boolean;
+  onRemove: (account: Account) => void;
+  onLeave: () => void;
+  leaving: boolean;
+}) {
+  return (
+    <>
       {me.accounts.map((account, i) => (
         <AccountRow
           key={account.id}
           account={account}
           index={i}
           isMe={account.id === me.user.id}
-          onRemove={isOwner && account.id !== me.user.id ? () => confirmRemove(account) : undefined}
+          onRemove={isOwner && account.id !== me.user.id ? () => onRemove(account) : undefined}
         />
       ))}
 
@@ -148,14 +186,17 @@ export function AccountsCard({ me }: { me: MeResponse }) {
         <Button title="Присоединиться по коду" variant="ghost" onPress={() => router.push('/join')} />
       ) : null}
       {!isOwner ? (
-        <Button title="Выйти из семьи" variant="danger" disabled={leave.isPending} onPress={confirmLeave} />
+        <Button title="Выйти из семьи" variant="danger" disabled={leaving} onPress={onLeave} />
       ) : null}
-    </Card>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   card: { gap: spacing.md },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 },
+  pressed: { opacity: 0.6 },
+  tabular: { fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 44 },
   rowText: { flex: 1, gap: 2 },
   badge: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 3, backgroundColor: colors.track },
