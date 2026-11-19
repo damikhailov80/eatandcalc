@@ -1,0 +1,169 @@
+import { todayISO, type CookingData, type CookingDto, type ProductDto, type RecipeDto } from '@eatandcalc/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+
+import {
+  CookingForm,
+  fromCookingDraft,
+  toCookingDraft,
+  toRowDraft,
+  type CookingDraft,
+} from '@/components/cooking/CookingForm';
+import { familyErrorMessage } from '@/components/family/errors';
+import { ProductPicker } from '@/components/recipes/ProductPicker';
+import { Button, Screen, StateMessage, StickyFooter } from '@/components/ui';
+import { api } from '@/lib/api';
+import { rowsFromRecipe, snapshotOf } from '@/lib/cooking';
+import { queryClient, queryKeys } from '@/lib/query';
+import { productsById, type ProductsById } from '@/lib/recipes';
+import { colors } from '@/theme';
+
+const NEW = 'new';
+
+const sessionData = ({ id: _id, createdAt: _createdAt, ...data }: CookingDto): CookingData => data;
+
+/** A new pot: from a recipe ×1 (products as they are now) or blank, cooked today. */
+function newDraft(recipe: RecipeDto | undefined, products: ProductsById): CookingDraft {
+  return toCookingDraft({
+    name: recipe?.name ?? '',
+    date: todayISO(),
+    recipeId: recipe?.id ?? null,
+    recipeScale: recipe ? 1 : null,
+    copiedFromId: null,
+    items: recipe ? rowsFromRecipe(recipe, products, 1) : [],
+    potWeightG: null,
+    grossWeightG: null,
+  });
+}
+
+function Editor({
+  session,
+  initial,
+  products,
+  recipes,
+}: {
+  session: CookingDto | null;
+  initial: CookingDraft;
+  products: readonly ProductDto[];
+  recipes: readonly RecipeDto[];
+}) {
+  const [value, setValue] = useState(initial);
+  const [picking, setPicking] = useState(false);
+  const [focusKey, setFocusKey] = useState<string | null>(null);
+  const byId = useMemo(() => productsById(products), [products]);
+  const recipe = value.recipeId ? recipes.find((r) => r.id === value.recipeId) : undefined;
+  const data = fromCookingDraft(value);
+
+  const sessionId = session?.id;
+  const save = useMutation({
+    mutationFn: (input: CookingData) => (sessionId ? api.updateCooking(sessionId, input) : api.createCooking(input)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.cooking });
+      router.back();
+    },
+    onError: (e) => Alert.alert('Не получилось', familyErrorMessage(e)),
+  });
+
+  const pick = useCallback((p: ProductDto) => {
+    const row = toRowDraft(snapshotOf(p, 1, 'g'), '');
+    setValue((v) => ({ ...v, items: [...v.items, row] }));
+    setFocusKey(row.key);
+    setPicking(false);
+  }, []);
+  const closePicker = useCallback(() => setPicking(false), []);
+
+  if (picking) return <ProductPicker products={products} onPick={pick} onClose={closePicker} />;
+
+  return (
+    <Screen
+      title={session ? 'Готовка' : 'Новая готовка'}
+      onBack={() => router.back()}
+      footer={
+        <StickyFooter>
+          <Button title="Сохранить" large disabled={!data || save.isPending} onPress={() => data && save.mutate(data)} />
+        </StickyFooter>
+      }>
+      <CookingForm
+        value={value}
+        onChange={setValue}
+        recipe={recipe}
+        products={byId}
+        onAddProduct={() => setPicking(true)}
+        focusKey={focusKey}
+      />
+    </Screen>
+  );
+}
+
+export default function CookingEditScreen() {
+  const { id, recipe: recipeId } = useLocalSearchParams<{ id: string; recipe?: string }>();
+  const isNew = id === NEW;
+
+  const session = useQuery({
+    queryKey: [...queryKeys.cooking, id],
+    queryFn: () => api.cooking(id),
+    enabled: !isNew,
+    initialData: () => queryClient.getQueryData<CookingDto[]>(queryKeys.cooking)?.find((s) => s.id === id),
+  });
+  const products = useQuery({ queryKey: queryKeys.products, queryFn: api.products });
+  const recipes = useQuery({ queryKey: queryKeys.recipes, queryFn: api.recipes });
+
+  if ((!isNew && session.isPending) || products.isPending || recipes.isPending) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+  if (products.isError || recipes.isError) {
+    return (
+      <StateMessage
+        icon="wifi-off"
+        title="Нет связи с сервером"
+        text="Приложение работает только онлайн. Проверьте интернет."
+        actionTitle="Повторить"
+        onAction={() => {
+          if (products.isError) products.refetch();
+          if (recipes.isError) recipes.refetch();
+        }}
+      />
+    );
+  }
+  if (isNew) {
+    const recipe = recipeId ? recipes.data.find((r) => r.id === recipeId) : undefined;
+    return (
+      <Editor
+        session={null}
+        initial={newDraft(recipe, productsById(products.data))}
+        products={products.data}
+        recipes={recipes.data}
+      />
+    );
+  }
+  if (session.isError || !session.data) {
+    return (
+      <StateMessage
+        icon="pot-steam-outline"
+        title="Готовка не найдена"
+        text={familyErrorMessage(session.error)}
+        actionTitle="Назад"
+        onAction={() => router.back()}
+      />
+    );
+  }
+  return (
+    <Editor
+      key={session.data.id}
+      session={session.data}
+      initial={toCookingDraft(sessionData(session.data))}
+      products={products.data}
+      recipes={recipes.data}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+});

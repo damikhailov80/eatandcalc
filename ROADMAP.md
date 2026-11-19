@@ -9,7 +9,7 @@ Development goes in stages; each stage ends with a working app.
 | 2 | Products | Shared catalog + per-family edits / hiding / own products, per-account favorites, search, filters, units → grams, merge on join | ✅ done (plan below) |
 | 3 | Recipes | Shared catalog + own recipes, editor (products in their units), totals / per 100 g, hide / ♥ / delete, merge on join | ✅ done (plan below) |
 | 4 | Family | Members list, profile editor, norms, macro-energy check; account roles (owner/member), invite link + code, join/leave/remove | ✅ done (today's eaten = 0 until stage 6) |
-| 5 | Cooking | Session from recipe or blank, editor (multiplier, cooked weight), quick weight pad, history with leftovers, repeat/copy | |
+| 5 | Cooking | Session from a recipe, a copy or blank; editor (multiplier, frozen product copies, pot and gross weight → per 100 g); history by day with search; delete, cook again; join / leave | 🔧 in progress (plan below) |
 | 6 | Daily planner | Date strip, meals, add dish (leftovers / history / recipe), distribution between members, member rings | |
 | 7 | Stats & history | Member day stats, history calendar, copy a day's plan | |
 | 8 | Polish | Frequent items, empty states, haptics, performance | |
@@ -61,8 +61,22 @@ Steps (each one ends with a test on the phones, then commit):
 
 Not done on purpose: "copy a recipe" (a new own recipe based on another; not needed). "Cook today" from a recipe card arrives with Stage 5 (cooking sessions).
 
+## Stage 5 plan: cooking
+
+Decisions:
+- A cooking session is one real pot on a date: name, rows, optional recipe (origin, ×1..×4 multiplier) and origin session (copy).
+- Rows are **frozen forever**: each keeps the product's name, KBJU per 100 g and unit weights as they were when the row was added. Product edits / deletes never change a session; to refresh, remove the row and add the product again. A copy copies the frozen rows as they are. Deleting a product is never blocked by sessions.
+- Weights: the empty pot and the pot with food; cooked weight = gross − pot, KBJU per 100 g of the finished dish follows from it. Until weighed, per 100 g uses the raw weight (badge «сырой вес»). No portions.
+- Recipe comparison against the recipe as the family sees it now × multiplier («как в рецепте» / «изменено: N», «в рецепте 150 г» per row). Picking a multiplier resets the amounts to the recipe × N (rows of the same product keep their frozen copy); the ×1..×4 switch shows only while the pot equals the recipe × N, after manual changes it folds into a «×N» badge that asks to confirm the reset.
+- Leftovers and "eaten" arrive with Stage 6 (meals).
+- Join: sessions move into the family. Leave / removal: the family keeps all, the account gets copies (product, recipe and origin ids re-pointed to its copies).
+
+Steps (each one ends with a test on the phones, then commit):
+1. [x] Model + list + editor: migration `cooking_session`, shared schemas and `cookingTotals`, `/api/cooking` CRUD, Cooking tab (by day, search), new cooking from a recipe or blank, editor (name, date, rows, ×N, comparison, weights, totals).
+2. [ ] Delete, "Приготовить снова" (copy dated today), new cooking as a copy of a session, "Приготовить" from a recipe.
+3. [ ] Join / leave: move on join, copy on leave.
+
 ## Open questions
 
-- Postgres schema for Stage 2+: cooking snapshots as JSONB or a `cooking_items` table; numeric precision.
 - Time zones: `date` is the household's local calendar date.
 - Conflict handling when two people edit the same day (last write wins?).

@@ -77,6 +77,8 @@ export default function RootLayout() {
             <Stack.Screen name="member/[id]" />
             <Stack.Screen name="product/[id]" />
             <Stack.Screen name="recipe/[id]" />
+            <Stack.Screen name="cooking/start" />
+            <Stack.Screen name="cooking/[id]" />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn}>
             <Stack.Screen name="sign-in" />

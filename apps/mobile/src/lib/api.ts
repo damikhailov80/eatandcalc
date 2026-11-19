@@ -1,4 +1,6 @@
 import {
+  CookingListResponseSchema,
+  CookingResponseSchema,
   FamilyMemberResponseSchema,
   FamilyMembersResponseSchema,
   InviteResponseSchema,
@@ -11,6 +13,8 @@ import {
   RecipeResponseSchema,
   RecipesResponseSchema,
   SyncResponseSchema,
+  type CookingData,
+  type CookingDto,
   type FamilyMemberDto,
   type FamilyMemberInput,
   type Invite,
@@ -218,4 +222,21 @@ export const api = {
         method: favorite ? 'PUT' : 'DELETE',
       })
     ).recipe,
+
+  cookingList: async (): Promise<CookingDto[]> =>
+    (await apiRequest('/api/cooking', CookingListResponseSchema)).sessions,
+  cooking: async (id: string): Promise<CookingDto> =>
+    (await apiRequest(`/api/cooking/${encodeURIComponent(id)}`, CookingResponseSchema)).session,
+  createCooking: async (input: CookingData): Promise<CookingDto> =>
+    (await apiRequest('/api/cooking', CookingResponseSchema, { method: 'POST', json: input })).session,
+  updateCooking: async (id: string, input: CookingData): Promise<CookingDto> =>
+    (
+      await apiRequest(`/api/cooking/${encodeURIComponent(id)}`, CookingResponseSchema, {
+        method: 'PATCH',
+        json: input,
+      })
+    ).session,
+  deleteCooking: async (id: string): Promise<void> => {
+    await apiRequest(`/api/cooking/${encodeURIComponent(id)}`, OkResponseSchema, { method: 'DELETE' });
+  },
 };

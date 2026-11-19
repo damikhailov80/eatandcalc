@@ -22,6 +22,34 @@ const dayMonth = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long
 /** "19 ноября". */
 export const formatDayMonth = (date: Date) => dayMonth.format(date);
 
+const weekday = new Intl.DateTimeFormat('ru-RU', { weekday: 'long' });
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** Local calendar date → `YYYY-MM-DD`. */
+export const toISODate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+/** `YYYY-MM-DD` → local midnight. */
+export function fromISODate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y!, m! - 1, d!);
+}
+
+export const todayISO = () => toISODate(new Date());
+
+/** The date `days` later (negative = earlier). */
+export function shiftISODate(iso: string, days: number): string {
+  const d = fromISODate(iso);
+  d.setDate(d.getDate() + days);
+  return toISODate(d);
+}
+
+/** "Сегодня, 19 ноября", "Вчера, 18 ноября", "Вторник, 17 ноября". */
+export function formatDayTitle(iso: string, today = todayISO()): string {
+  const date = fromISODate(iso);
+  const day = iso === today ? 'Сегодня' : iso === shiftISODate(today, -1) ? 'Вчера' : weekday.format(date);
+  return `${day.charAt(0).toUpperCase()}${day.slice(1)}, ${formatDayMonth(date)}`;
+}
+
 /** "ABCDEFGH" → "ABCD-EFGH". */
 export const formatInviteCode = (code: string) =>
   code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code;

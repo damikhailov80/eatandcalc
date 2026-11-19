@@ -81,12 +81,43 @@ export function recipeTotals(
   return { grams, nutrients, per100: per100g(nutrients, grams), missing };
 }
 
-export function cookingTotals(items: readonly CookingItem[]): Nutrients {
-  return sum(items.map((i) => i.nutrients));
+/** Grams of a cooking row from its frozen unit weights; 0 if the unit has no weight. */
+export const cookingItemGrams = (item: Pick<CookingItem, 'units' | 'amount' | 'unit'>) => quantityGrams(item, item) ?? 0;
+
+/** Weight of the finished dish: pot with food minus the empty pot. Null until weighed (or not above zero). */
+export function cookedWeight(grossWeightG: number | null, potWeightG: number | null): number | null {
+  if (grossWeightG == null) return null;
+  const net = grossWeightG - (potWeightG ?? 0);
+  return net > 0 ? net : null;
 }
 
-export function rawWeight(items: readonly { grams: number }[]): number {
-  return items.reduce((s, i) => s + i.grams, 0);
+export type CookingTotals = {
+  /** Sum of raw ingredient grams. */
+  rawGrams: number;
+  nutrients: Nutrients;
+  /** Cooked weight when weighed, otherwise the raw weight. */
+  weightG: number;
+  weighed: boolean;
+  /** Per 100 g of the finished dish (of the raw weight until weighed). */
+  per100: Nutrients;
+};
+
+/** Weight and nutrition of a real pot from its frozen rows. */
+export function cookingTotals(
+  items: readonly Pick<CookingItem, 'units' | 'amount' | 'unit' | 'nutrients'>[],
+  cookedG: number | null = null,
+): CookingTotals {
+  let rawGrams = 0;
+  const parts: Nutrients[] = [];
+  for (const item of items) {
+    const g = cookingItemGrams(item);
+    rawGrams += g;
+    parts.push(scale(item.nutrients, g / 100));
+  }
+  const nutrients = sum(parts);
+  const weighed = cookedG != null && cookedG > 0;
+  const weightG = weighed ? cookedG : rawGrams;
+  return { rawGrams, nutrients, weightG, weighed, per100: per100g(nutrients, weightG) };
 }
 
 /** Nutrients per 100 g of a finished dish. */

@@ -87,29 +87,33 @@ export type Recipe = {
 // ---------- Cooking sessions (concrete pots) ----------
 
 /**
- * Snapshot of one ingredient at cooking time. Product name and resulting nutrients are copied,
- * so later product edits or deletes don't change history.
+ * One ingredient of a real pot. The product's name, nutrients and unit weights are frozen when the row is
+ * added: later product edits or deletes never change it (remove the row and add the product again to refresh).
  */
 export type CookingItem = Quantity & {
+  /** The product it was taken from; may no longer exist. */
   productId: Id | null;
-  productName: string;
-  grams: number;
+  name: string;
+  /** Per 100 g, as the product was when added. */
   nutrients: Nutrients;
+  units: ProductUnits;
 };
 
 export type CookingSession = {
   id: Id;
-  householdId: Id;
   date: ISODate;
   name: string;
-  /** Recipe it was started from, if any. */
+  /** Recipe it was started from, if any (null once the recipe is deleted). */
   recipeId: Id | null;
-  /** Session it was copied from ("Повторить" / "Копировать и изменить"), if any. */
+  /** Recipe multiplier ×1..×4 the amounts were taken with. */
+  recipeScale: number | null;
+  /** Session it was copied from ("Приготовить снова"), if any. */
   copiedFromId: Id | null;
   items: CookingItem[];
-  /** Weighed finished dish, grams. Nutrients per gram = total ÷ cookedWeightG. */
-  cookedWeightG: number;
-  portions: number;
+  /** Empty pot, grams. */
+  potWeightG: number | null;
+  /** Pot with the finished dish, grams. Cooked weight = gross − pot. */
+  grossWeightG: number | null;
 };
 
 // ---------- Family ----------

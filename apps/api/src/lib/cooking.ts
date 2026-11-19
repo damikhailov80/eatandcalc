@@ -1,0 +1,113 @@
+import { prisma, type CookingSession, type Prisma } from '@eatandcalc/db';
+import {
+  ApiErrors,
+  CookingItemSchema,
+  CookingSchema,
+  type CookingData,
+  type CookingDto,
+  type CookingItemDto,
+} from '@eatandcalc/shared';
+
+import { HttpError } from './http';
+import type { RequestUser } from './session';
+
+/** Stored rows of a session; invalid entries are dropped rather than failing the list. */
+function rowItems(s: CookingSession): CookingItemDto[] {
+  if (!Array.isArray(s.items)) return [];
+  return s.items.flatMap((item) => {
+    const parsed = CookingItemSchema.safeParse(item);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
+
+/** `@db.Date` comes back as UTC midnight. */
+const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+const dbDate = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
+
+export const toCookingDto = (s: CookingSession): CookingDto =>
+  CookingSchema.parse({
+    id: s.id,
+    createdAt: s.createdAt.toISOString(),
+    name: s.name,
+    date: isoDate(s.date),
+    recipeId: s.recipeId,
+    recipeScale: s.recipeScale,
+    copiedFromId: s.copiedFromId,
+    items: rowItems(s),
+    potWeightG: s.potWeightG,
+    grossWeightG: s.grossWeightG,
+  });
+
+/** Stable JSON form of the rows (only known keys) for storing. */
+const canonicalItems = (items: readonly CookingItemDto[]) =>
+  items.map(({ productId, name, nutrients, units, amount, unit }) => ({
+    productId,
+    name,
+    nutrients: { kcal: nutrients.kcal, protein: nutrients.protein, fat: nutrients.fat, carbs: nutrients.carbs },
+    units,
+    amount,
+    unit,
+  }));
+
+/** Newest days first; within a day the latest cooked first. */
+export async function listCooking(me: RequestUser): Promise<CookingDto[]> {
+  const rows = await prisma.cookingSession.findMany({
+    where: { householdId: me.householdId },
+    orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+  });
+  return rows.map(toCookingDto);
+}
+
+async function findOwn(me: RequestUser, id: string) {
+  const s = await prisma.cookingSession.findFirst({ where: { id, householdId: me.householdId } });
+  if (!s) throw new HttpError(404, ApiErrors.notFound);
+  return s;
+}
+
+export async function getCooking(me: RequestUser, id: string): Promise<CookingDto> {
+  return toCookingDto(await findOwn(me, id));
+}
+
+/** The recipe must be one the family sees, the origin one of its sessions; otherwise 400. */
+async function checkLinks(me: RequestUser, data: CookingData) {
+  if (data.recipeId) {
+    const r = await prisma.recipe.count({
+      where: { id: data.recipeId, OR: [{ householdId: null }, { householdId: me.householdId }] },
+    });
+    if (!r) throw new HttpError(400, ApiErrors.validation);
+  }
+  if (data.copiedFromId) {
+    const s = await prisma.cookingSession.count({ where: { id: data.copiedFromId, householdId: me.householdId } });
+    if (!s) throw new HttpError(400, ApiErrors.validation);
+  }
+}
+
+const rowData = (data: CookingData) => ({
+  name: data.name,
+  date: dbDate(data.date),
+  recipeId: data.recipeId,
+  recipeScale: data.recipeId ? data.recipeScale : null,
+  copiedFromId: data.copiedFromId,
+  items: canonicalItems(data.items) as Prisma.InputJsonValue,
+  potWeightG: data.potWeightG,
+  grossWeightG: data.grossWeightG,
+});
+
+export async function createCooking(me: RequestUser, data: CookingData): Promise<CookingDto> {
+  await checkLinks(me, data);
+  const s = await prisma.cookingSession.create({ data: { householdId: me.householdId, ...rowData(data) } });
+  return toCookingDto(s);
+}
+
+export async function updateCooking(me: RequestUser, id: string, data: CookingData): Promise<CookingDto> {
+  await findOwn(me, id);
+  if (data.copiedFromId === id) throw new HttpError(400, ApiErrors.validation);
+  await checkLinks(me, data);
+  const s = await prisma.cookingSession.update({ where: { id }, data: rowData(data) });
+  return toCookingDto(s);
+}
+
+export async function deleteCooking(me: RequestUser, id: string): Promise<void> {
+  await findOwn(me, id);
+  await prisma.cookingSession.delete({ where: { id } });
+}

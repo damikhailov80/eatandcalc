@@ -93,6 +93,7 @@ model Household {
   productStates HouseholdProduct[]
   recipes       Recipe[]
   recipeStates  HouseholdRecipe[]
+  cooking       CookingSession[]
 
   @@map("household")
 }
@@ -251,6 +252,7 @@ model Recipe {
   household   Household?        @relation(fields: [householdId], references: [id], onDelete: Cascade)
   states      HouseholdRecipe[]
   favorites   RecipeFavorite[]
+  cooking     CookingSession[]
 
   @@index([householdId])
   @@map("recipe")
@@ -283,4 +285,32 @@ model RecipeFavorite {
   @@id([userId, recipeId])
   @@index([recipeId])
   @@map("recipe_favorite")
+}
+
+// ---------- Cooking ----------
+
+/// One real pot cooked on a date. `items` are frozen copies of the products (`CookingItemSchema`), so product
+/// edits never change it. Cooked weight = `gross_weight_g − pot_weight_g`; KBJU per 100 g follows from it.
+model CookingSession {
+  id           String           @id @default(cuid())
+  householdId  String           @map("household_id")
+  date         DateTime         @db.Date
+  name         String
+  recipeId     String?          @map("recipe_id")
+  recipeScale  Int?             @map("recipe_scale")
+  copiedFromId String?          @map("copied_from_id")
+  /// `[{ productId, name, nutrients, units, amount, unit }]` (`CookingItemSchema`).
+  items        Json             @default("[]")
+  potWeightG   Float?           @map("pot_weight_g")
+  grossWeightG Float?           @map("gross_weight_g")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  household    Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  recipe       Recipe?          @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  copiedFrom   CookingSession?  @relation("CookingCopies", fields: [copiedFromId], references: [id], onDelete: SetNull)
+  copies       CookingSession[] @relation("CookingCopies")
+
+  @@index([householdId, date])
+  @@index([recipeId])
+  @@map("cooking_session")
 }

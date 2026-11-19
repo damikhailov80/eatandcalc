@@ -212,6 +212,47 @@ export const JoinPreviewQuerySchema = z.object({ code: InviteCodeSchema });
 export const RecipesResponseSchema = z.object({ recipes: z.array(RecipeSchema) });
 export const RecipeResponseSchema = z.object({ recipe: RecipeSchema });
 
+// ---------- Cooking sessions ----------
+
+/** Calendar date `YYYY-MM-DD` (the household's local date). */
+export const ISODateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** One row of a real pot with the product frozen as it was when added (`CookingItem`). */
+export const CookingItemSchema = z.object({
+  productId: z.string().min(1).nullable(),
+  name: z.string().trim().min(1).max(80),
+  /** Per 100 g. */
+  nutrients: NutrientsSchema,
+  units: ProductUnitsSchema,
+  amount: z.number().positive().max(100_000),
+  unit: UnitKeySchema,
+});
+export type CookingItemDto = z.infer<typeof CookingItemSchema>;
+
+const potWeight = z.number().min(0).max(100_000).nullable();
+
+/** Editable data of a cooking session. */
+export const CookingDataSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  date: ISODateSchema,
+  recipeId: z.string().min(1).nullable(),
+  recipeScale: z.number().int().min(1).max(4).nullable(),
+  copiedFromId: z.string().min(1).nullable(),
+  items: z.array(CookingItemSchema).min(1).max(100),
+  potWeightG: potWeight,
+  grossWeightG: potWeight,
+});
+export type CookingData = z.infer<typeof CookingDataSchema>;
+
+export const CookingSchema = CookingDataSchema.extend({
+  id: z.string(),
+  createdAt: z.string(),
+});
+export type CookingDto = z.infer<typeof CookingSchema>;
+
+export const CookingListResponseSchema = z.object({ sessions: z.array(CookingSchema) });
+export const CookingResponseSchema = z.object({ session: CookingSchema });
+
 export const ApiErrorSchema = z.object({
   error: z.string(),
 });
