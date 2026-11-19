@@ -1,15 +1,18 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, Card, Text } from '@/components/ui';
 import { signInWithGoogle } from '@/lib/auth';
+import { useDiagnostics } from '@/lib/diagnostics';
 import { colors, radii, spacing } from '@/theme';
 
 export default function SignInScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { signOut } = useDiagnostics();
 
   const onSignIn = async () => {
     setBusy(true);
@@ -35,6 +38,12 @@ export default function SignInScreen() {
       </View>
 
       <View style={styles.bottom}>
+        {signOut && !error ? (
+          <Card style={styles.error}>
+            <Text variant="bodyStrong" color={colors.over}>Сервер завершил сессию</Text>
+            <Text variant="caption" color={colors.over}>{signOut.reason}</Text>
+          </Card>
+        ) : null}
         {error ? (
           <Card style={styles.error}>
             <Text variant="bodyStrong" color={colors.over}>{error}</Text>
@@ -48,6 +57,7 @@ export default function SignInScreen() {
         <Text variant="caption" style={styles.center}>
           Доступ только для аккаунтов семьи.
         </Text>
+        <Button title="Журнал входа" variant="ghost" onPress={() => router.push('/diagnostics')} />
       </View>
     </SafeAreaView>
   );

@@ -106,14 +106,15 @@ Components to build as needed: Chip, SearchField, NumberField, ProgressRing, Mac
 | `apps/mobile/src/app/_layout.tsx` | root Stack, fonts, splash, auth guard, QueryClientProvider |
 | `apps/mobile/src/app/sign-in.tsx` | Google sign-in screen |
 | `apps/mobile/src/app/member/[id].tsx` | member profile editor (`new` = create) |
+| `apps/mobile/src/app/diagnostics.tsx` | «Журнал входа»: on-device sign-in/API failure log (outside the auth guard), share as text |
 | `apps/mobile/src/app/join/` | join by invite: `[code]` (deep link `eatandcalc://join/<code>`), `index` (typed code); outside the auth guard |
 | `apps/mobile/src/components/family/` | Family tab pieces: `MemberCard`, `MemberForm`, `AccountsCard` (roles, invite), `JoinFamily`, `errors` |
 | `apps/mobile/src/app/(tabs)/` | tab screens (День, Готовка, Рецепты, Продукты, Семья) |
 | `apps/mobile/src/components/ui/` | Screen (`onBack`, `footer`), Text, Card, Button, IconButton, TextField, Stepper, SegmentedControl, ProgressBar, MemberAvatar, StickyFooter, Placeholder, StateMessage |
-| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` |
+| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query`, `diagnostics` (SecureStore ring buffer, `diag()`, auto sign-out reason) |
 | `apps/mobile/scripts/` | `android-dev` (local Gradle build → `dist/eatandcalc-dev.apk` + `dist/dev.json`), `android-sha1`, `android-env` (JDK/SDK, keystore) |
 | `apps/mobile/eas.json` | build profiles (development / production APK), update channels |
-| `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `http` (`HttpError`, `parseBody`), `household` (membership, invites, join/leave/remove), `family`, `env` |
+| `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `http` (`HttpError`, `parseBody`), `household` (membership, invites, join/leave/remove), `family`, `env`, `log` (`authLog`: JSON lines `"tag":"auth"` for Vercel Logs) |
 | `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `health`, `household/{invite,join,leave,accounts/[userId]}`, `family-members[/id]` |
 | `apps/api/src/app/invite/[code]/` | legacy invite link: redirects to the landing's invite page |
 | `apps/web/src/app/page.tsx` | landing: headline + QR to itself, download card; under `next dev` the same card serves the local dev APK |

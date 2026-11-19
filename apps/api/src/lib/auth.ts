@@ -7,7 +7,9 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 
 import { getEnv, isAllowedEmail } from './env';
 import { ensureHouseholdMembership } from './household';
+import { authLog } from './log';
 
+const allowlistSize = () => getEnv().allowedEmails.size;
 const notAllowed = () => new APIError('FORBIDDEN', { message: NOT_ALLOWED_ERROR });
 
 function createAuth() {
@@ -24,6 +26,17 @@ function createAuth() {
       },
     },
     plugins: [expo()],
+    // Better Auth's own messages (e.g. why an ID token was rejected). AUTH_LOG_LEVEL=debug for everything.
+    logger: { level: (process.env.AUTH_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error' | undefined) ?? 'info' },
+    onAPIError: {
+      onError: (error) => {
+        authLog('api_error', {
+          name: error instanceof Error ? error.name : typeof error,
+          message: error instanceof Error ? error.message : String(error),
+          status: (error as { status?: unknown }).status,
+        });
+      },
+    },
     trustedOrigins: [
       'eatandcalc://',
       ...(process.env.NODE_ENV === 'development' ? ['exp://', 'exp://**'] : []),
@@ -36,10 +49,14 @@ function createAuth() {
       user: {
         create: {
           before: async (user) => {
-            if (!isAllowedEmail(user.email)) throw notAllowed();
+            if (!isAllowedEmail(user.email)) {
+              authLog('user_rejected', { email: user.email, allowlistSize: allowlistSize() });
+              throw notAllowed();
+            }
           },
           after: async (user) => {
-            await ensureHouseholdMembership(user.id);
+            const householdId = await ensureHouseholdMembership(user.id);
+            authLog('user_created', { userId: user.id, email: user.email, householdId });
           },
         },
       },
@@ -50,8 +67,17 @@ function createAuth() {
             const user = await prisma.user.findUnique({
               where: { id: session.userId },
             });
-            if (!user || !isAllowedEmail(user.email)) throw notAllowed();
-            await ensureHouseholdMembership(user.id);
+            if (!user || !isAllowedEmail(user.email)) {
+              authLog('session_rejected', {
+                userId: session.userId,
+                email: user?.email ?? null,
+                reason: user ? 'not_in_allowlist' : 'user_not_found',
+                allowlistSize: allowlistSize(),
+              });
+              throw notAllowed();
+            }
+            const householdId = await ensureHouseholdMembership(user.id);
+            authLog('session_created', { userId: user.id, email: user.email, householdId });
           },
         },
       },

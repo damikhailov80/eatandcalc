@@ -57,6 +57,7 @@ The order matters only where noted. Everything below is already configured; repe
 | `BETTER_AUTH_SECRET` | new `openssl rand -base64 32`, not the local one. Changing it later signs everyone out |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | the same Web client as locally (`eatandcalc web`) |
 | `ALLOWED_EMAILS` | comma-separated family accounts |
+| `AUTH_LOG_LEVEL` | optional; Better Auth log level, default `info`, `debug` while chasing a sign-in problem |
 | `WEB_URL` | optional; landing for legacy `/invite/<code>` redirects, default `https://eat-and-calc-web.vercel.app` |
 
 - Env vars are read at request time, not at build time (`apps/api/src/lib/env.ts`, lazy `getAuth()` and `prisma`), so the build passes without them; a missing one shows up as a 500 with `X is not set` in Vercel → Logs.
@@ -156,6 +157,23 @@ From the repo root; it runs `npx eas-cli update --platform android --channel pro
 - A phone may run the old bundle until restart: API changes and migrations must stay backward compatible.
 
 ## Troubleshooting
+
+### Sign-in diagnostics
+
+When someone can't sign in (especially "nothing happens, the sign-in form comes back"), look at both ends:
+
+1. **Phone: «Журнал входа»** (button under «Войти через Google», also on the join screen). It lists every step of the last attempts: Google result (`cancelled` = the account picker returned no account), the account email, the `/sign-in/social` response, which cookies were stored, the `get-session` check, every failed API call with its status, error code and `x-vercel-id`, and why the app signed out on its own. Build info on top shows the API URL, webClientId and the OTA update id (proof the fix reached the phone). «Поделиться» sends it as text. The log lives in SecureStore (last 150 entries), so it survives restarts and ships with an OTA update (no native changes).
+2. **Server: Vercel → `eat-and-calc-api` → Logs**, search `"tag":"auth"`. Events: `user_created`, `user_rejected` / `session_rejected` (email not in `ALLOWED_EMAILS`, with the allowlist size, so a mangled env var shows up as a wrong count), `session_created`, `request_unauthorized` (with the cookie names the request carried), `request_no_household`, `api_error` (Better Auth's own errors, e.g. a rejected ID token). Match phone lines by `x-vercel-id`. Set `AUTH_LOG_LEVEL=debug` + Redeploy for more detail. Runtime logs are kept only briefly on the Hobby plan: look right after the attempt.
+
+How to read it:
+
+| Phone log | Meaning |
+|---|---|
+| `Google: cancelled` without the user closing the picker | Google side: the account isn't a test user on the OAuth consent screen (Testing mode), or the release SHA-1 / client config is off. |
+| `API /sign-in/social: 403 …` | Not in `ALLOWED_EMAILS` (server: `user_rejected` / `session_rejected`). Edited env needs a Redeploy. |
+| `API /sign-in/social: 401 …` | ID token rejected (audience, `GOOGLE_CLIENT_ID`); see `api_error` on the server. |
+| `cookie сохранены: нет` or `get-session: сессии нет` | Session cookie not stored or not accepted (`BETTER_AUTH_URL`, trusted origins). |
+| `GET /api/me → 401 UNAUTHORIZED` + automatic sign-out | Session created but not accepted on requests; server `request_unauthorized` shows which cookies arrived. |
 
 | Symptom | Cause / fix |
 |---|---|

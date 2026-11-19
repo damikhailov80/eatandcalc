@@ -10,10 +10,11 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { authClient } from '@/lib/auth';
+import { diag } from '@/lib/diagnostics';
 import { queryClient } from '@/lib/query';
 import { colors } from '@/theme';
 
@@ -32,14 +33,23 @@ export default function RootLayout() {
   const { data: session, isPending } = authClient.useSession();
 
   const ready = (fontsLoaded || !!fontsError) && !isPending;
+  const signedIn = !!session;
+
+  // Session transitions go to the diagnostics log: a sign-out nobody asked for becomes visible.
+  const prevSignedIn = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!ready || prevSignedIn.current === signedIn) return;
+    if (prevSignedIn.current !== null || signedIn) {
+      diag('session', signedIn ? `вход: ${session?.user.email}` : 'сессия пропала → экран входа');
+    }
+    prevSignedIn.current = signedIn;
+  }, [ready, signedIn, session?.user.email]);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
 
   if (!ready) return null;
-
-  const signedIn = !!session;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -57,6 +67,7 @@ export default function RootLayout() {
           {/* Invite deep link: reachable signed out too, the screen asks to sign in first. */}
           <Stack.Screen name="join/index" />
           <Stack.Screen name="join/[code]" />
+          <Stack.Screen name="diagnostics" />
         </Stack>
       </SafeAreaProvider>
     </QueryClientProvider>

@@ -36,6 +36,7 @@ function SignInStep() {
       ) : (
         <Button title="Войти через Google" large onPress={onSignIn} />
       )}
+      <Button title="Журнал входа" variant="ghost" onPress={() => router.push('/diagnostics')} />
     </Card>
   );
 }
