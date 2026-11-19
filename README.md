@@ -62,7 +62,7 @@ npm run android:sha1   # SHA-1 of the dev signing key, for Google Cloud
 
 **Installing the dev build on a phone:** with `npm run dev` running, open `http://localhost:3001` on the Mac and scan the QR code with the phone (or open `http://<Mac LAN IP>:3001` on the phone) → "Скачать APK" → install. Under `next dev` the landing's download card serves the dev APK from `apps/mobile/dist` (built by `npm run android:dev`); in production it serves the published release.
 
-**Connecting to Metro:** the dev build's launcher lists the Metro server found on the Wi-Fi; tap it once, later launches reopen it. Alternatively Enter URL manually → `http://<Mac LAN IP>:8081`. Metro's interactive keys (`r` reload) are unavailable inside `npm run dev`; run `npm run dev:mobile` in its own terminal when you need them.
+**Connecting to Metro:** the dev build has `http://<Mac LAN IP>:8081` baked in at build time and opens it on launch; if the Mac's IP changes, rebuild (`npm run android:dev`). Fallback: the launcher's Enter URL manually. Metro's interactive keys (`r` reload) are unavailable inside `npm run dev`; run `npm run dev:mobile` in its own terminal when you need them.
 
 The dev build only needs rebuilding (`npm run android:dev`) after adding a native library or changing `app.json`; JS changes arrive through Metro. It is signed with `apps/mobile/credentials/debug.keystore` (gitignored, created on first run): keep it, Google Cloud knows its SHA-1.
 

@@ -34,7 +34,7 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 
 ### Hot reload (JS)
 
-- `npm run dev` starts Postgres, API (:3000), landing (:3001) and Metro (:8081). The dev build's launcher lists the Metro server found on the Wi-Fi; tap it once and later launches reopen it. Fallback: Enter URL manually → `http://<Mac LAN IP>:8081`.
+- `npm run dev` starts Postgres, API (:3000), landing (:3001) and Metro (:8081). The dev build opens Metro by itself: `app.config.ts` bakes `http://<Mac LAN IP>:8081` (detected at build time, override with `DEV_SERVER_URL`) into `expo-dev-client` as `android.defaultLaunchURL`. If the Mac's IP changes (other Wi-Fi, new DHCP lease), rebuild with `npm run android:dev` or reserve the IP in the router. Fallback: the launcher's Enter URL manually.
 - Metro keeps a dependency graph of all modules and watches the files. On save it rebuilds only the changed module and pushes it to connected phones over a WebSocket (HMR).
 - On the phone, Hermes swaps the module and React Refresh re-renders the affected components, keeping their state (signed-in session, current tab, `useState` values).
 - Full reload happens automatically when a changed module has no component above it, on syntax errors (red screen, clears after the fix), or manually: shake the phone → Reload.
