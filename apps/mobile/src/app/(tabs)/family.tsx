@@ -1,7 +1,8 @@
-import { ZERO } from '@eatandcalc/shared';
+import { todayISO } from '@eatandcalc/shared';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { AccountsCard } from '@/components/family/AccountsCard';
@@ -9,12 +10,16 @@ import { MemberCard } from '@/components/family/MemberCard';
 import { Button, Screen, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { signOut } from '@/lib/auth';
+import { dayEaten, eatenOf, useWeekMeals } from '@/lib/day';
 import { queryClient, queryKeys, refreshAll } from '@/lib/query';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 export default function FamilyScreen() {
   const me = useQuery({ queryKey: queryKeys.me, queryFn: api.me });
   const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
+  const today = todayISO();
+  const meals = useWeekMeals(today);
+  const eaten = useMemo(() => dayEaten(meals.data ?? [], today), [meals.data, today]);
 
   if (me.isPending || members.isPending) {
     return (
@@ -52,8 +57,7 @@ export default function FamilyScreen() {
         <MemberCard
           key={m.id}
           member={m}
-          // Daily planner (Stage 6) will supply today's consumption.
-          eaten={ZERO}
+          eaten={eatenOf(eaten, m.id)}
           onEdit={() => router.push({ pathname: '/member/[id]', params: { id: m.id } })}
         />
       ))}

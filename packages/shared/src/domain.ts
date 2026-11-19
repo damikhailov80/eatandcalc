@@ -142,20 +142,31 @@ export type Consumption = {
   grams: number;
 };
 
-/** One cooking session served in a meal, shared between members. */
+/**
+ * A dish served in a meal: a frozen copy of a cooking session or a product (name, KBJU per 100 g, weight).
+ * Edits or deletes of the source never change it; the source ids only count leftovers.
+ */
 export type MealDish = {
   id: Id;
-  cookingSessionId: Id;
+  sessionId: Id | null;
+  productId: Id | null;
+  name: string;
+  /** Per 100 g. */
+  nutrients: Nutrients;
+  /** Date of the cooking session (null for a product). */
+  sourceDate: ISODate | null;
+  /** Cooked weight when copied (null for a product). */
+  weightG: number | null;
+  /** Per 100 g is of the raw weight (the session was not weighed). */
+  rawWeight: boolean;
   consumptions: Consumption[];
 };
 
+/** Stored only while it has dishes; the app draws empty breakfast / lunch / dinner itself. */
 export type Meal = {
   id: Id;
-  householdId: Id;
   date: ISODate;
   type: MealType;
-  /** Display title; defaults from type ("Завтрак"), snacks may be numbered. */
-  title: string;
-  order: number;
+  createdAt: string;
   dishes: MealDish[];
 };

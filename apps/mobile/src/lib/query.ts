@@ -34,6 +34,10 @@ export const queryKeys = {
   products: ['products'] as const,
   recipes: ['recipes'] as const,
   cooking: ['cooking'] as const,
+  /** All meals queries (prefix for invalidation). */
+  meals: ['meals'] as const,
+  /** Meals of the week starting on `monday`. */
+  mealsWeek: (monday: string) => ['meals', monday] as const,
 };
 
 /**

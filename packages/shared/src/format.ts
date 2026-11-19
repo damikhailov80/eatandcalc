@@ -22,7 +22,21 @@ const dayMonth = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long
 /** "19 ноября". */
 export const formatDayMonth = (date: Date) => dayMonth.format(date);
 
+const MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+
+/** "15 ноя". */
+export const formatDayMonthShort = (date: Date) => `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]}`;
+
+/** Monday-first short weekday: "Пн".."Вс". */
+export const WEEKDAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
+
 const weekday = new Intl.DateTimeFormat('ru-RU', { weekday: 'long' });
+
+/** "Воскресенье". */
+export function formatWeekday(date: Date) {
+  const day = weekday.format(date);
+  return `${day.charAt(0).toUpperCase()}${day.slice(1)}`;
+}
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /** Local calendar date → `YYYY-MM-DD`. */

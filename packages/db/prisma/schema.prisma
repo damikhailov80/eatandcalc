@@ -94,6 +94,7 @@ model Household {
   recipes       Recipe[]
   recipeStates  HouseholdRecipe[]
   cooking       CookingSession[]
+  meals         Meal[]
 
   @@map("household")
 }
@@ -145,19 +146,20 @@ enum Sex {
 /// A person whose nutrition is tracked (not an account: kids have profiles without accounts).
 /// Deleting archives (`archived_at`) so consumption history keeps its member.
 model FamilyMember {
-  id          String    @id @default(cuid())
-  householdId String    @map("household_id")
-  name        String
-  sex         Sex
-  color       String
-  kcal        Float
-  protein     Float
-  fat         Float
-  carbs       Float
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  archivedAt  DateTime? @map("archived_at")
-  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  id           String        @id @default(cuid())
+  householdId  String        @map("household_id")
+  name         String
+  sex          Sex
+  color        String
+  kcal         Float
+  protein      Float
+  fat          Float
+  carbs        Float
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  archivedAt   DateTime?     @map("archived_at")
+  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  consumptions Consumption[]
 
   @@index([householdId])
   @@map("family_member")
@@ -202,6 +204,7 @@ model Product {
   household   Household?         @relation(fields: [householdId], references: [id], onDelete: Cascade)
   states      HouseholdProduct[]
   favorites   ProductFavorite[]
+  dishes      MealDish[]
 
   @@index([householdId])
   @@map("product")
@@ -309,8 +312,80 @@ model CookingSession {
   recipe       Recipe?          @relation(fields: [recipeId], references: [id], onDelete: SetNull)
   copiedFrom   CookingSession?  @relation("CookingCopies", fields: [copiedFromId], references: [id], onDelete: SetNull)
   copies       CookingSession[] @relation("CookingCopies")
+  dishes       MealDish[]
 
   @@index([householdId, date])
   @@index([recipeId])
   @@map("cooking_session")
+}
+
+// ---------- Daily planner ----------
+
+enum MealType {
+  breakfast
+  lunch
+  dinner
+  snack
+
+  @@map("meal_type")
+}
+
+/// One meal of a day. Stored only while it has dishes (empty breakfast / lunch / dinner are drawn by the app).
+model Meal {
+  id          String     @id @default(cuid())
+  householdId String     @map("household_id")
+  date        DateTime   @db.Date
+  type        MealType
+  createdAt   DateTime   @default(now()) @map("created_at")
+  household   Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  dishes      MealDish[]
+
+  @@index([householdId, date])
+  @@map("meal")
+}
+
+/// A dish served in a meal: a frozen copy of a cooking session or a product (name, KBJU per 100 g, weight), so
+/// later edits or deletes of the source never change the history. `session_id` / `product_id` are kept only to
+/// count leftovers and suggest "как в прошлый раз".
+model MealDish {
+  id           String          @id @default(cuid())
+  mealId       String          @map("meal_id")
+  position     Int             @default(0)
+  sessionId    String?         @map("session_id")
+  productId    String?         @map("product_id")
+  name         String
+  /// Per 100 g.
+  kcal         Float
+  protein      Float
+  fat          Float
+  carbs        Float
+  /// Date of the cooking session (null for a product).
+  sourceDate   DateTime?       @map("source_date") @db.Date
+  /// Weight of the cooked dish when copied (null for a product).
+  weightG      Float?          @map("weight_g")
+  /// The session was not weighed yet: per 100 g is of the raw weight.
+  rawWeight    Boolean         @default(false) @map("raw_weight")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  meal         Meal            @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  session      CookingSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  product      Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  consumptions Consumption[]
+
+  @@index([mealId])
+  @@index([sessionId])
+  @@map("meal_dish")
+}
+
+/// Grams of a dish eaten by one family member.
+model Consumption {
+  id       String       @id @default(cuid())
+  dishId   String       @map("dish_id")
+  memberId String       @map("member_id")
+  grams    Float
+  dish     MealDish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  member   FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, memberId])
+  @@index([memberId])
+  @@map("consumption")
 }

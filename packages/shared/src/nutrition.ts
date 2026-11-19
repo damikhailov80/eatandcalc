@@ -2,7 +2,7 @@
  * Pure nutrition math. All screens must use these helpers instead of computing inline.
  * Formulas: CLAUDE.md → "Data model".
  */
-import type { CookingItem, Id, Nutrients, Product, Quantity, RecipeItem, UnitKey } from './domain';
+import type { CookingItem, Id, Meal, MealDish, Nutrients, Product, Quantity, RecipeItem, UnitKey } from './domain';
 
 export const ZERO: Nutrients = { kcal: 0, protein: 0, fat: 0, carbs: 0 };
 
@@ -133,6 +133,28 @@ export function perPortion(total: Nutrients, portions: number): Nutrients {
 export function consumed(sessionTotal: Nutrients, cookedWeightG: number, gramsEaten: number): Nutrients {
   return cookedWeightG > 0 ? scale(sessionTotal, gramsEaten / cookedWeightG) : ZERO;
 }
+
+/** What `grams` of a meal dish give (the dish keeps its KBJU per 100 g). */
+export const dishConsumed = (per100: Nutrients, grams: number): Nutrients => scale(per100, grams / 100);
+
+/** Total grams served of a dish. */
+export const dishGrams = (dish: Pick<MealDish, 'consumptions'>) => dish.consumptions.reduce((g, c) => g + c.grams, 0);
+
+/** KBJU of everything served of a dish. */
+export const dishTotal = (dish: Pick<MealDish, 'nutrients' | 'consumptions'>) => dishConsumed(dish.nutrients, dishGrams(dish));
+
+/** What each member ate over the meals (by member id). */
+export function eatenByMember(meals: readonly Pick<Meal, 'dishes'>[]): Map<Id, Nutrients> {
+  const eaten = new Map<Id, Nutrients>();
+  for (const meal of meals)
+    for (const dish of meal.dishes)
+      for (const c of dish.consumptions)
+        eaten.set(c.memberId, add(eaten.get(c.memberId) ?? ZERO, dishConsumed(dish.nutrients, c.grams)));
+  return eaten;
+}
+
+/** Cooking leftover: cooked (or raw) weight minus everything served; negative = more served than cooked. */
+export const leftover = (weightG: number, eatenG: number) => weightG - eatenG;
 
 /** Norm minus eaten; negative values mean the norm is exceeded. */
 export function remaining(norm: Nutrients, eaten: Nutrients): Nutrients {

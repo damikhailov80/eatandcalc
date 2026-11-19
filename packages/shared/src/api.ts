@@ -247,11 +247,75 @@ export type CookingData = z.infer<typeof CookingDataSchema>;
 export const CookingSchema = CookingDataSchema.extend({
   id: z.string(),
   createdAt: z.string(),
+  /** Grams of it served in all meals (leftover = cooked weight − eaten). Missing from older servers. */
+  eatenG: z.number().min(0).default(0),
 });
 export type CookingDto = z.infer<typeof CookingSchema>;
 
 export const CookingListResponseSchema = z.object({ sessions: z.array(CookingSchema) });
 export const CookingResponseSchema = z.object({ session: CookingSchema });
+
+// ---------- Daily planner ----------
+
+export const MealTypeSchema = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
+
+export const ConsumptionSchema = z.object({
+  memberId: z.string().min(1),
+  grams: z.number().positive().max(10_000),
+});
+export type ConsumptionDto = z.infer<typeof ConsumptionSchema>;
+
+/** Who ate how much; one row per member. */
+const ConsumptionsSchema = z
+  .array(ConsumptionSchema)
+  .max(50)
+  .refine((list) => new Set(list.map((c) => c.memberId)).size === list.length);
+
+/** A frozen copy of a cooking session or a product served in a meal (`MealDish`). */
+export const MealDishSchema = z.object({
+  id: z.string(),
+  sessionId: z.string().nullable(),
+  productId: z.string().nullable(),
+  name: z.string(),
+  /** Per 100 g. */
+  nutrients: NutrientsSchema,
+  sourceDate: ISODateSchema.nullable(),
+  weightG: z.number().nullable(),
+  rawWeight: z.boolean(),
+  consumptions: z.array(ConsumptionSchema),
+});
+export type MealDishDto = z.infer<typeof MealDishSchema>;
+
+export const MealSchema = z.object({
+  id: z.string(),
+  date: ISODateSchema,
+  type: MealTypeSchema,
+  createdAt: z.string(),
+  dishes: z.array(MealDishSchema),
+});
+export type MealDto = z.infer<typeof MealSchema>;
+
+/** `GET /api/meals?from=&to=` (dates inclusive, at most ~a year). */
+export const MealsQuerySchema = z.object({ from: ISODateSchema, to: ISODateSchema });
+export const MealsResponseSchema = z.object({ meals: z.array(MealSchema) });
+export const MealResponseSchema = z.object({ meal: MealSchema });
+
+/**
+ * `POST /api/meals/dishes`: adds a dish to an existing meal (`mealId`) or to a new meal of `type` on `date`.
+ * The server copies the source as the family sees it now.
+ */
+export const AddDishRequestSchema = z.object({
+  date: ISODateSchema,
+  mealId: z.string().min(1).nullable(),
+  type: MealTypeSchema,
+  source: z.union([z.object({ sessionId: z.string().min(1) }), z.object({ productId: z.string().min(1) })]),
+  consumptions: ConsumptionsSchema,
+});
+export type AddDishRequest = z.infer<typeof AddDishRequestSchema>;
+
+/** `PATCH /api/meals/dishes/:id`: replaces who ate how much. */
+export const UpdateDishRequestSchema = z.object({ consumptions: ConsumptionsSchema });
+export type UpdateDishRequest = z.infer<typeof UpdateDishRequestSchema>;
 
 export const ApiErrorSchema = z.object({
   error: z.string(),

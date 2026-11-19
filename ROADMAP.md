@@ -10,7 +10,7 @@ Development goes in stages; each stage ends with a working app.
 | 3 | Recipes | Shared catalog + own recipes, editor (products in their units), totals / per 100 g, hide / ♥ / delete, merge on join | ✅ done (plan below) |
 | 4 | Family | Members list, profile editor, norms, macro-energy check; account roles (owner/member), invite link + code, join/leave/remove | ✅ done (today's eaten = 0 until stage 6) |
 | 5 | Cooking | Session from a recipe, a copy or blank; editor (multiplier, frozen product copies, pot and gross weight → per 100 g); history by day with search; delete, cook again; join / leave | ✅ done (plan below; leftovers with stage 6) |
-| 6 | Daily planner | Date strip, meals, add dish (leftovers / history / recipe), distribution between members, member rings | |
+| 6 | Daily planner | Date strip, meals, add dish (leftovers / history / recipe / product), distribution between members, member rings | 🔧 in progress (plan below) |
 | 7 | Stats & history | Member day stats, history calendar, copy a day's plan | |
 | 8 | Polish | Frequent items, empty states, haptics, performance | |
 | 9 | Release | Vercel (API + landing), Neon, CI migrations, EAS production APK on the landing, EAS Update | code from stage 1 waits |
@@ -76,7 +76,22 @@ Steps (each one ends with a test on the phones, then commit):
 2. [x] Delete, "Приготовить снова" (copy dated today), new cooking as a copy of a session, "Приготовить" from a recipe.
 3. [x] Join / leave: move on join (`moveCookingOnJoin`), copy on leave (`copyCookingOnLeave`).
 
+## Stage 6 plan: daily planner
+
+Decisions:
+- An empty day shows Завтрак, Обед, Ужин; a meal is stored only with its first dish and goes with its last one (one breakfast / lunch / dinner per day, the server reuses it). «Добавить приём пищи» adds a snack («Перекус», «Перекус 2»).
+- A dish is a **frozen copy** of a cooking session (KBJU per 100 g of the finished dish via `cookingTotals`, weight, «сырой вес» flag, the session's date) or of a product (KBJU per 100 g): edits / deletes of the session, recipe or product never change the history. `session_id` / `product_id` (SetNull) only count leftovers and suggest «как в прошлый раз».
+- Eaten = `Consumption` (member, grams): `dish per 100 g × grams / 100`. Leftover of a session = its weight (raw until weighed) − grams in all dishes with it; overspending is allowed (badge).
+- Join / leave: meals don't move (family members don't either): the joiner's meals go with the old household, on leave the family keeps all; moved / copied sessions start untouched.
+- Two people editing a day: each dish is written on its own, last write wins; other phones see it through the sync poll.
+
+Steps (each one ends with a test on the phones, then commit):
+1. [ ] Day + dish from a session + manual split: migration `meals`, `GET /api/meals?from&to`, `POST /api/meals/dishes`, `PATCH|DELETE /api/meals/dishes/:id`, `eatenG` in `/api/cooking`; Day tab (date strip, rings, meal cards), `day/add` (sessions), `day/dish` (per-member grams, edit, remove); today's eaten on Family.
+2. [ ] Leftovers: eaten / leftover in the split, «Поровну», «Всё без остатка», «Есть остатки» in `day/add`, leftover on cooking cards.
+3. [ ] Other sources: recipe → new cooking → «Сохранить и распределить», «Повторить» a past session, a product as a dish.
+4. [ ] Meals & extras: snacks, «Как в прошлый раз», ring over-badge details, «готовка изменена» → refresh the copy.
+5. [ ] Join / leave check, docs.
+
 ## Open questions
 
 - Time zones: `date` is the household's local calendar date.
-- Conflict handling when two people edit the same day (last write wins?).

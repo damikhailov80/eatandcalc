@@ -5,6 +5,8 @@ import {
   FamilyMembersResponseSchema,
   InviteResponseSchema,
   JoinPreviewResponseSchema,
+  MealResponseSchema,
+  MealsResponseSchema,
   MeResponseSchema,
   NOT_ALLOWED_ERROR,
   OkResponseSchema,
@@ -14,7 +16,10 @@ import {
   RecipesResponseSchema,
   SyncResponseSchema,
   type CookingData,
+  type AddDishRequest,
+  type ConsumptionDto,
   type CookingDto,
+  type MealDto,
   type FamilyMemberDto,
   type FamilyMemberInput,
   type Invite,
@@ -238,5 +243,22 @@ export const api = {
     ).session,
   deleteCooking: async (id: string): Promise<void> => {
     await apiRequest(`/api/cooking/${encodeURIComponent(id)}`, OkResponseSchema, { method: 'DELETE' });
+  },
+
+  /** Meals of the days `from`..`to` (inclusive). */
+  meals: async (from: string, to: string): Promise<MealDto[]> =>
+    (await apiRequest(`/api/meals?from=${from}&to=${to}`, MealsResponseSchema)).meals,
+  /** Returns the meal the dish went to. */
+  addDish: async (input: AddDishRequest): Promise<MealDto> =>
+    (await apiRequest('/api/meals/dishes', MealResponseSchema, { method: 'POST', json: input })).meal,
+  updateDish: async (id: string, consumptions: ConsumptionDto[]): Promise<MealDto> =>
+    (
+      await apiRequest(`/api/meals/dishes/${encodeURIComponent(id)}`, MealResponseSchema, {
+        method: 'PATCH',
+        json: { consumptions },
+      })
+    ).meal,
+  deleteDish: async (id: string): Promise<void> => {
+    await apiRequest(`/api/meals/dishes/${encodeURIComponent(id)}`, OkResponseSchema, { method: 'DELETE' });
   },
 };

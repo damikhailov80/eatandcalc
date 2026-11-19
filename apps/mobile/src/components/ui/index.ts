@@ -17,3 +17,4 @@ export * from './NumberField';
 export * from './ListScreen';
 export * from './QrCode';
 export * from './MacroBar';
+export * from './ProgressRing';
