@@ -5,7 +5,9 @@ import {
   formatGrams,
   formatInt,
   formatKcal,
+  formatNumberInput,
   fromISODate,
+  dishUnitShort,
   type FamilyMemberDto,
   type MealDishDto,
 } from '@eatandcalc/shared';
@@ -22,14 +24,21 @@ export type MealCardProps = {
   onDishPress: (dish: MealDishDto) => void;
 };
 
-/** "Готовка 15 ноя · 102 ккал / 100 г" or "Продукт · 52 ккал / 100 г". */
+/** "Готовка 15 ноя · 102 ккал / 100 г", "Рецепт · …", "Продукт · 52 ккал / 100 г". */
 export function dishMeta(dish: MealDishDto) {
   const per100 = `${formatInt(dish.nutrients.kcal)} ккал / 100 г`;
   if (dish.sourceDate) return `Готовка ${formatDayMonthShort(fromISODate(dish.sourceDate))} · ${per100}`;
-  return `Продукт · ${per100}`;
+  if (dish.recipeId) return `Рецепт · ${per100}`;
+  return dish.productId ? `Продукт · ${per100}` : per100;
 }
 
-type MemberLine = { dish: MealDishDto; grams: number; kcal: number };
+/** "1 шт (сред.)", "1 порц." when entered in a unit, otherwise "150 г". */
+const amountText = (c: MealDishDto['consumptions'][number]) =>
+  c.unit && c.unit !== 'g' && c.amount != null
+    ? `${formatNumberInput(c.amount)} ${dishUnitShort(c.unit)}`
+    : formatGrams(c.grams);
+
+type MemberLine = { dish: MealDishDto; amount: string; kcal: number };
 type MemberGroup = { memberId: string; member: FamilyMemberDto | undefined; kcal: number; lines: MemberLine[] };
 
 /** Who ate what in the meal: members in the family's order (unknown / archived ones last), each with their dishes. */
@@ -39,7 +48,7 @@ function byMember(dishes: readonly MealDishDto[], members: ReadonlyMap<string, F
     for (const c of dish.consumptions) {
       const g = groups.get(c.memberId) ?? { memberId: c.memberId, member: members.get(c.memberId), kcal: 0, lines: [] };
       const kcal = dishConsumed(dish.nutrients, c.grams).kcal;
-      g.lines.push({ dish, grams: c.grams, kcal });
+      g.lines.push({ dish, amount: amountText(c), kcal });
       g.kcal += kcal;
       groups.set(c.memberId, g);
     }
@@ -80,7 +89,7 @@ export function MealCard({ slot, members, onAddDish, onDishPress }: MealCardProp
               style={({ pressed }) => [styles.line, pressed && styles.linePressed]}>
               <Text style={styles.dishName} numberOfLines={1}>{line.dish.name}</Text>
               <Text style={styles.lineNumbers} color={colors.textSecondary}>
-                {`${formatGrams(line.grams)} · ${formatKcal(line.kcal)}`}
+                {`${line.amount} · ${formatKcal(line.kcal)}`}
               </Text>
             </Pressable>
           ))}

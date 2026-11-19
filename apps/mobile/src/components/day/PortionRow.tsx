@@ -1,24 +1,55 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { dishConsumed, formatInt, formatOne, type FamilyMemberDto, type Nutrients } from '@eatandcalc/shared';
+import {
+  dishConsumed,
+  formatGrams,
+  formatInt,
+  formatOne,
+  dishUnitShort,
+  type DishUnit,
+  type FamilyMemberDto,
+  type Nutrients,
+} from '@eatandcalc/shared';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { MemberAvatar, Stepper, Text } from '@/components/ui';
+import { Chip, MemberAvatar, Stepper, Text } from '@/components/ui';
+import { dishUnitGrams, type DishMeasure } from '@/lib/day';
 import { colors, fonts, spacing } from '@/theme';
 
 export type PortionRowProps = {
   member: FamilyMemberDto;
   on: boolean;
   grams: number;
+  /** Unit the amount is typed in; grams stay the stored value. */
+  unit: DishUnit;
+  /** Units offered; one = no switch. */
+  units: readonly DishUnit[];
+  /** Unit weights and the portion of the dish. */
+  measure: DishMeasure;
   /** KBJU per 100 g of the dish. */
   per100: Nutrients;
   /** What the member ate that day without this dish. */
   eatenElsewhere: Nutrients;
   onToggle: () => void;
-  onGrams: (grams: number) => void;
+  onChange: (next: { grams?: number; unit?: DishUnit }) => void;
 };
 
+/** Grams and millilitres step by 10, spoons and pieces by one. */
+const stepOf = (unit: DishUnit) => (unit === 'g' || unit === 'ml' ? 10 : 1);
+
 /** One member in a dish split: on/off, grams, what it gives and how much of the day's norm is left. */
-export function PortionRow({ member, on, grams, per100, eatenElsewhere, onToggle, onGrams }: PortionRowProps) {
+export function PortionRow({
+  member,
+  on,
+  grams,
+  unit,
+  units,
+  measure,
+  per100,
+  eatenElsewhere,
+  onToggle,
+  onChange,
+}: PortionRowProps) {
+  const per = dishUnitGrams(measure, unit) ?? 1;
   const got = dishConsumed(per100, on ? grams : 0);
   const left = member.norms.kcal - eatenElsewhere.kcal - got.kcal;
   return (
@@ -40,11 +71,26 @@ export function PortionRow({ member, on, grams, per100, eatenElsewhere, onToggle
           </Text>
         </View>
       </Pressable>
+      {on && units.length > 1 ? (
+        <View style={styles.units}>
+          {units.map((u) => (
+            <Chip key={u} label={dishUnitShort(u)} selected={u === unit} onPress={() => onChange({ unit: u })} />
+          ))}
+        </View>
+      ) : null}
       {on ? (
         <View style={styles.amount}>
-          <Stepper value={grams} onChange={onGrams} step={10} max={5000} unit="г" label={`Граммы — ${member.name}`} inputWidth={48} />
+          <Stepper
+            value={Math.round((grams / per) * 10) / 10}
+            onChange={(amount) => onChange({ grams: amount * per })}
+            step={stepOf(unit)}
+            max={unit === 'g' || unit === 'ml' ? 5000 : 99}
+            unit={dishUnitShort(unit)}
+            label={`Сколько — ${member.name}`}
+            inputWidth={48}
+          />
           <Text style={styles.macros} color={colors.textSecondary}>
-            {`${formatInt(got.kcal)} ккал · Б ${formatOne(got.protein)} · Ж ${formatOne(got.fat)} · У ${formatOne(got.carbs)}`}
+            {`${unit === 'g' ? '' : `${formatGrams(grams)} · `}${formatInt(got.kcal)} ккал · Б ${formatOne(got.protein)} · Ж ${formatOne(got.fat)} · У ${formatOne(got.carbs)}`}
           </Text>
         </View>
       ) : null}
@@ -69,6 +115,7 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 1 },
   name: { fontFamily: fonts.bodySemibold, fontSize: 15 },
   left: { fontSize: 12, fontFamily: fonts.body },
+  units: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingLeft: 36 },
   amount: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingLeft: 36 },
   macros: { flex: 1, fontSize: 12, fontFamily: fonts.body },
 });

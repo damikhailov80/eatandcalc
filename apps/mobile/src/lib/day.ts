@@ -3,8 +3,12 @@ import {
   fromISODate,
   shiftISODate,
   ZERO,
+  unitGrams,
+  UNIT_KEYS,
+  type DishUnit,
   type MealDto,
   type Nutrients,
+  type ProductUnits,
 } from '@eatandcalc/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
@@ -90,3 +94,21 @@ export function useWeekMeals(date: string) {
     placeholderData: keepPreviousData,
   });
 }
+
+/** How a dish is measured: its unit weights (products) and one portion (recipes). */
+export type DishMeasure = { units: ProductUnits; portionG: number | null };
+
+/** Grams in one `unit` of the dish, or null when it isn't measured that way. */
+export const dishUnitGrams = (m: DishMeasure, unit: DishUnit) =>
+  unit === 'portion' ? (m.portionG && m.portionG > 0 ? m.portionG : null) : unitGrams(m, unit);
+
+/** Units a dish can be eaten in: a portion first (recipes), grams, then the product's own (spoons, pieces). */
+export const dishUnits = (m: DishMeasure): DishUnit[] => [
+  ...(m.portionG ? (['portion'] as const) : []),
+  'g',
+  ...UNIT_KEYS.filter((k) => m.units[k] != null),
+];
+
+/** What a new dish is counted in: a portion (recipe), pieces when the product has them ("1 яблоко"), else grams. */
+export const defaultDishUnit = (m: DishMeasure): DishUnit =>
+  m.portionG ? 'portion' : ((['pieceM', 'pieceS', 'pieceL'] as const).find((k) => m.units[k] != null) ?? 'g');

@@ -17,7 +17,7 @@ import {
   SyncResponseSchema,
   type CookingData,
   type AddDishRequest,
-  type ConsumptionDto,
+  type ConsumptionInput,
   type CookingDto,
   type MealDto,
   type FamilyMemberDto,
@@ -251,7 +251,7 @@ export const api = {
   /** Returns the meal the dish went to. */
   addDish: async (input: AddDishRequest): Promise<MealDto> =>
     (await apiRequest('/api/meals/dishes', MealResponseSchema, { method: 'POST', json: input })).meal,
-  updateDish: async (id: string, consumptions: ConsumptionDto[]): Promise<MealDto> =>
+  updateDish: async (id: string, consumptions: ConsumptionInput[]): Promise<MealDto> =>
     (
       await apiRequest(`/api/meals/dishes/${encodeURIComponent(id)}`, MealResponseSchema, {
         method: 'PATCH',

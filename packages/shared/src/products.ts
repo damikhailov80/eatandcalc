@@ -49,6 +49,9 @@ export const unitShort: Record<UnitKey, string> = {
   pieceL: 'шт (бол.)',
 };
 
+/** Short name of a dish unit: a product unit or "порц." (a whole recipe). */
+export const dishUnitShort = (unit: UnitKey | 'portion') => (unit === 'portion' ? 'порц.' : unitShort[unit]);
+
 /** Unit name in the product editor ("1 ст. ложка"). */
 export const unitLong: Record<ExtraUnit, string> = {
   ml: '1 мл',

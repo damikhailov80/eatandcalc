@@ -88,7 +88,7 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 |---|---|---|
 | `Main` | Day plan (main tab) | weekday strip; copy-day & history buttons; per-member kcal rings with "ещё N" / over badge; meal cards grouped by member (dishes with weight and kcal, the member's kcal per meal; no meal / family totals); "+ Блюдо"; "Добавить приём пищи" |
 | `MemberStats` | Member's day | member switcher; kcal ring; macro bars; norm / eaten / remaining table; by meal |
-| `AddDish` | Add dish (sheet) | Готовки / Рецепты; recent sessions with "Повторить"; recipes → new session |
+| `AddDish` | Add dish (sheet) | Готовки / Рецепты / Продукты with search; each pick goes straight to the split (a recipe is served as is, no new session) |
 | `Distribute` | Split dish | session summary; "Как в прошлый раз"; per-member toggle, grams, day remaining, macros |
 | `History` | Nutrition history | family/member filter; month calendar with status dots; week average; past days with copy-to-today |
 | `CookingHistory` | Cooking tab | name search; by date; card: kcal, source (по рецепту / изменено N / копия / без рецепта), weight, kcal/100 g; "Приготовить снова" |

@@ -257,9 +257,16 @@ export const CookingResponseSchema = z.object({ session: CookingSchema });
 
 export const MealTypeSchema = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
 
+/** A unit a dish is eaten in: a product's unit, or `portion` = a whole recipe (its weight is the dish's `weightG`). */
+export const DishUnitSchema = z.enum([...UnitKeySchema.options, 'portion']);
+export type DishUnit = z.infer<typeof DishUnitSchema>;
+
 export const ConsumptionSchema = z.object({
   memberId: z.string().min(1),
   grams: z.number().positive().max(10_000),
+  /** How it was entered ("1 шт (сред.)", "1 порц."); null = in grams. Missing from older apps / servers. */
+  amount: z.number().positive().max(10_000).nullable().default(null),
+  unit: DishUnitSchema.nullable().default(null),
 });
 export type ConsumptionDto = z.infer<typeof ConsumptionSchema>;
 
@@ -269,17 +276,21 @@ const ConsumptionsSchema = z
   .max(50)
   .refine((list) => new Set(list.map((c) => c.memberId)).size === list.length);
 
-/** A frozen copy of a cooking session or a product served in a meal (`MealDish`). */
+/** A frozen copy of a cooking session, a recipe or a product served in a meal (`MealDish`). */
 export const MealDishSchema = z.object({
   id: z.string(),
   sessionId: z.string().nullable(),
+  recipeId: z.string().nullable().default(null),
   productId: z.string().nullable(),
   name: z.string(),
   /** Per 100 g. */
   nutrients: NutrientsSchema,
   sourceDate: ISODateSchema.nullable(),
+  /** Session: the cooked weight; recipe: one portion (the recipe's weight); product: null. */
   weightG: z.number().nullable(),
   rawWeight: z.boolean(),
+  /** Grams per unit of the product when copied; `{}` for sessions and recipes. */
+  units: ProductUnitsSchema.default({}),
   consumptions: z.array(ConsumptionSchema),
 });
 export type MealDishDto = z.infer<typeof MealDishSchema>;
@@ -306,14 +317,19 @@ export const AddDishRequestSchema = z.object({
   date: ISODateSchema,
   mealId: z.string().min(1).nullable(),
   type: MealTypeSchema,
-  source: z.union([z.object({ sessionId: z.string().min(1) }), z.object({ productId: z.string().min(1) })]),
+  source: z.union([
+    z.object({ sessionId: z.string().min(1) }),
+    z.object({ recipeId: z.string().min(1) }),
+    z.object({ productId: z.string().min(1) }),
+  ]),
   consumptions: ConsumptionsSchema,
 });
-export type AddDishRequest = z.infer<typeof AddDishRequestSchema>;
+export type AddDishRequest = z.input<typeof AddDishRequestSchema>;
 
 /** `PATCH /api/meals/dishes/:id`: replaces who ate how much. */
 export const UpdateDishRequestSchema = z.object({ consumptions: ConsumptionsSchema });
-export type UpdateDishRequest = z.infer<typeof UpdateDishRequestSchema>;
+export type UpdateDishRequest = z.input<typeof UpdateDishRequestSchema>;
+export type ConsumptionInput = z.input<typeof ConsumptionSchema>;
 
 export const ApiErrorSchema = z.object({
   error: z.string(),

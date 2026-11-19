@@ -140,25 +140,32 @@ export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 export type Consumption = {
   memberId: Id;
   grams: number;
+  /** How it was entered ("1 шт (сред.)", "1 порц."); null = in grams. */
+  amount: number | null;
+  /** `portion` = a whole recipe (the dish's `weightG`). */
+  unit: UnitKey | 'portion' | null;
 };
 
 /**
- * A dish served in a meal: a frozen copy of a cooking session or a product (name, KBJU per 100 g, weight).
+ * A dish served in a meal: a frozen copy of a cooking session, a recipe or a product (name, KBJU per 100 g, weight).
  * Edits or deletes of the source never change it; the source ids only help suggest "как в прошлый раз".
  */
 export type MealDish = {
   id: Id;
   sessionId: Id | null;
+  recipeId: Id | null;
   productId: Id | null;
   name: string;
   /** Per 100 g. */
   nutrients: Nutrients;
   /** Date of the cooking session (null for a product). */
   sourceDate: ISODate | null;
-  /** Cooked weight when copied (null for a product). */
+  /** Session: the cooked weight; recipe: one portion (the recipe's weight); product: null. */
   weightG: number | null;
   /** Per 100 g is of the raw weight (the session was not weighed). */
   rawWeight: boolean;
+  /** Grams per unit of the product when copied; `{}` for sessions and recipes. */
+  units: ProductUnits;
   consumptions: Consumption[];
 };
 

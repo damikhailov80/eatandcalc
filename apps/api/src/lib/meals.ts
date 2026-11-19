@@ -4,15 +4,19 @@ import {
   cookedWeight,
   cookingTotals,
   MealSchema,
+  ProductUnitsSchema,
+  recipeTotals,
+  DishUnitSchema,
   type AddDishRequest,
-  type ConsumptionDto,
+  type ConsumptionInput,
   type MealDto,
   type Nutrients,
 } from '@eatandcalc/shared';
 
 import { dbDate, isoDate, rowItems } from './cooking';
 import { HttpError } from './http';
-import { getProduct } from './products';
+import { getProduct, listProducts } from './products';
+import { getRecipe } from './recipes';
 import type { RequestUser } from './session';
 
 type DishRow = MealDish & { consumptions: Consumption[] };
@@ -34,13 +38,20 @@ const toMealDto = (m: MealRow): MealDto =>
     dishes: m.dishes.map((d) => ({
       id: d.id,
       sessionId: d.sessionId,
+      recipeId: d.recipeId,
       productId: d.productId,
       name: d.name,
       nutrients: { kcal: d.kcal, protein: d.protein, fat: d.fat, carbs: d.carbs },
       sourceDate: d.sourceDate ? isoDate(d.sourceDate) : null,
       weightG: d.weightG,
       rawWeight: d.rawWeight,
-      consumptions: d.consumptions.map((c) => ({ memberId: c.memberId, grams: c.grams })),
+      units: ProductUnitsSchema.catch({}).parse(d.units),
+      consumptions: d.consumptions.map((c) => ({
+        memberId: c.memberId,
+        grams: c.grams,
+        amount: c.amount,
+        unit: DishUnitSchema.nullable().catch(null).parse(c.unit),
+      })),
     })),
   });
 
@@ -73,7 +84,7 @@ async function findDish(me: RequestUser, id: string) {
 }
 
 /** Every member must be one of the family's (archived ones too: their history stays); otherwise 400. */
-async function checkMembers(me: RequestUser, consumptions: readonly ConsumptionDto[]) {
+async function checkMembers(me: RequestUser, consumptions: readonly ConsumptionInput[]) {
   if (!consumptions.length) return;
   const ids = consumptions.map((c) => c.memberId);
   const found = await prisma.familyMember.count({ where: { id: { in: ids }, householdId: me.householdId } });
@@ -82,12 +93,14 @@ async function checkMembers(me: RequestUser, consumptions: readonly ConsumptionD
 
 type Snapshot = {
   sessionId: string | null;
+  recipeId: string | null;
   productId: string | null;
   name: string;
   nutrients: Nutrients;
   sourceDate: Date | null;
   weightG: number | null;
   rawWeight: boolean;
+  units: Prisma.InputJsonValue;
 };
 
 /** The dish as a frozen copy of the source as the family sees it now. */
@@ -98,12 +111,34 @@ async function snapshot(me: RequestUser, source: AddDishRequest['source']): Prom
     const totals = cookingTotals(rowItems(s), cookedWeight(s.grossWeightG, s.potWeightG));
     return {
       sessionId: s.id,
+      recipeId: null,
       productId: null,
       name: s.name,
       nutrients: totals.per100,
       sourceDate: s.date,
       weightG: totals.weightG,
       rawWeight: !totals.weighed,
+      units: {},
+    };
+  }
+  if ('recipeId' in source) {
+    const fail = () => {
+      throw new HttpError(400, ApiErrors.validation);
+    };
+    const [r, products] = await Promise.all([getRecipe(me, source.recipeId).catch(fail), listProducts(me)]);
+    const totals = recipeTotals(r.items, new Map(products.map((p) => [p.id, p])));
+    if (totals.grams <= 0) fail();
+    return {
+      sessionId: null,
+      recipeId: r.id,
+      productId: null,
+      name: r.name,
+      nutrients: totals.per100,
+      sourceDate: null,
+      // One portion = the whole recipe.
+      weightG: totals.grams,
+      rawWeight: false,
+      units: {},
     };
   }
   const p = await getProduct(me, source.productId).catch(() => {
@@ -111,17 +146,23 @@ async function snapshot(me: RequestUser, source: AddDishRequest['source']): Prom
   });
   return {
     sessionId: null,
+    recipeId: null,
     productId: p.id,
     name: p.name,
     nutrients: p.nutrients,
     sourceDate: null,
     weightG: null,
     rawWeight: false,
+    units: p.units,
   };
 }
 
-const consumptionRows = (list: readonly ConsumptionDto[]) =>
-  list.map((c) => ({ memberId: c.memberId, grams: c.grams }));
+/** Entered in grams (or no unit) = stored as plain grams. */
+const consumptionRows = (list: readonly ConsumptionInput[]) =>
+  list.map((c) => {
+    const inUnit = c.unit != null && c.unit !== 'g' && c.amount != null;
+    return { memberId: c.memberId, grams: c.grams, amount: inUnit ? c.amount : null, unit: inUnit ? c.unit : null };
+  });
 
 /** Adds a dish to the meal (`mealId`) or to a new meal of `type` on `date`; returns the meal. */
 export async function addDish(me: RequestUser, input: AddDishRequest): Promise<MealDto> {
@@ -164,7 +205,7 @@ export async function addDish(me: RequestUser, input: AddDishRequest): Promise<M
 }
 
 /** Replaces who ate how much; returns the meal. */
-export async function updateDish(me: RequestUser, id: string, consumptions: readonly ConsumptionDto[]) {
+export async function updateDish(me: RequestUser, id: string, consumptions: readonly ConsumptionInput[]) {
   const dish = await findDish(me, id);
   await checkMembers(me, consumptions);
   await prisma.$transaction([

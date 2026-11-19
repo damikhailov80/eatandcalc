@@ -1,4 +1,4 @@
-import { formatDayTitle, todayISO } from '@eatandcalc/shared';
+import { formatDayTitle, todayISO, type ProductDto } from '@eatandcalc/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -6,52 +6,147 @@ import { ActivityIndicator, FlatList, KeyboardAvoidingView, StyleSheet, View, ty
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CookingRow } from '@/components/cooking/CookingRow';
-import { Card, IconButton, SearchField, StateMessage, Text } from '@/components/ui';
+import { ProductRow } from '@/components/products/ProductRow';
+import { RecipeRow } from '@/components/recipes/RecipeRow';
+import { Card, Chip, ChipRow, IconButton, SearchField, SegmentedControl, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { filterCooking, toCookingView, withDayTitles, type CookingListRow, type CookingView } from '@/lib/cooking';
 import { MEAL_TITLES, type MealType } from '@/lib/day';
+import { filterLabels, filterProducts, type ProductFilter } from '@/lib/products';
 import { queryKeys } from '@/lib/query';
-import { productsById } from '@/lib/recipes';
+import { filterRecipes, productsById, toRecipeView, type RecipeFilter, type RecipeView } from '@/lib/recipes';
 import { colors, fonts, spacing } from '@/theme';
 
 type Params = { date: string; type: MealType; meal?: string };
 
-const cookingKey = (row: CookingListRow) => (row.kind === 'day' ? `day-${row.date}` : row.view.session.id);
-const Separator = () => <View style={styles.separator} />;
+type Source = 'cooking' | 'recipes' | 'products';
+const SOURCES = [
+  { value: 'cooking', label: 'Готовки' },
+  { value: 'recipes', label: 'Рецепты' },
+  { value: 'products', label: 'Продукты' },
+] as const;
+/** «Свои» / «Все» chips, the same for recipes and products. */
+const FILTERS = ['mine', 'all'] as const satisfies readonly (RecipeFilter & ProductFilter)[];
+type MineOrAll = (typeof FILTERS)[number];
 
-/** "+ Блюдо": pick what goes into the meal (a cooking session for now), then distribute it. */
+const cookingKey = (row: CookingListRow) => (row.kind === 'day' ? `day-${row.date}` : row.view.session.id);
+const recipeKey = (v: RecipeView) => v.recipe.id;
+const productKey = (p: ProductDto) => p.id;
+const Separator = () => <View style={styles.separator} />;
+const listProps = {
+  contentContainerStyle: { padding: spacing.xl },
+  keyboardShouldPersistTaps: 'handled',
+  keyboardDismissMode: 'on-drag',
+  initialNumToRender: 10,
+  windowSize: 7,
+} as const;
+
+/**
+ * "+ Блюдо": what goes into the meal — a cooking session (weighed pot), a recipe (its KBJU per 100 g, e.g. coffee
+ * with sugar) or a product. Then the split screen replaces this one, so "back" returns to the day.
+ */
 export default function AddDishScreen() {
-  const { date, type, meal } = useLocalSearchParams<Params>();
+  const { date, type, meal = '' } = useLocalSearchParams<Params>();
   const sessions = useQuery({ queryKey: queryKeys.cooking, queryFn: api.cookingList });
   const recipes = useQuery({ queryKey: queryKeys.recipes, queryFn: api.recipes });
   const products = useQuery({ queryKey: queryKeys.products, queryFn: api.products });
+  const [source, setSource] = useState<Source>('cooking');
   const [query, setQuery] = useState('');
+  const [chosen, setFilter] = useState<MineOrAll | null>(null);
 
   const byId = useMemo(() => productsById(products.data), [products.data]);
   const recipesById = useMemo(() => new Map((recipes.data ?? []).map((r) => [r.id, r])), [recipes.data]);
-  const rows = useMemo(
+
+  const cookingRows = useMemo(
     () => withDayTitles(filterCooking(sessions.data ?? [], query).map((s) => toCookingView(s, recipesById, byId))),
     [sessions.data, query, recipesById, byId],
   );
 
-  // The distribution screen replaces this one, so "back" from it returns to the day.
-  const pick = useCallback(
-    (v: CookingView) =>
-      router.replace({ pathname: '/day/dish', params: { date, type, meal: meal ?? '', session: v.session.id } }),
+  // «Свои» first when there is anything in it; a search looks through everything.
+  const mineCount = useMemo(() => {
+    if (source === 'recipes') return filterRecipes(recipes.data ?? [], byId, { filter: 'mine', query: '' }).length;
+    if (source === 'products')
+      return filterProducts(products.data ?? [], { filter: 'mine', category: null, query: '' }).length;
+    return 0;
+  }, [source, recipes.data, products.data, byId]);
+  const filter: MineOrAll = query.trim() ? 'all' : (chosen ?? (mineCount > 0 ? 'mine' : 'all'));
+
+  const recipeViews = useMemo(
+    () =>
+      source === 'recipes'
+        ? filterRecipes(recipes.data ?? [], byId, { filter, query })
+            .filter((r) => !r.hidden)
+            .map((r) => toRecipeView(r, byId))
+        : [],
+    [source, recipes.data, byId, filter, query],
+  );
+  const productList = useMemo(
+    () => (source === 'products' ? filterProducts(products.data ?? [], { filter, category: null, query }) : []),
+    [source, products.data, filter, query],
+  );
+
+  const pickSession = useCallback(
+    (v: CookingView) => router.replace({ pathname: '/day/dish', params: { date, type, meal, session: v.session.id } }),
     [date, type, meal],
   );
+  const pickRecipe = useCallback(
+    (v: RecipeView) => router.replace({ pathname: '/day/dish', params: { date, type, meal, recipe: v.recipe.id } }),
+    [date, type, meal],
+  );
+  const pickProduct = useCallback(
+    (p: ProductDto) => router.replace({ pathname: '/day/dish', params: { date, type, meal, product: p.id } }),
+    [date, type, meal],
+  );
+
   const today = todayISO();
-  const renderItem = useCallback<ListRenderItem<CookingListRow>>(
+  const renderCooking = useCallback<ListRenderItem<CookingListRow>>(
     ({ item }) =>
       item.kind === 'day' ? (
         <Text variant="h3" style={styles.day}>{formatDayTitle(item.date, today)}</Text>
       ) : (
-        <CookingRow view={item.view} onPress={pick} />
+        <CookingRow view={item.view} onPress={pickSession} />
       ),
-    [today, pick],
+    [today, pickSession],
+  );
+  const renderRecipe = useCallback<ListRenderItem<RecipeView>>(
+    ({ item }) => <RecipeRow view={item} onPress={pickRecipe} />,
+    [pickRecipe],
+  );
+  const lastProduct = productList.length - 1;
+  const renderProduct = useCallback<ListRenderItem<ProductDto>>(
+    ({ item, index }) => (
+      <ProductRow product={item} first={index === 0} last={index === lastProduct} onPress={pickProduct} />
+    ),
+    [lastProduct, pickProduct],
   );
 
-  const title = `В «${MEAL_TITLES[type] ?? 'приём пищи'}»`;
+  const changeSource = (next: Source) => {
+    setSource(next);
+    setQuery('');
+    setFilter(null);
+  };
+
+  const placeholder = { cooking: 'Название готовки', recipes: 'Рецепт или продукт', products: 'Поиск продукта' }[
+    source
+  ];
+  const header = (
+    <>
+      <SearchField value={query} onChangeText={setQuery} placeholder={placeholder} />
+      {source === 'cooking' || query.trim() ? null : (
+        <ChipRow>
+          {FILTERS.map((f) => (
+            <Chip key={f} label={filterLabels[f]} selected={f === filter} onPress={() => setFilter(f)} />
+          ))}
+        </ChipRow>
+      )}
+    </>
+  );
+  const empty = (
+    <Card>
+      <Text variant="h3">{query.trim() || source !== 'cooking' ? 'Ничего не нашлось' : 'Готовок пока нет'}</Text>
+    </Card>
+  );
+
   let body;
   if (sessions.isPending || recipes.isPending || products.isPending) {
     body = (
@@ -73,25 +168,42 @@ export default function AddDishScreen() {
         }}
       />
     );
+  } else if (source === 'cooking') {
+    body = (
+      <FlatList
+        data={cookingRows}
+        keyExtractor={cookingKey}
+        renderItem={renderCooking}
+        ItemSeparatorComponent={Separator}
+        ListHeaderComponent={header}
+        ListHeaderComponentStyle={styles.listHeader}
+        ListEmptyComponent={empty}
+        {...listProps}
+      />
+    );
+  } else if (source === 'recipes') {
+    body = (
+      <FlatList
+        data={recipeViews}
+        keyExtractor={recipeKey}
+        renderItem={renderRecipe}
+        ItemSeparatorComponent={Separator}
+        ListHeaderComponent={header}
+        ListHeaderComponentStyle={styles.listHeader}
+        ListEmptyComponent={empty}
+        {...listProps}
+      />
+    );
   } else {
     body = (
       <FlatList
-        data={rows}
-        keyExtractor={cookingKey}
-        renderItem={renderItem}
-        ItemSeparatorComponent={Separator}
-        ListHeaderComponent={<SearchField value={query} onChangeText={setQuery} placeholder="Название готовки" />}
+        data={productList}
+        keyExtractor={productKey}
+        renderItem={renderProduct}
+        ListHeaderComponent={header}
         ListHeaderComponentStyle={styles.listHeader}
-        ListEmptyComponent={
-          <Card>
-            <Text variant="h3">{query.trim() ? 'Ничего не нашлось' : 'Готовок пока нет'}</Text>
-          </Card>
-        }
-        contentContainerStyle={styles.list}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        initialNumToRender={10}
-        windowSize={7}
+        ListEmptyComponent={empty}
+        {...listProps}
       />
     );
   }
@@ -102,10 +214,17 @@ export default function AddDishScreen() {
         <View style={styles.header}>
           <IconButton icon="chevron-left" label="Назад" variant="plain" onPress={() => router.back()} />
           <View style={styles.headerText}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.title}>{`В «${MEAL_TITLES[type] ?? 'приём пищи'}»`}</Text>
             <Text variant="caption">{formatDayTitle(date, today)}</Text>
           </View>
         </View>
+        <SegmentedControl
+          options={SOURCES}
+          value={source}
+          onChange={changeSource}
+          accessibilityLabel="Что добавить"
+          style={styles.sources}
+        />
         {body}
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -124,7 +243,7 @@ const styles = StyleSheet.create({
   },
   headerText: { flex: 1 },
   title: { fontSize: 20, fontFamily: fonts.headingHeavy },
-  list: { padding: spacing.xl },
+  sources: { marginTop: spacing.md, marginHorizontal: spacing.xl },
   day: { marginTop: spacing.sm },
   listHeader: { gap: spacing.md, marginBottom: spacing.md },
   separator: { height: 10 },
