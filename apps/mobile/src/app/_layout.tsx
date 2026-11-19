@@ -5,6 +5,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import { Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, usePathname } from 'expo-router';
@@ -30,6 +31,8 @@ export default function RootLayout() {
     Inter_700Bold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
+    // Icon font is preloaded too: lazy loading inside <Icon> fails silently and leaves blank icons.
+    ...MaterialCommunityIcons.font,
   });
   // Session is cached in SecureStore by the Expo plugin, so this resolves fast on relaunch.
   const { data: session, isPending } = authClient.useSession();
@@ -52,6 +55,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (ready) diag('nav', pathname);
   }, [ready, pathname]);
+
+  useEffect(() => {
+    if (fontsError) diag('fonts', `шрифты не загрузились: ${fontsError.message}`, 'error');
+  }, [fontsError]);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
