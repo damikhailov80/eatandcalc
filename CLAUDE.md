@@ -26,8 +26,10 @@ npm run dev:mobile      # Expo (dev build, not Expo Go)
 npm run dev:web         # landing on :3001
 npm run dev             # db:up + api + web + mobile together (concurrently)
 npm run db:studio       # Prisma Studio on :5555
-npm run android:dev     # local dev APK build + install over USB (only after native changes)
-npm run android:sha1    # SHA-1 of apps/mobile/credentials/debug.keystore for Google Cloud
+npm run dev:build       # local dev APK build + install over USB (only after native changes)
+npm run prod:update     # OTA (EAS Update) of JS/TS to production; optional -- "msg", default = last commit subject
+npm run prod:release    # new production APK: EAS build → Vercel Blob → landing (asks for confirmation)
+node apps/mobile/scripts/android-sha1.mjs   # one-time: SHA-1 of the dev signing key for Google Cloud
 npm run typecheck       # all workspaces (run before declaring work done)
 npm run lint
 cd apps/mobile && npx expo-doctor

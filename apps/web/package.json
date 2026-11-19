@@ -7,8 +7,7 @@
     "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "release:android": "node --env-file-if-exists=.env.local scripts/release-android.mjs"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@eatandcalc/shared": "*",

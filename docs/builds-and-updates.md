@@ -21,7 +21,7 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 
 ### Dev build (native shell)
 
-- `npm run android:dev` (`apps/mobile/scripts/android-dev.mjs`):
+- `npm run dev:build` (`apps/mobile/scripts/android-dev.mjs`):
   1. `expo prebuild` generates or refreshes `apps/mobile/android/` (gitignored, never edited by hand) with `APP_VARIANT=development`, so the launcher name is **Eat And Calc (dev)** and the package is `com.eatandcalc.app.dev` (`apps/mobile/app.config.ts`; production builds are **Eat And Calc**, `com.eatandcalc.app`). Different packages = two separate apps: dev and production install side by side, each with its own sign-in. Both register the `eatandcalc://` scheme, so an invite link asks which one to open;
   2. copies `apps/mobile/credentials/debug.keystore` into it (stable SHA-1 for Google, see `docs/google-oauth.md`);
   3. `./gradlew app:assembleDebug` with JDK/SDK from Android Studio, `arm64-v8a` only (override: `ANDROID_ARCHS`);
@@ -34,7 +34,7 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 
 ### Hot reload (JS)
 
-- `npm run dev` starts Postgres, API (:3000), landing (:3001) and Metro (:8081). The dev build opens Metro by itself: `app.config.ts` bakes `http://<Mac LAN IP>:8081` (detected at build time, override with `DEV_SERVER_URL`) into `expo-dev-client` as `android.defaultLaunchURL`. If the Mac's IP changes (other Wi-Fi, new DHCP lease), rebuild with `npm run android:dev` or reserve the IP in the router. Fallback: the launcher's Enter URL manually.
+- `npm run dev` starts Postgres, API (:3000), landing (:3001) and Metro (:8081). The dev build opens Metro by itself: `app.config.ts` bakes `http://<Mac LAN IP>:8081` (detected at build time, override with `DEV_SERVER_URL`) into `expo-dev-client` as `android.defaultLaunchURL`. If the Mac's IP changes (other Wi-Fi, new DHCP lease), rebuild with `npm run dev:build` or reserve the IP in the router. Fallback: the launcher's Enter URL manually.
 - Metro keeps a dependency graph of all modules and watches the files. On save it rebuilds only the changed module and pushes it to connected phones over a WebSocket (HMR).
 - On the phone, Hermes swaps the module and React Refresh re-renders the affected components, keeping their state (signed-in session, current tab, `useState` values).
 - Full reload happens automatically when a changed module has no component above it, on syntax errors (red screen, clears after the fix), or manually: shake the phone → Reload.
@@ -44,7 +44,7 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 
 ### Release APK (native shell + JS bundle)
 
-- `npm run release:android` (`apps/web/scripts/release-android.mjs`): EAS cloud build with profile `production` (`apps/mobile/eas.json`) → downloads the APK → uploads `android/eatandcalc.apk` and `android/latest.json` to Vercel Blob → the landing page shows version, date and the download button.
+- `npm run prod:release` (`apps/web/scripts/release-android.mjs`): EAS cloud build with profile `production` (`apps/mobile/eas.json`) → downloads the APK → uploads `android/eatandcalc.apk` and `android/latest.json` to Vercel Blob → the landing page shows version, date and the download button.
 - Step-by-step setup, release checklist and troubleshooting: [production-release.md](production-release.md).
 - The production APK contains the JS bundle, `EXPO_PUBLIC_API_URL=https://eat-and-calc-api.vercel.app` (EAS env `production`), and is signed with the EAS-managed keystore. `versionCode` is incremented by EAS (`appVersionSource: remote`, `autoIncrement`).
 - Phones install it from the landing page once (allow installs from the browser).
@@ -52,14 +52,14 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 ### Over-the-air updates (JS only)
 
 ```
-edit TS → npx eas-cli update --channel production --environment production --message "…"
+edit TS → npm run prod:update -- "…"   (eas-cli update, channel + environment production)
         → EAS uploads the new bundle
         → app checks for updates on launch, downloads in background
         → next app start runs the new bundle
 ```
 
 - Enabled by `expo-updates`; channel `production` is set in the build profile.
-- **Compatibility guard:** `runtimeVersion` policy `appVersion` (`apps/mobile/app.json`). An APK only receives updates published for the same `expo.version`. After a native change: bump `version` in `app.json` (e.g. `1.0.0` → `1.1.0`), run `npm run release:android`, install the new APK; old APKs keep running their last compatible bundle.
+- **Compatibility guard:** `runtimeVersion` policy `appVersion` (`apps/mobile/app.json`). An APK only receives updates published for the same `expo.version`. After a native change: bump `version` in `app.json` (e.g. `1.0.0` → `1.1.0`), run `npm run prod:release`, install the new APK; old APKs keep running their last compatible bundle.
 - Rollback: `npx eas-cli update:rollback` (or republish the previous commit).
 - Free EAS plan is far above two users.
 - **API compatibility:** a phone may run the old bundle until its next restart, so API changes and DB migrations must stay backward compatible.
@@ -69,8 +69,8 @@ edit TS → npx eas-cli update --channel production --environment production --m
 | Screen, style, text, logic (TS) | save → Fast Refresh | `eas update` |
 | API / DB | Next.js reload / `npm run db:migrate` | push to `main` (Vercel + migrate workflow) |
 | New JS-only library | `npx expo install` → Fast Refresh | `eas update` |
-| New native module, `app.json`, SDK upgrade | `npm run android:dev` | bump version → `npm run release:android` |
+| New native module, `app.json`, SDK upgrade | `npm run dev:build` | bump version → `npm run prod:release` |
 
 ### One-time production setup for updates
 
-`cd apps/mobile && npx eas-cli login && npx eas-cli init && npx eas-cli update:configure` (adds the project ID and updates URL to `app.json`), then the first `npm run release:android`.
+`cd apps/mobile && npx eas-cli login && npx eas-cli init && npx eas-cli update:configure` (adds the project ID and updates URL to `app.json`), then the first `npm run prod:release`.

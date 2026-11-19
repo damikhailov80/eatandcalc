@@ -16,10 +16,10 @@
     "db:studio": "npm run studio -w @eatandcalc/db",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "release:android": "npm run release:android -w @eatandcalc/web --",
     "dev": "npm run db:up && concurrently -k -n api,web,mobile -c green,blue,magenta npm:dev:api npm:dev:web npm:dev:mobile",
-    "android:dev": "npm run android:dev -w @eatandcalc/mobile",
-    "android:sha1": "npm run android:sha1 -w @eatandcalc/mobile"
+    "dev:build": "node apps/mobile/scripts/android-dev.mjs",
+    "prod:release": "node --env-file-if-exists=apps/web/.env.local apps/web/scripts/release-android.mjs",
+    "prod:update": "cd apps/mobile && sh -c 'npx eas-cli update --channel production --environment production --message \"${1:-$(git log -1 --format=%s)}\"' --"
   },
   "allowScripts": {
     "prisma@7.10.1": true,

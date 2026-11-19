@@ -17,7 +17,7 @@ Vercel eat-and-calc-api   Vercel eat-and-calc-web    GitHub Action "Migrate data
   prod DB              Vercel Blob (eat-and-calc-web store)
                                ▲
                                │ uploads APK + latest.json
-                  npm run release:android (on the Mac)
+                  npm run prod:release (on the Mac)
                                │
                                ▼
                     EAS Build (Expo cloud, profile "production")
@@ -119,17 +119,17 @@ Needed for the first install and after any native change (new native module, `ap
 3. **Build and publish** from the repo root:
 
    ```bash
-   npm run release:android
+   npm run prod:release
    ```
 
    `apps/web/scripts/release-android.mjs`:
-   1. checks `BLOB_READ_WRITE_TOKEN` (from `apps/web/.env.local`);
+   1. checks `BLOB_READ_WRITE_TOKEN` (from `apps/web/.env.local`), shows `expo.version` and warns about uncommitted changes, asks `Continue? [y/N]`;
    2. `eas build --platform android --profile production --non-interactive --wait` (10–20 min on the free plan, queue included);
    3. downloads the APK from EAS;
    4. uploads `android/eatandcalc.apk` and `android/latest.json` to Vercel Blob;
    5. prints `Published <version> (<build>): <url>`.
 
-   If the build finished but publishing failed (Blob token, network), don't spend another build: `npm run release:android -- --build <build-id>` publishes an existing finished build (ID from the script output or expo.dev → Builds).
+   If the build finished but publishing failed (Blob token, network), don't spend another build: `npm run prod:release -- --build <build-id>` publishes an existing finished build (ID from the script output or expo.dev → Builds).
 
 4. **Check the landing.** https://eat-and-calc-web.vercel.app shows the new version and date within about a minute (`latest.json` is cached for 60 s).
 5. **Install on the phones.** Open the landing on each phone → "Скачать APK" → allow installs from the browser on the first time. A new APK installs over the previous release (same EAS key, the session is kept). The release app "Eat And Calc" lives next to the dev build "Eat And Calc (dev)" with its own data and session.
@@ -141,9 +141,10 @@ Build logs and past builds: https://expo.dev/accounts/d.a.mikhailov80/projects/e
 Screens, styles, texts and logic don't need a new APK:
 
 ```bash
-cd apps/mobile
-npx eas-cli update --channel production --environment production --message "what changed"
+npm run prod:update -- "what changed"
 ```
+
+From the repo root; it runs `npx eas-cli update --channel production --environment production --message "…"` in `apps/mobile`. Without a message (`npm run prod:update`) the last commit subject is used.
 
 - `--environment production` is required: it injects `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` into the bundle.
 - The app downloads the update on launch and runs it on the next start.
@@ -166,7 +167,7 @@ npx eas-cli update --channel production --environment production --message "what
 | 401 `INVALID_TOKEN` from the API | `GOOGLE_CLIENT_ID` in Vercel differs from `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in EAS. |
 | Sign-in rejected for an account | The email isn't in `ALLOWED_EMAILS` (Vercel) or isn't a test user on the Google consent screen. |
 | Release app calls the wrong server / crashes with `EXPO_PUBLIC_API_URL is not set` | Check `eas env:list --environment production`. The value is baked into the JS bundle: fix it, then publish an OTA update with `--environment production` (or rebuild). |
-| `Cannot use public access on a private store` | The Blob store was created as private. Create a new store with public access, connect it to `eat-and-calc-web` (disconnect the old one), update the token in `apps/web/.env.local`, Redeploy, then `npm run release:android -- --build <build-id>`. |
+| `Cannot use public access on a private store` | The Blob store was created as private. Create a new store with public access, connect it to `eat-and-calc-web` (disconnect the old one), update the token in `apps/web/.env.local`, Redeploy, then `npm run prod:release -- --build <build-id>`. |
 | Landing download button stays grey after a successful release | The deployment can't read the store: check that it's connected to `eat-and-calc-web` (`BLOB_STORE_ID` in its env vars), Redeploy, and look for "Failed to read the Android release manifest" in Vercel → Logs. |
 | `BlobStoreNotFoundError: This store does not exist` | `apps/web/.env.local` still holds the token of a deleted store. Copy the token of the current one. |
 | Landing still shows the old version | Wait 60 s (cache) or check `android/latest.json` in the Blob store. |

@@ -56,15 +56,15 @@ npm run dev:mobile     # Metro on :8081 for the dev build; the app calls http://
 npm run dev:web        # landing on :3001 (+ dev APK download for phones)
 npm run dev            # db:up + api, web and mobile in one terminal (Ctrl+C stops all)
 npm run db:studio      # Prisma Studio on :5555
-npm run android:dev    # build the dev APK on this Mac, install on USB phones (only after native changes)
-npm run android:sha1   # SHA-1 of the dev signing key, for Google Cloud
+npm run dev:build    # build the dev APK on this Mac, install on USB phones (only after native changes)
+node apps/mobile/scripts/android-sha1.mjs   # SHA-1 of the dev signing key, for Google Cloud
 ```
 
-**Installing the dev build on a phone:** with `npm run dev` running, open `http://localhost:3001` on the Mac and scan the QR code with the phone (or open `http://<Mac LAN IP>:3001` on the phone) → "Скачать APK" → install. Under `next dev` the landing's download card serves the dev APK from `apps/mobile/dist` (built by `npm run android:dev`); in production it serves the published release.
+**Installing the dev build on a phone:** with `npm run dev` running, open `http://localhost:3001` on the Mac and scan the QR code with the phone (or open `http://<Mac LAN IP>:3001` on the phone) → "Скачать APK" → install. Under `next dev` the landing's download card serves the dev APK from `apps/mobile/dist` (built by `npm run dev:build`); in production it serves the published release.
 
-**Connecting to Metro:** the dev build has `http://<Mac LAN IP>:8081` baked in at build time and opens it on launch; if the Mac's IP changes, rebuild (`npm run android:dev`). Fallback: the launcher's Enter URL manually. Metro's interactive keys (`r` reload) are unavailable inside `npm run dev`; run `npm run dev:mobile` in its own terminal when you need them.
+**Connecting to Metro:** the dev build has `http://<Mac LAN IP>:8081` baked in at build time and opens it on launch; if the Mac's IP changes, rebuild (`npm run dev:build`). Fallback: the launcher's Enter URL manually. Metro's interactive keys (`r` reload) are unavailable inside `npm run dev`; run `npm run dev:mobile` in its own terminal when you need them.
 
-The dev build only needs rebuilding (`npm run android:dev`) after adding a native library or changing `app.json`; JS changes arrive through Metro. It is signed with `apps/mobile/credentials/debug.keystore` (gitignored, created on first run): keep it, Google Cloud knows its SHA-1.
+The dev build only needs rebuilding (`npm run dev:build`) after adding a native library or changing `app.json`; JS changes arrive through Metro. It is signed with `apps/mobile/credentials/debug.keystore` (gitignored, created on first run): keep it, Google Cloud knows its SHA-1.
 
 **Inviting the second phone locally:** sign in on phone A (owner) → Семья → «Пригласить в семью» → «Поделиться ссылкой». The link is `http://<Mac LAN IP>:3000/invite/<code>` (the API), so phone B must be on the same Wi-Fi; the page opens the app at `eatandcalc://join/<code>`, or type the code in Семья → «Присоединиться по коду». The account must still be in `ALLOWED_EMAILS`. Joining deletes the joiner's own (empty) household.
 
@@ -80,8 +80,8 @@ Postponed until the app is ready; the code is in place.
 | API | Vercel project `eat-and-calc-api`, Root Directory `apps/api`; deploys on push to `main` |
 | Landing | Vercel project `eat-and-calc-web`, Root Directory `apps/web` |
 | DB migrations | GitHub Action `migrate.yml` runs `prisma migrate deploy` on push to `main` when `packages/db/prisma/**` changes |
-| Android APK | `npm run release:android`: EAS production build → Vercel Blob → link on the landing |
-| JS-only fixes | `cd apps/mobile && npx eas-cli update --channel production` (OTA, no reinstall) |
+| Android APK | `npm run prod:release`: EAS production build → Vercel Blob → link on the landing |
+| JS-only fixes | `npm run prod:update -- "what changed"` (EAS Update, OTA, no reinstall) |
 
 ## Secrets
 
@@ -106,9 +106,9 @@ Detailed guides: [docs/google-oauth.md](docs/google-oauth.md) (sign-in, troubles
    - Google Auth Platform → Get started: app name `eatandcalc`, your support email, Audience **External**, contact email.
    - Audience → Test users → add both family accounts. Stay in **Testing**: only test users can sign in.
    - Clients → Create client → **Web application** (`eatandcalc web`, no redirect URIs). Client ID → `GOOGLE_CLIENT_ID` (`apps/api/.env.local`) and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (`apps/mobile/.env.local`); secret → `GOOGLE_CLIENT_SECRET`.
-   - Clients → Create client → **Android**: package `com.eatandcalc.app.dev` (the dev build; production is `com.eatandcalc.app`, so both install side by side), SHA-1 from `npm run android:sha1`. Nothing to copy back; Google matches the app by package + SHA-1.
+   - Clients → Create client → **Android**: package `com.eatandcalc.app.dev` (the dev build; production is `com.eatandcalc.app`, so both install side by side), SHA-1 from `node apps/mobile/scripts/android-sha1.mjs`. Nothing to copy back; Google matches the app by package + SHA-1.
 2. `BETTER_AUTH_SECRET` in `apps/api/.env.local`: `openssl rand -base64 32`.
-3. `npm run android:dev` (installs over USB if a phone is connected).
+3. `npm run dev:build` (installs over USB if a phone is connected).
 4. `npm run dev`, install the dev APK from the landing page on each phone (allow installs from the browser), open Eat And Calc (dev), tap the Metro server, sign in.
 
 ### Production (later)
@@ -117,4 +117,4 @@ Detailed guides: [docs/google-oauth.md](docs/google-oauth.md) (sign-in, troubles
 2. **Expo**: `cd apps/mobile && npx eas-cli login && npx eas-cli init && npx eas-cli update:configure`; `npx eas-cli env:create --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value <id> --visibility plaintext --environment production --environment development` and `EXPO_PUBLIC_API_URL=https://eat-and-calc-api.vercel.app` for `production`.
 3. **Vercel**: import the GitHub repo twice — `eat-and-calc-api` (Root Directory `apps/api`) and `eat-and-calc-web` (Root Directory `apps/web`). In `eat-and-calc-api`: Storage → Neon (region Frankfurt), then add the API env vars above with `BETTER_AUTH_URL=https://eat-and-calc-api.vercel.app`. In `eat-and-calc-web`: Storage → Blob.
 4. **GitHub**: environment `production` with secret `DIRECT_URL` = Neon `DATABASE_URL_UNPOOLED`. Run the "Migrate database" workflow once.
-5. `npm run release:android` and open the landing page.
+5. `npm run prod:release` and open the landing page.

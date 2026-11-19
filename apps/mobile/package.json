@@ -47,12 +47,8 @@
   },
   "scripts": {
     "start": "expo start --port 8081",
-    "android": "expo run:android",
-    "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit",
-    "android:dev": "node scripts/android-dev.mjs",
-    "android:sha1": "node scripts/android-sha1.mjs"
+    "typecheck": "tsc --noEmit"
   },
   "private": true,
   "version": "1.0.0"

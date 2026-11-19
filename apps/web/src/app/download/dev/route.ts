@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   if (!DEV_BUILD_ENABLED) return new Response('Not found', { status: 404 });
   const info = await stat(DEV_APK_PATH).catch(() => null);
-  if (!info) return new Response('Dev APK is not built: run `npm run android:dev`', { status: 404 });
+  if (!info) return new Response('Dev APK is not built: run `npm run dev:build`', { status: 404 });
 
   return new Response(Readable.toWeb(createReadStream(DEV_APK_PATH)) as ReadableStream, {
     headers: {

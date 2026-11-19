@@ -37,7 +37,7 @@ Code: `apps/mobile/src/lib/auth.ts` (client), `apps/api/src/lib/auth.ts` (server
 4. **Web client.** Clients → Create client → **Web application**, name `eatandcalc web`, leave origins and redirect URIs empty. Copy:
    - Client ID → `GOOGLE_CLIENT_ID` in `apps/api/.env.local` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in `apps/mobile/.env.local`;
    - Client secret → `GOOGLE_CLIENT_SECRET` in `apps/api/.env.local`.
-5. **Dev signing key.** `npm run android:sha1` prints the package and SHA-1. On the first run it creates `apps/mobile/credentials/debug.keystore` (gitignored). **Keep this file** (e.g. in a password manager): a new key means a new SHA-1 and a new Android client.
+5. **Dev signing key.** `node apps/mobile/scripts/android-sha1.mjs` prints the package and SHA-1. On the first run it creates `apps/mobile/credentials/debug.keystore` (gitignored). **Keep this file** (e.g. in a password manager): a new key means a new SHA-1 and a new Android client.
 6. **Android client.** Clients → Create client → **Android**: package `com.eatandcalc.app.dev` (dev builds use their own package, see `apps/mobile/app.config.ts`), SHA-1 from step 5. Nothing to copy back.
 7. **API env.** In `apps/api/.env.local` also set `BETTER_AUTH_SECRET` (`openssl rand -base64 32`) and `ALLOWED_EMAILS` (comma-separated). `BETTER_AUTH_URL=http://localhost:3000` is fine locally.
 8. Restart `npm run dev` (env files are read at start) and sign in on the phone.
@@ -54,9 +54,9 @@ Code: `apps/mobile/src/lib/auth.ts` (client), `apps/api/src/lib/auth.ts` (server
 
 | Symptom | Cause / fix |
 |---|---|
-| `DEVELOPER_ERROR` / code 10 in the app | Package or SHA-1 of the installed APK is not registered as an Android client, or `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is wrong. Compare `npm run android:sha1` with Google Cloud. |
+| `DEVELOPER_ERROR` / code 10 in the app | Package or SHA-1 of the installed APK is not registered as an Android client, or `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is wrong. Compare `node apps/mobile/scripts/android-sha1.mjs` with Google Cloud. |
 | "Доступ только для членов семьи…" | Email is not in `ALLOWED_EMAILS` (API returns 403 `NOT_IN_FAMILY`). |
 | Google says the app is not verified / access blocked | The account is not in Test users. |
 | 401 `INVALID_TOKEN` from the API | `GOOGLE_CLIENT_ID` in the API differs from the Web client ID used by the app. |
 | "Нет связи с сервером" | API not running, or phone not on the same Wi-Fi; check `http://<Mac LAN IP>:3000/api/health` from the phone's browser. |
-| Worked, then stopped after deleting `apps/mobile/android/` | Should not happen: build scripts restore the saved keystore. If `credentials/debug.keystore` was lost, run `npm run android:sha1` and register the new SHA-1. |
+| Worked, then stopped after deleting `apps/mobile/android/` | Should not happen: build scripts restore the saved keystore. If `credentials/debug.keystore` was lost, run `node apps/mobile/scripts/android-sha1.mjs` and register the new SHA-1. |

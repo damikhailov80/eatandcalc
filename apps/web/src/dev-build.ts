@@ -3,7 +3,7 @@ import { networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 
 /**
- * Local-only: the dev APK built by `npm run android:dev` (apps/mobile/dist).
+ * Local-only: the dev APK built by `npm run dev:build` (apps/mobile/dist).
  * Never available in production builds of the landing page.
  */
 export const DEV_BUILD_ENABLED = process.env.NODE_ENV === 'development';

@@ -5,12 +5,14 @@
  *   android/latest.json     — { version, build, publishedAt, apkUrl }
  *
  * Usage (from repo root):
- *   npm run release:android                       — new EAS build, then publish
- *   npm run release:android -- --build <build-id> — publish an existing finished build
- * Needs: `eas login` done, BLOB_READ_WRITE_TOKEN in apps/web/.env.local.
+ *   npm run prod:release                       — new EAS build, then publish
+ *   npm run prod:release -- --build <build-id> — publish an existing finished build
+ * Asks for confirmation first. Needs: `eas login` done, BLOB_READ_WRITE_TOKEN in apps/web/.env.local.
  */
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
 import { put } from '@vercel/blob';
@@ -25,8 +27,24 @@ if (!process.env.BLOB_READ_WRITE_TOKEN) {
 const buildFlag = process.argv.indexOf('--build');
 const existingBuildId = buildFlag === -1 ? undefined : process.argv[buildFlag + 1];
 if (buildFlag !== -1 && !existingBuildId) {
-  console.error('Usage: npm run release:android -- --build <build-id>');
+  console.error('Usage: npm run prod:release -- --build <build-id>');
   process.exit(1);
+}
+
+const { version } = JSON.parse(readFileSync(resolve(mobileDir, 'app.json'), 'utf8')).expo;
+const dirty = execFileSync('git', ['status', '--porcelain'], { cwd: mobileDir, encoding: 'utf8' }).trim();
+console.log(
+  existingBuildId
+    ? `Publish existing EAS build ${existingBuildId} as the production APK on the landing page.`
+    : `Build a production APK on EAS (expo.version ${version}) and publish it on the landing page.`,
+);
+if (dirty) console.log('Warning: uncommitted changes in the repo; EAS builds the working tree as is.');
+const rl = createInterface({ input: process.stdin, output: process.stdout });
+const answer = (await rl.question('Continue? [y/N] ')).trim().toLowerCase();
+rl.close();
+if (answer !== 'y' && answer !== 'yes') {
+  console.log('Cancelled.');
+  process.exit(0);
 }
 
 const eas = (args) =>
