@@ -50,7 +50,7 @@ cp apps/web/.env.example    apps/web/.env.local      # optional, Blob token
 
 npm run db:up          # Postgres 17 in Docker on localhost:5434
 npm run db:migrate     # prisma migrate dev
-npm run db:seed        # optional, nothing to seed yet (households are created on first sign-in)
+npm run db:seed        # shared product catalog (upsert, re-run after editing packages/db/prisma/catalog.ts)
 npm run dev:api        # API on 0.0.0.0:3000
 npm run dev:mobile     # Metro on :8081 for the dev build; the app calls http://<Mac LAN IP>:3000
 npm run dev:web        # landing on :3001 (+ dev APK download for phones)

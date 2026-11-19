@@ -5,11 +5,13 @@ import {
   MeResponseSchema,
   NOT_ALLOWED_ERROR,
   OkResponseSchema,
+  ProductsResponseSchema,
   SyncResponseSchema,
   type FamilyMemberDto,
   type FamilyMemberInput,
   type Invite,
   type MeResponse,
+  type ProductDto,
   type SyncResponse,
 } from '@eatandcalc/shared';
 import type { z } from 'zod';
@@ -123,4 +125,7 @@ export const api = {
       method: 'DELETE',
     });
   },
+
+  products: async (): Promise<ProductDto[]> =>
+    (await apiRequest('/api/products', ProductsResponseSchema)).products,
 };

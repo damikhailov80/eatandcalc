@@ -31,6 +31,7 @@ export const queryKeys = {
   sync: ['sync'] as const,
   invite: ['invite'] as const,
   familyMembers: ['family-members'] as const,
+  products: ['products'] as const,
 };
 
 /** After joining/leaving/removing the household everything cached belongs to another family. */

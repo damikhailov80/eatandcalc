@@ -6,7 +6,7 @@ Development goes in stages; each stage ends with a working app.
 |---|---|---|---|
 | 0 | Boilerplate | Expo SDK 58 + expo-router, 5 tabs, theme tokens, base UI kit, domain types, nutrition math | ✅ done |
 | 1 | Backend & auth | Monorepo; Next.js API on Vercel, Better Auth (Google, allowlist), Prisma + Neon, household, `/api/me`; sign-in screen and guard; landing with APK download; CI migrations | 🔧 code done; local dev setup (Google OAuth) pending |
-| 2 | Products | List, search, category filter, create/edit/delete, units & gram weights, seed catalog | |
+| 2 | Products | Shared catalog + per-family edits / hiding / own products, per-account favorites, search, filters, units → grams, merge on join | 🔧 in progress (plan below) |
 | 3 | Recipes | List, editor with steppers, totals / per portion / per 100 g, copy, delete | |
 | 4 | Family | Members list, profile editor, norms, macro-energy check; account roles (owner/member), invite link + code, join/leave/remove | ✅ done (today's eaten = 0 until stage 6) |
 | 5 | Cooking | Session from recipe or blank, editor (multiplier, cooked weight), quick weight pad, history with leftovers, repeat/copy | |
@@ -25,9 +25,25 @@ Development goes in stages; each stage ends with a working app.
 - Domains: `*.vercel.app` until a real domain is bought.
 - Until the release stage everything runs locally: Docker DB, API on the Mac, dev build (built locally, no EAS) on two phones over Wi-Fi.
 
+## Stage 2 plan: products
+
+Decisions:
+- One global **catalog** (~300 common products, seeded from `packages/db/prisma/catalog.ts`, stable slug ids `cat-…`) plus the family's **own** products in the same `product` table (`household_id` set).
+- KBJU always **per 100 g**. Units are a fixed set, each converted to grams per product and editable: г (always 1), мл (grams per ml), ч. л., ст. л., шт мал/сред/бол.
+- Per **family** (`household_product`): an override of a catalog product (full copy, can be reset to the catalog values) and hiding (restorable). Own products are edited in place and hidden the same way; nothing is hard-deleted (history keeps values).
+- Per **account** (`product_favorite`): favorites (♥).
+- Filters: Свои (= избранное + добавленные, the quick list), Все, Избранное, Добавленные, Изменённые (reset), Скрытые (restore); category chips; instant name search on the client (case- and ё-insensitive).
+- Release note: production needs `npm run db:seed` (catalog upsert) after migrations; wire it into the `migrate` workflow at the release stage.
+- Joining a family: the joiner's own products move over, hidden sets are merged, overrides are copied; when both families edited the same catalog product the joiner picks whose version stays. Favorites stay with the account.
+
+Steps (each one ends with a test on the phones, then commit):
+1. [ ] Catalog + read-only list: migration, shared types / nutrition / schemas, catalog seed, `GET /api/products`, Products tab with search, categories, filters Свои / Все.
+2. [ ] Edit & add: product editor (KBJU, energy check, units), create own product, override catalog product, reset; filters Добавленные / Изменённые.
+3. [ ] Hide & favorites: hide / restore, ♥, filters Скрытые / Избранное, Свои as the default list.
+4. [ ] Join merge: conflict preview and picker in the join flow, merge in the join transaction.
+
 ## Open questions
 
 - Postgres schema for Stage 2+: cooking snapshots as JSONB or a `cooking_items` table; numeric precision.
-- Seed product catalog: per household or a shared global one.
 - Time zones: `date` is the household's local calendar date.
 - Conflict handling when two people edit the same day (last write wins?).

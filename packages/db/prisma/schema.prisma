@@ -14,16 +14,17 @@ datasource db {
 // ---------- Better Auth ----------
 
 model User {
-  id            String    @id
+  id            String            @id
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String            @unique
+  emailVerified Boolean           @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
   sessions      Session[]
   accounts      Account[]
   household     HouseholdUser?
+  favorites     ProductFavorite[]
 
   @@map("user")
 }
@@ -79,14 +80,16 @@ model Verification {
 
 /// One family. Every domain table (products, recipes, …) will reference it.
 model Household {
-  id        String          @id @default(cuid())
-  name      String
+  id            String             @id @default(cuid())
+  name          String
   /// Bumped on every write to the household's data; clients poll it to know when to refetch.
-  revision  Int               @default(0)
-  createdAt DateTime          @default(now()) @map("created_at")
-  users     HouseholdUser[]
-  invites   HouseholdInvite[]
-  members   FamilyMember[]
+  revision      Int                @default(0)
+  createdAt     DateTime           @default(now()) @map("created_at")
+  users         HouseholdUser[]
+  invites       HouseholdInvite[]
+  members       FamilyMember[]
+  products      Product[]
+  productStates HouseholdProduct[]
 
   @@map("household")
 }
@@ -105,8 +108,8 @@ model HouseholdUser {
   householdId String        @map("household_id")
   role        HouseholdRole @default(member)
   createdAt   DateTime      @default(now()) @map("created_at")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household   Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   @@index([householdId])
   @@map("household_user")
@@ -153,4 +156,77 @@ model FamilyMember {
 
   @@index([householdId])
   @@map("family_member")
+}
+
+// ---------- Products ----------
+
+enum ProductCategory {
+  meat
+  fish
+  dairy
+  eggs
+  vegetables
+  fruits
+  grains
+  bakery
+  legumes
+  nuts
+  oils
+  sweets
+  drinks
+  other
+
+  @@map("product_category")
+}
+
+/// A product with nutrition per 100 g. `household_id` null = shared catalog row (seeded, stable `cat-…` id);
+/// set = the family's own product. Families never change catalog rows: edits go to `household_product.override`.
+model Product {
+  id          String             @id @default(cuid())
+  householdId String?            @map("household_id")
+  name        String
+  category    ProductCategory
+  kcal        Float
+  protein     Float
+  fat         Float
+  carbs       Float
+  /// Grams per one unit: `{ ml?, tsp?, tbsp?, pieceS?, pieceM?, pieceL? }` (`ProductUnitsSchema`).
+  units       Json               @default("{}")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+  household   Household?         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  states      HouseholdProduct[]
+  favorites   ProductFavorite[]
+
+  @@index([householdId])
+  @@map("product")
+}
+
+/// The family's view of a product: an override of a catalog product (full `ProductDataSchema` copy,
+/// null = catalog values) and hiding (null = visible). Applies to every account of the household.
+model HouseholdProduct {
+  householdId String    @map("household_id")
+  productId   String    @map("product_id")
+  override    Json?
+  hiddenAt    DateTime? @map("hidden_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([householdId, productId])
+  @@index([productId])
+  @@map("household_product")
+}
+
+/// Favorites (♥) belong to an account, not to the household.
+model ProductFavorite {
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId])
+  @@index([productId])
+  @@map("product_favorite")
 }

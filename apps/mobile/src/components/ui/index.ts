@@ -11,3 +11,5 @@ export * from './SegmentedControl';
 export * from './Stepper';
 export * from './StickyFooter';
 export * from './TextField';
+export * from './Chip';
+export * from './SearchField';

@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 
+import { PRODUCT_CATEGORIES, UNIT_KEYS } from './domain';
 import { memberColors } from './tokens';
 
 export const HouseholdSchema = z.object({
@@ -83,6 +84,50 @@ export type FamilyMemberDto = z.infer<typeof FamilyMemberSchema>;
 
 export const FamilyMembersResponseSchema = z.object({ members: z.array(FamilyMemberSchema) });
 export const FamilyMemberResponseSchema = z.object({ member: FamilyMemberSchema });
+
+// ---------- Products ----------
+
+const macro = z.number().min(0).max(100);
+const unitWeight = z.number().positive().max(10_000);
+
+export const NutrientsSchema = z.object({
+  kcal: z.number().min(0).max(1000),
+  protein: macro,
+  fat: macro,
+  carbs: macro,
+});
+
+/** Grams per one unit; keys from `UNIT_KEYS`. */
+export const ProductUnitsSchema = z.partialRecord(z.enum(UNIT_KEYS), unitWeight);
+
+/** Editable product data (an own product, or a family's override of a catalog product). */
+export const ProductDataSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  category: z.enum(PRODUCT_CATEGORIES),
+  /** Per 100 g. */
+  nutrients: NutrientsSchema,
+  units: ProductUnitsSchema,
+});
+export type ProductData = z.infer<typeof ProductDataSchema>;
+
+export const ProductSourceSchema = z.enum(['catalog', 'own']);
+export type ProductSource = z.infer<typeof ProductSourceSchema>;
+
+/** A product as the family sees it: catalog values with the family's edits applied, plus flags. */
+export const ProductSchema = ProductDataSchema.extend({
+  id: z.string(),
+  /** `catalog` = from the shared list; `own` = added by the family. */
+  source: ProductSourceSchema,
+  /** A catalog product the family edited (`original` holds the catalog values). */
+  modified: z.boolean(),
+  hidden: z.boolean(),
+  /** In the signed-in account's favorites (favorites are per account). */
+  favorite: z.boolean(),
+  original: ProductDataSchema.nullable(),
+});
+export type ProductDto = z.infer<typeof ProductSchema>;
+
+export const ProductsResponseSchema = z.object({ products: z.array(ProductSchema) });
 
 export const ApiErrorSchema = z.object({
   error: z.string(),

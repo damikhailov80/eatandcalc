@@ -44,6 +44,24 @@ export const macroColors = {
 /** Avatar colors a family member can pick. */
 export const memberColors = ['#2F5D9E', '#A3456F', '#2E7D4F', '#9A6416'] as const;
 
+/** Product category tiles: soft background + dark letters (keys = `PRODUCT_CATEGORIES`). */
+export const categoryColors = {
+  meat: { bg: '#F6E1DC', fg: '#8A2E1A' },
+  fish: { bg: '#DCE8F6', fg: '#24497F' },
+  dairy: { bg: '#ECE7F6', fg: '#4F3A7F' },
+  eggs: { bg: '#FBF1D3', fg: '#6E5208' },
+  vegetables: { bg: '#E3F0E7', fg: '#1F5E3A' },
+  fruits: { bg: '#FBEBD3', fg: '#7A440B' },
+  grains: { bg: '#F1EADB', fg: '#5E4A1E' },
+  bakery: { bg: '#F3E4D4', fg: '#6B3F17' },
+  legumes: { bg: '#E8EED8', fg: '#4A5A1C' },
+  nuts: { bg: '#EFE3DA', fg: '#5C3A24' },
+  oils: { bg: '#F6F0CF', fg: '#5F5310' },
+  sweets: { bg: '#F7E1EA', fg: '#7F2A4E' },
+  drinks: { bg: '#DCF0F1', fg: '#1E5A5E' },
+  other: { bg: '#EDEAE2', fg: '#4A4740' },
+} as const;
+
 export const radii = {
   sm: 9,
   md: 12,

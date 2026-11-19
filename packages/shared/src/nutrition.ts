@@ -2,7 +2,7 @@
  * Pure nutrition math. All screens must use these helpers instead of computing inline.
  * Formulas: CLAUDE.md → "Data model".
  */
-import type { CookingItem, Nutrients, Product, Quantity } from './domain';
+import type { CookingItem, Nutrients, Product, Quantity, UnitKey } from './domain';
 
 export const ZERO: Nutrients = { kcal: 0, protein: 0, fat: 0, carbs: 0 };
 
@@ -32,29 +32,22 @@ export function subtract(a: Nutrients, b: Nutrients): Nutrients {
   return add(a, scale(b, -1));
 }
 
-/** Grams of one unit of the product; `'g'` is always 1. Null if the unit has no known weight. */
-export function unitGrams(product: Product, unitId: Quantity['unitId']): number | null {
-  if (unitId === 'g') return 1;
-  return product.units.find((u) => u.id === unitId)?.grams ?? null;
+/** Grams of one unit of the product; `'g'` is always 1. Null if the product has no weight for that unit. */
+export function unitGrams(product: Pick<Product, 'units'>, unit: UnitKey): number | null {
+  if (unit === 'g') return 1;
+  return product.units[unit] ?? null;
 }
 
 /** Weight in grams of a quantity, or null if it can't be converted. */
-export function quantityGrams(product: Product, q: Quantity): number | null {
-  const g = unitGrams(product, q.unitId);
+export function quantityGrams(product: Pick<Product, 'units'>, q: Quantity): number | null {
+  const g = unitGrams(product, q.unit);
   return g == null ? null : g * q.amount;
 }
 
-/**
- * Nutrients of a quantity of a product. Works when the quantity is in the basis unit
- * (even without a gram weight, e.g. "2 шт") or when both units have gram weights.
- * Returns null if the units can't be related.
- */
-export function nutrientsOf(product: Product, q: Quantity): Nutrients | null {
-  if (q.unitId === product.basisUnitId) return scale(product.nutrients, q.amount);
-  const basisG = unitGrams(product, product.basisUnitId);
+/** Nutrients of a quantity of a product (nutrients are per 100 g). Null if the unit has no gram weight. */
+export function nutrientsOf(product: Pick<Product, 'units' | 'nutrients'>, q: Quantity): Nutrients | null {
   const grams = quantityGrams(product, q);
-  if (basisG == null || grams == null || basisG === 0) return null;
-  return scale(product.nutrients, grams / basisG);
+  return grams == null ? null : scale(product.nutrients, grams / 100);
 }
 
 export function cookingTotals(items: readonly CookingItem[]): Nutrients {

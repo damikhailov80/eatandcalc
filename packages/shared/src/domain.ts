@@ -29,48 +29,46 @@ export type HouseholdRole = 'owner' | 'member';
 
 // ---------- Products ----------
 
-export type ProductCategory =
-  | 'meat'
-  | 'fish'
-  | 'vegetables'
-  | 'fruits'
-  | 'dairy'
-  | 'grains'
-  | 'oils'
-  | 'other';
+export const PRODUCT_CATEGORIES = [
+  'meat',
+  'fish',
+  'dairy',
+  'eggs',
+  'vegetables',
+  'fruits',
+  'grains',
+  'bakery',
+  'legumes',
+  'nuts',
+  'oils',
+  'sweets',
+  'drinks',
+  'other',
+] as const;
+export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 
-export type UnitKind = 'g100' | 'piece' | 'tsp' | 'tbsp' | 'custom';
+/** Measures besides grams; each product says how many grams one of them weighs. */
+export const UNIT_KEYS = ['ml', 'tsp', 'tbsp', 'pieceS', 'pieceM', 'pieceL'] as const;
+export type ExtraUnit = (typeof UNIT_KEYS)[number];
+/** `'g'` is always available and weighs 1 g. */
+export type UnitKey = 'g' | ExtraUnit;
 
-/**
- * A measure a product can be counted in. `grams` is the weight of ONE such unit
- * (100 for "100 г", 13.5 for a tablespoon of oil); null when unknown (e.g. "1 шт" without a weight).
- */
-export type ProductUnit = {
-  id: Id;
-  kind: UnitKind;
-  /** Display name: "100 г", "1 шт", "ст. л.", "бутылка". */
-  name: string;
-  grams: number | null;
-};
+/** Grams per one unit (`ml` = grams per 1 ml); a missing key = the product isn't measured that way. */
+export type ProductUnits = Partial<Record<ExtraUnit, number>>;
 
 export type Product = {
   id: Id;
-  householdId: Id;
   name: string;
   category: ProductCategory;
-  /** The unit `nutrients` refer to (exactly one of it). */
-  basisUnitId: Id;
-  /** Nutrition for one `basisUnitId`. */
+  /** Nutrition per 100 g. */
   nutrients: Nutrients;
-  /** All units incl. the basis unit. */
-  units: ProductUnit[];
-  archived?: boolean;
+  units: ProductUnits;
 };
 
-/** An amount of a product in one of its units. Plain grams use unit id `'g'`. */
+/** An amount of a product in one of its units. */
 export type Quantity = {
   amount: number;
-  unitId: Id | 'g';
+  unit: UnitKey;
 };
 
 // ---------- Recipes (templates) ----------
