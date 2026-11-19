@@ -14,7 +14,7 @@ Phone (dev or prod APK)                      API (apps/api, Better Auth)        
                                              4. verifies the token signature and
                                                 aud == GOOGLE_CLIENT_ID
                                              5. email in ALLOWED_EMAILS? else 403
-                                             6. creates user/session, joins household
+                                             6. creates user/session; new account → own household (owner)
                            ◄──────────────── session cookie (stored in SecureStore)
 ```
 
@@ -38,13 +38,13 @@ Code: `apps/mobile/src/lib/auth.ts` (client), `apps/api/src/lib/auth.ts` (server
    - Client ID → `GOOGLE_CLIENT_ID` in `apps/api/.env.local` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in `apps/mobile/.env.local`;
    - Client secret → `GOOGLE_CLIENT_SECRET` in `apps/api/.env.local`.
 5. **Dev signing key.** `npm run android:sha1` prints the package and SHA-1. On the first run it creates `apps/mobile/credentials/debug.keystore` (gitignored). **Keep this file** (e.g. in a password manager): a new key means a new SHA-1 and a new Android client.
-6. **Android client.** Clients → Create client → **Android**: package `com.eatandcalc.app`, SHA-1 from step 5. Nothing to copy back.
+6. **Android client.** Clients → Create client → **Android**: package `com.eatandcalc.app.dev` (dev builds use their own package, see `apps/mobile/app.config.ts`), SHA-1 from step 5. Nothing to copy back.
 7. **API env.** In `apps/api/.env.local` also set `BETTER_AUTH_SECRET` (`openssl rand -base64 32`) and `ALLOWED_EMAILS` (comma-separated). `BETTER_AUTH_URL=http://localhost:3000` is fine locally.
 8. Restart `npm run dev` (env files are read at start) and sign in on the phone.
 
 ## Production setup (at release)
 
-1. **Android client for the release key.** EAS signs production APKs with its own keystore: `cd apps/mobile && npx eas-cli credentials -p android` → copy its SHA-1 → Clients → Create client → **Android**, package `com.eatandcalc.app`, that SHA-1. Keep the dev client as well (one Android client per signing key).
+1. **Android client for the release key.** EAS signs production APKs with its own keystore: `cd apps/mobile && npx eas-cli credentials -p android` → copy its SHA-1 → Clients → Create client → **Android**, package `com.eatandcalc.app`, that SHA-1. Keep the dev client (`com.eatandcalc.app.dev`) as well: one Android client per package + signing key.
 2. **Web client is reused.** Put the same ID/secret into Vercel env of `eat-and-calc-api`: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, plus `BETTER_AUTH_SECRET` (a new one, not the local), `BETTER_AUTH_URL=https://eat-and-calc-api.vercel.app`, `ALLOWED_EMAILS`.
 3. **App.** `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` goes into EAS env (`npx eas-cli env:create … --environment production`); `EXPO_PUBLIC_API_URL` too.
 4. **Consent screen** can stay in Testing for a family app. Testing-mode refresh tokens expire after 7 days, but we don't use Google refresh tokens: the app keeps its own Better Auth session (90 days).

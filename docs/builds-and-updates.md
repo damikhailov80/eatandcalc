@@ -22,7 +22,7 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 ### Dev build (native shell)
 
 - `npm run android:dev` (`apps/mobile/scripts/android-dev.mjs`):
-  1. `expo prebuild` generates or refreshes `apps/mobile/android/` (gitignored, never edited by hand) with `APP_VARIANT=development`, so the launcher name is **Eat And Calc (dev)** (`apps/mobile/app.config.ts`; production builds are **Eat And Calc**);
+  1. `expo prebuild` generates or refreshes `apps/mobile/android/` (gitignored, never edited by hand) with `APP_VARIANT=development`, so the launcher name is **Eat And Calc (dev)** and the package is `com.eatandcalc.app.dev` (`apps/mobile/app.config.ts`; production builds are **Eat And Calc**, `com.eatandcalc.app`). Different packages = two separate apps: dev and production install side by side, each with its own sign-in. Both register the `eatandcalc://` scheme, so an invite link asks which one to open;
   2. copies `apps/mobile/credentials/debug.keystore` into it (stable SHA-1 for Google, see `docs/google-oauth.md`);
   3. `./gradlew app:assembleDebug` with JDK/SDK from Android Studio, `arm64-v8a` only (override: `ANDROID_ARCHS`);
   4. copies the APK to `apps/mobile/dist/eatandcalc-dev.apk`, writes `dist/dev.json` (version, build time, size) and installs it on every phone connected over USB.

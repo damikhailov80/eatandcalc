@@ -88,7 +88,7 @@ cd apps/mobile && npx eas-cli credentials -p android
 
 Profile `production` → Keystore → Generate new (once; the release script is non-interactive and cannot create it). Copy the **SHA-1** shown for the keystore.
 
-Google Cloud → Clients → Create client → **Android**: package `com.eatandcalc.app`, that SHA-1. Keep the dev Android client too: one Android client per signing key. Without this, sign-in in the release APK fails with `DEVELOPER_ERROR`.
+Google Cloud → Clients → Create client → **Android**: package `com.eatandcalc.app`, that SHA-1. Keep the dev Android client (`com.eatandcalc.app.dev`) too: one Android client per package + signing key. Without this, sign-in in the release APK fails with `DEVELOPER_ERROR`.
 
 ### 6. App env in EAS
 

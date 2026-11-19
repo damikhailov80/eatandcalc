@@ -17,6 +17,6 @@ if (!sha1) {
 
 console.log(`
 Google Cloud → Clients → Create client → Android
-  Package name:              com.eatandcalc.app
+  Package name:              com.eatandcalc.app.dev   (dev build; production is com.eatandcalc.app)
   SHA-1 certificate:         ${sha1}
 `);
