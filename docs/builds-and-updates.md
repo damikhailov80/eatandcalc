@@ -52,7 +52,7 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 ### Over-the-air updates (JS only)
 
 ```
-edit TS → npm run prod:update -- "…"   (eas-cli update, channel + environment production)
+edit TS → npm run prod:update -- "…"   (eas-cli update, Android only, channel + environment production)
         → EAS uploads the new bundle
         → app checks for updates on launch, downloads in background
         → next app start runs the new bundle

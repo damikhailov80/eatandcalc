@@ -144,7 +144,7 @@ Screens, styles, texts and logic don't need a new APK:
 npm run prod:update -- "what changed"
 ```
 
-From the repo root; it runs `npx eas-cli update --channel production --environment production --message "…"` in `apps/mobile`. Without a message (`npm run prod:update`) the last commit subject is used.
+From the repo root; it runs `npx eas-cli update --platform android --channel production --environment production --message "…"` in `apps/mobile`. Without a message (`npm run prod:update`) the last commit subject is used.
 
 - `--environment production` is required: it injects `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` into the bundle.
 - The app downloads the update on launch and runs it on the next start.
