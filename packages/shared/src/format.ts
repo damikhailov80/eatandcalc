@@ -26,10 +26,13 @@ export const formatDayMonth = (date: Date) => dayMonth.format(date);
 export const formatInviteCode = (code: string) =>
   code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code;
 
-const inputNumber = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1, useGrouping: false });
+const inputNumber = [0, 1, 2, 3].map(
+  (digits) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: digits, useGrouping: false }),
+);
 
-/** Number for an editable field: no thousands separator, comma decimals ("1435", "13,5"). */
-export const formatNumberInput = (n: number) => inputNumber.format(n);
+/** Number for an editable field: no thousands separator, comma decimals ("1435", "13,5"; up to 3 decimals). */
+export const formatNumberInput = (n: number, maxFractionDigits = 1) =>
+  inputNumber[Math.min(3, Math.max(0, maxFractionDigits))]!.format(n);
 
 /** Parses a typed number; accepts both "," and "." as the decimal separator. Null when not a number. */
 export function parseNumberInput(text: string): number | null {

@@ -43,7 +43,7 @@ cd apps/mobile && npx expo-doctor
 - **Routing (mobile):** expo-router, routes only in `apps/mobile/src/app/`. Non-route code lives outside `src/app/`. Import alias `@/` → `apps/mobile/src/` (same alias in each Next app → its own `src/`).
 - **Auth:** every screen except `sign-in` and `join/*` (invite deep link; it asks to sign in itself) sits behind `Stack.Protected` in the root layout. Mobile signs in with a native Google ID token → Better Auth (`apps/api/src/lib/auth.ts`); allowlist + household assignment happen in Better Auth DB hooks.
 - **API:** mobile never talks to the DB. Every route handler is wrapped in `withUser` (`apps/api/src/lib/session.ts`) and filters by `householdId`; owner-only actions call `requireOwner`. Business errors are `ApiErrors` codes with 400/404/409, never 401/403 (the client signs out only on 401 or 403 `NOT_IN_FAMILY`). Bodies are parsed with `parseBody(request, Schema)`. Request/response shapes are zod schemas in `packages/shared/src/api.ts`; the client calls through `apps/mobile/src/lib/api.ts`.
-- **Sync between devices:** every successful non-GET request through `withUser` bumps `household.revision` (`bumpRevision` in `lib/household.ts`; join also bumps the joined household). Mobile `useHouseholdSync` (`lib/sync.ts`, mounted in the tabs layout) polls `GET /api/sync` (`householdId` + `revision`) every 15 s while the app is foregrounded and invalidates all queries when it changes; `lib/query.ts` wires TanStack `focusManager`/`onlineManager` to `AppState`/`expo-network`. Data tabs pass `onRefresh={refreshAll}` to `Screen` (pull-to-refresh); editors don't.
+- **Sync between devices:** every successful non-GET request through `withUser` bumps `household.revision` (`bumpRevision` in `lib/household.ts`; join also bumps the joined household). Mobile `useHouseholdSync` (`lib/sync.ts`, mounted in the tabs layout) polls `GET /api/sync` (`householdId` + `revision`) every 15 s while the app is foregrounded and invalidates all queries when it changes; `lib/query.ts` wires TanStack `focusManager`/`onlineManager` to `AppState`/`expo-network`. Data tabs pass `onRefresh={refreshAll}` to `Screen` / `ListScreen` (pull-to-refresh); editors don't. Long lists (products) use `ListScreen` with memoized rows and stable callbacks, never a `.map` inside `Screen`.
 - **DB:** Prisma 7 with `@prisma/adapter-pg`; import `prisma` from `@eatandcalc/db` (server only — never in mobile/web). Schema changes = new migration in `packages/db/prisma/migrations`, backward compatible (old app versions keep working). Tables `snake_case` via `@@map`/`@map`.
 - **UI:** own components in `src/components/ui/`. No react-native-paper or other UI kits. Colors, radii, spacing and fonts come only from `@/theme`; no hard-coded hex values in screens. Use `Text` from the UI kit, not RN `Text`.
 - **Design fidelity:** match `design/mockups/` (screen table below). Touch targets ≥ 44, tabular figures, ru-RU number formatting via `@eatandcalc/shared` (`format.ts`) (`1 435`, `13,2`).
@@ -65,7 +65,7 @@ Household ─┬─ HouseholdUser (account, role owner|member), HouseholdInvite 
                                      └─ Consumption[] ──► FamilyMember (grams)
 ```
 
-- **Product:** `nutrients` always per **100 g**; `units` = grams per one unit for a fixed set (`ml`, `tsp`, `tbsp`, `pieceS/M/L`; `g` is implicit), a missing key = not measured that way. One `product` table: `household_id` null = shared **catalog** (seeded from `packages/db/prisma/catalog.ts`, permanent `cat-…` ids), set = the family's **own** product. Families never touch catalog rows: `household_product` holds their `override` (full copy, reset = drop it) and `hidden_at` (also for own products; nothing is hard-deleted). Favorites (`product_favorite`) are per **account**. `GET /api/products` returns the merged list (`ProductDto`: `source`, `modified`, `hidden`, `favorite`, `original`); filtering and search run on the client (`lib/products.ts`, `matchesSearch`).
+- **Product:** `nutrients` always per **100 g**; `units` = grams per one unit for a fixed set (`ml`, `tsp`, `tbsp`, `pieceS/M/L`; `g` is implicit), a missing key = not measured that way. One `product` table: `household_id` null = shared **catalog** (seeded from `packages/db/prisma/catalog.ts`, permanent `cat-…` ids), set = the family's **own** product. Catalog values are exactly USDA FoodData Central (SR Legacy, FDC id per row in `catalog.ts`); only products present there; `npm run db:seed` upserts and drops unreferenced removed rows. Families never touch catalog rows: `household_product` holds their `override` (full copy, reset = drop it) and `hidden_at` (also for own products; nothing is hard-deleted). Favorites (`product_favorite`) are per **account**. `GET /api/products` returns the merged list, `PATCH /api/products/:id` edits an own product or saves the family's override (equal to catalog = no override), `DELETE …/override` resets (`ProductDto`: `source`, `modified`, `hidden`, `favorite`, `original`); filtering and search run on the client (`lib/products.ts`, `matchesSearch`).
 - **Recipe** = template: items, `totalWeightG` (`null` = sum of raw weights), `portions`. **Never modified by cooking**; "В рецепт…" is an explicit separate action.
 - **CookingSession** = one real pot: `date`, optional `recipeId` / `copiedFromId`, `items[]` is a **snapshot** (name, amount, grams, nutrients copied), `cookedWeightG` (weighed finished dish), `portions`. Leftover = `cookedWeightG − Σ consumptions`.
 - **Meal** (`breakfast | lunch | dinner | snack`, several snacks allowed) → **MealDish** (one session; the same session can appear in several meals/days) → **Consumption** (`memberId`, `grams`). One dish, many members, no copies.
@@ -76,7 +76,7 @@ Household ─┬─ HouseholdUser (account, role owner|member), HouseholdInvite 
 | Per 100 g / portion | `total × 100 / cookedWeightG` / `total / portions` |
 | **Consumption** | `sessionTotal / cookedWeightG × gramsEaten` |
 | Remaining | `norm − eaten` (negative = exceeded) |
-| Energy check | `P×4 + F×9 + C×4` vs. entered kcal |
+| Energy check | `P×4 + F×9 + C×4` vs. entered kcal (`energyCheck`: norms ±3 %, products ±10 % / 10 kcal; shown only when out of tolerance; unedited catalog values get an explanation instead of a warning) |
 
 ## Design
 
@@ -99,7 +99,7 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 | `Family` | Family tab | member cards: norm, today's bar, macro chips |
 | `MemberEdit` | Member profile | color; name; sex; norm steppers; macro energy check |
 
-Components to build as needed: NumberField, ProgressRing, MacroBar, MemberChip, DateStrip, SwipeRow, BottomSheet, NumericKeypad (built: Chip/ChipRow, SearchField, SegmentedControl, Stepper, ProgressBar, MemberAvatar, StickyFooter, TextField, IconButton).
+Components to build as needed: ProgressRing, MacroBar, MemberChip, DateStrip, SwipeRow, BottomSheet, NumericKeypad (built: Chip/ChipRow, SearchField, NumberField, SegmentedControl, Stepper, ProgressBar, MemberAvatar, StickyFooter, TextField, IconButton).
 
 ## File map
 
@@ -110,15 +110,16 @@ Components to build as needed: NumberField, ProgressRing, MacroBar, MemberChip, 
 | `apps/mobile/src/app/member/[id].tsx` | member profile editor (`new` = create) |
 | `apps/mobile/src/app/diagnostics.tsx`, `components/DevLogButton.tsx` | temporary debug «Журнал»: floating button on every screen (off with `EXPO_PUBLIC_DEV_LOG=0`) → log with tag filter, share as text |
 | `apps/mobile/src/app/join/` | join by invite: `[code]` (deep link `eatandcalc://join/<code>`), `index` (typed code); outside the auth guard |
-| `apps/mobile/src/components/products/` | Products tab pieces: `ProductRow` |
+| `apps/mobile/src/app/product/[id].tsx` | product editor (`new` = own product, `?name=` prefills); catalog product → family override, reset |
+| `apps/mobile/src/components/products/` | Products pieces: `ProductRow` (badges, trailing action), `ProductForm` (draft ↔ `ProductData`, KBJU, units) |
 | `apps/mobile/src/components/family/` | Family tab pieces: `MemberCard`, `MemberForm`, `AccountsCard` (roles, invite), `JoinFamily`, `errors` |
 | `apps/mobile/src/app/(tabs)/` | tab screens (День, Готовка, Рецепты, Продукты, Семья) |
-| `apps/mobile/src/components/ui/` | Screen (`onBack`, `footer`, `onRefresh`), Text, Card, Button, IconButton, TextField, Stepper, SegmentedControl, ProgressBar, MemberAvatar, StickyFooter, Placeholder, StateMessage |
+| `apps/mobile/src/components/ui/` | Screen (`onBack`, `footer`, `onRefresh`), ListScreen (virtualized FlatList page for long lists), Text, Card, Button, IconButton, TextField, Stepper, SegmentedControl, ProgressBar, MemberAvatar, StickyFooter, Placeholder, StateMessage |
 | `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` (client, focus/online wiring, `refreshAll`), `sync` (`useHouseholdSync`), `products` (list filters), `diagnostics` (SecureStore ring buffer, `diag(tag, msg, level)`, console/crash capture, auto sign-out reason) |
 | `apps/mobile/scripts/` | `android-dev` (local Gradle build → `dist/eatandcalc-dev.apk` + `dist/dev.json`), `android-sha1`, `android-env` (JDK/SDK, keystore) |
 | `apps/mobile/eas.json` | build profiles (development / production APK), update channels |
 | `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `http` (`HttpError`, `parseBody`), `household` (membership, invites, join/leave/remove), `family`, `products` (merged list), `env`, `log` (`authLog`: JSON lines `"tag":"auth"` for Vercel Logs) |
-| `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `sync`, `health`, `household/{invite,join,leave,accounts/[userId]}`, `family-members[/id]`, `products` |
+| `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `sync`, `health`, `household/{invite,join,leave,accounts/[userId]}`, `family-members[/id]`, `products[/id[/override]]` |
 | `apps/api/src/app/invite/[code]/` | legacy invite link: redirects to the landing's invite page |
 | `apps/web/src/app/page.tsx` | landing: headline + QR to itself, download card; under `next dev` the same card serves the local dev APK |
 | `apps/web/src/app/invite/[code]/` | public invite page (shared link): opens the app via Android intent, else offers the APK; shows the code |

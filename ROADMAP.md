@@ -28,7 +28,7 @@ Development goes in stages; each stage ends with a working app.
 ## Stage 2 plan: products
 
 Decisions:
-- One global **catalog** (~300 common products, seeded from `packages/db/prisma/catalog.ts`, stable slug ids `cat-…`) plus the family's **own** products in the same `product` table (`household_id` set).
+- One global **catalog** (277 common products, seeded from `packages/db/prisma/catalog.ts`, stable slug ids `cat-…`; values exactly from USDA FoodData Central SR Legacy with the FDC id per row, carbs by difference incl. fiber; products missing in USDA are not in the catalog) plus the family's **own** products in the same `product` table (`household_id` set).
 - KBJU always **per 100 g**. Units are a fixed set, each converted to grams per product and editable: г (always 1), мл (grams per ml), ч. л., ст. л., шт мал/сред/бол.
 - Per **family** (`household_product`): an override of a catalog product (full copy, can be reset to the catalog values) and hiding (restorable). Own products are edited in place and hidden the same way; nothing is hard-deleted (history keeps values).
 - Per **account** (`product_favorite`): favorites (♥).
@@ -37,8 +37,8 @@ Decisions:
 - Joining a family: the joiner's own products move over, hidden sets are merged, overrides are copied; when both families edited the same catalog product the joiner picks whose version stays. Favorites stay with the account.
 
 Steps (each one ends with a test on the phones, then commit):
-1. [ ] Catalog + read-only list: migration, shared types / nutrition / schemas, catalog seed, `GET /api/products`, Products tab with search, categories, filters Свои / Все.
-2. [ ] Edit & add: product editor (KBJU, energy check, units), create own product, override catalog product, reset; filters Добавленные / Изменённые.
+1. [x] Catalog + read-only list: migration, shared types / nutrition / schemas, catalog seed, `GET /api/products`, Products tab with search, categories, filters Свои / Все.
+2. [x] Edit & add: product editor (KBJU, energy check, units), create own product, override catalog product, reset; filters Добавленные / Изменённые.
 3. [ ] Hide & favorites: hide / restore, ♥, filters Скрытые / Избранное, Свои as the default list.
 4. [ ] Join merge: conflict preview and picker in the join flow, merge in the join transaction.
 

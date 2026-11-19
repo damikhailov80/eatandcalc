@@ -5,12 +5,14 @@ import {
   MeResponseSchema,
   NOT_ALLOWED_ERROR,
   OkResponseSchema,
+  ProductResponseSchema,
   ProductsResponseSchema,
   SyncResponseSchema,
   type FamilyMemberDto,
   type FamilyMemberInput,
   type Invite,
   type MeResponse,
+  type ProductData,
   type ProductDto,
   type SyncResponse,
 } from '@eatandcalc/shared';
@@ -128,4 +130,22 @@ export const api = {
 
   products: async (): Promise<ProductDto[]> =>
     (await apiRequest('/api/products', ProductsResponseSchema)).products,
+  product: async (id: string): Promise<ProductDto> =>
+    (await apiRequest(`/api/products/${encodeURIComponent(id)}`, ProductResponseSchema)).product,
+  createProduct: async (input: ProductData): Promise<ProductDto> =>
+    (await apiRequest('/api/products', ProductResponseSchema, { method: 'POST', json: input })).product,
+  /** Own product: edited; catalog product: saved as the family's version. */
+  updateProduct: async (id: string, input: ProductData): Promise<ProductDto> =>
+    (
+      await apiRequest(`/api/products/${encodeURIComponent(id)}`, ProductResponseSchema, {
+        method: 'PATCH',
+        json: input,
+      })
+    ).product,
+  resetProduct: async (id: string): Promise<ProductDto> =>
+    (
+      await apiRequest(`/api/products/${encodeURIComponent(id)}/override`, ProductResponseSchema, {
+        method: 'DELETE',
+      })
+    ).product,
 };

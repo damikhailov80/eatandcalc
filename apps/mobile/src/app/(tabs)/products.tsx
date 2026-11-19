@@ -4,28 +4,61 @@ import {
   pluralRu,
   PRODUCT_CATEGORIES,
   type ProductCategory,
+  type ProductDto,
 } from '@eatandcalc/shared';
-import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, View, type ListRenderItem } from 'react-native';
 
-import { ProductRow } from '@/components/products/ProductRow';
-import { Button, Card, Chip, ChipRow, Screen, SearchField, StateMessage, Text } from '@/components/ui';
+import { familyErrorMessage } from '@/components/family/errors';
+import { ProductRow, type ProductRowAction } from '@/components/products/ProductRow';
+import { Button, Card, Chip, ChipRow, ListScreen, SearchField, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { filterLabels, filterProducts, type ProductFilter } from '@/lib/products';
-import { queryKeys, refreshAll } from '@/lib/query';
+import { queryClient, queryKeys, refreshAll } from '@/lib/query';
 import { colors, spacing } from '@/theme';
 
-/** Filter chips shown so far (the rest arrive with editing, hiding and favorites). */
-const FILTERS: readonly ProductFilter[] = ['mine', 'all'];
+/** Filter chips shown so far (Избранное and Скрытые arrive with favorites and hiding). */
+const FILTERS: readonly ProductFilter[] = ['mine', 'all', 'own', 'modified'];
 
 const productsWord = ['продукт', 'продукта', 'продуктов'] as const;
+
+const openProduct = (product: Pick<ProductDto, 'id'>, name?: string) =>
+  router.push({ pathname: '/product/[id]', params: name ? { id: product.id, name } : { id: product.id } });
+
+const emptyText: Partial<Record<ProductFilter, string>> = {
+  mine: 'Здесь будут избранные и добавленные',
+  own: 'Добавленных продуктов нет',
+  modified: 'Изменённых продуктов нет',
+};
+
+const keyExtractor = (p: ProductDto) => p.id;
 
 export default function ProductsScreen() {
   const products = useQuery({ queryKey: queryKeys.products, queryFn: api.products });
   const [query, setQuery] = useState('');
   const [chosenFilter, setFilter] = useState<ProductFilter | null>(null);
   const [category, setCategory] = useState<ProductCategory | null>(null);
+
+  const reset = useMutation({
+    mutationFn: api.resetProduct,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products }),
+    onError: (e) => Alert.alert('Не получилось', familyErrorMessage(e)),
+  });
+  const { mutate: resetMutate } = reset;
+  const resetAction = useMemo<ProductRowAction>(
+    () => ({
+      icon: 'restore',
+      label: 'Вернуть стандартные',
+      onPress: (p) =>
+        Alert.alert(`Вернуть стандартные значения «${p.name}»?`, undefined, [
+          { text: 'Отмена', style: 'cancel' },
+          { text: 'Вернуть', style: 'destructive', onPress: () => resetMutate(p.id) },
+        ]),
+    }),
+    [resetMutate],
+  );
 
   const list = products.data;
   const mineCount = useMemo(
@@ -46,6 +79,15 @@ export default function ProductsScreen() {
         ? filterProducts(list, { filter: 'all', category: null, query }).length
         : 0,
     [list, query, visible.length, filter, category],
+  );
+
+  const lastIndex = visible.length - 1;
+  const action = filter === 'modified' ? resetAction : undefined;
+  const renderItem = useCallback<ListRenderItem<ProductDto>>(
+    ({ item, index }) => (
+      <ProductRow product={item} first={index === 0} last={index === lastIndex} onPress={openProduct} action={action} />
+    ),
+    [lastIndex, action],
   );
 
   if (products.isPending) {
@@ -69,16 +111,16 @@ export default function ProductsScreen() {
   }
 
   const total = products.data.filter((p) => !p.hidden).length;
+  const trimmed = query.trim();
 
-  return (
-    <Screen title="Продукты" onRefresh={refreshAll}>
+  const header = (
+    <>
       <SearchField
         value={query}
         onChangeText={setQuery}
         placeholder={`Поиск среди ${formatInt(total)} ${pluralRu(total, productsWord)}`}
         accessibilityLabel="Поиск продуктов"
       />
-
       <ChipRow>
         {FILTERS.map((f) => (
           <Chip key={f} label={filterLabels[f]} selected={f === filter} onPress={() => setFilter(f)} />
@@ -95,41 +137,44 @@ export default function ProductsScreen() {
           />
         ))}
       </ChipRow>
-
-      {visible.length > 0 ? (
-        <Card style={styles.list}>
-          {visible.map((p, i) => (
-            <ProductRow key={p.id} product={p} first={i === 0} />
-          ))}
-        </Card>
-      ) : (
-        <Card style={styles.empty}>
-          <Text variant="h3">{query ? 'Ничего не нашлось' : emptyTitle(filter)}</Text>
-          {!query && filter === 'mine' ? (
-            <Text variant="caption">Здесь будут избранные и добавленные вами продукты.</Text>
-          ) : null}
-          {foundElsewhere > 0 ? (
-            <Button
-              variant="soft"
-              title={`Найдено во всех продуктах: ${formatInt(foundElsewhere)}`}
-              onPress={() => {
-                setFilter('all');
-                setCategory(null);
-              }}
-            />
-          ) : null}
-        </Card>
-      )}
-    </Screen>
+    </>
   );
-}
 
-function emptyTitle(filter: ProductFilter) {
-  return filter === 'mine' ? 'Пока пусто' : 'Нет продуктов';
+  const empty = (
+    <Card style={styles.empty}>
+      <Text variant="h3">{trimmed ? 'Ничего не нашлось' : (emptyText[filter] ?? 'Нет продуктов')}</Text>
+      {foundElsewhere > 0 ? (
+        <Button
+          variant="soft"
+          title={`Найдено во всех продуктах: ${formatInt(foundElsewhere)}`}
+          onPress={() => {
+            setFilter('all');
+            setCategory(null);
+          }}
+        />
+      ) : null}
+      {trimmed ? (
+        <Button variant="ghost" title={`Добавить «${trimmed}»`} onPress={() => openProduct({ id: 'new' }, trimmed)} />
+      ) : null}
+    </Card>
+  );
+
+  return (
+    <ListScreen
+      title="Продукты"
+      actions={<Button title="Добавить" onPress={() => openProduct({ id: 'new' })} style={styles.add} />}
+      header={header}
+      onRefresh={refreshAll}
+      data={visible}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
+      ListEmptyComponent={empty}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
-  list: { padding: 0, overflow: 'hidden' },
   empty: { gap: spacing.sm },
+  add: { height: 44, paddingHorizontal: spacing.lg },
 });

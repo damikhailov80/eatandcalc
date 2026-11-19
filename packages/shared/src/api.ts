@@ -128,6 +128,7 @@ export const ProductSchema = ProductDataSchema.extend({
 export type ProductDto = z.infer<typeof ProductSchema>;
 
 export const ProductsResponseSchema = z.object({ products: z.array(ProductSchema) });
+export const ProductResponseSchema = z.object({ product: ProductSchema });
 
 export const ApiErrorSchema = z.object({
   error: z.string(),

@@ -24,18 +24,44 @@ export type ScreenProps = {
   children?: ReactNode;
 };
 
-/** Page shell: warm background, safe area (top only — the tab bar or footer handles the bottom), scrollable body. */
-export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer, onRefresh, children }: ScreenProps) {
+/** Pull-to-refresh control for a scroll view, or undefined without `onRefresh`. */
+export function useRefreshControl(onRefresh: (() => Promise<unknown>) | undefined) {
   const [refreshing, setRefreshing] = useState(false);
+  if (!onRefresh) return undefined;
   const refresh = async () => {
     setRefreshing(true);
     try {
       // Local requests finish in a few ms: keep the spinner long enough to read as "refreshed".
-      await Promise.allSettled([onRefresh?.(), new Promise((r) => setTimeout(r, MIN_SPINNER_MS))]);
+      await Promise.allSettled([onRefresh(), new Promise((r) => setTimeout(r, MIN_SPINNER_MS))]);
     } finally {
       setRefreshing(false);
     }
   };
+  return (
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={refresh}
+      colors={[colors.primary]}
+      progressBackgroundColor={colors.surface}
+    />
+  );
+}
+
+/** Big tab title with optional actions on the right (shared by `Screen` and `ListScreen`). */
+export function ScreenHeader({ title, actions }: { title: string; actions?: ReactNode }) {
+  return (
+    <View style={styles.header}>
+      <View style={styles.headerText}>
+        <Text variant="title">{title}</Text>
+      </View>
+      {actions}
+    </View>
+  );
+}
+
+/** Page shell: warm background, safe area (top only — the tab bar or footer handles the bottom), scrollable body. */
+export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer, onRefresh, children }: ScreenProps) {
+  const refreshControl = useRefreshControl(onRefresh);
 
   const sub = subtitle ? (
     <Text variant={subtitleBelow ? 'caption' : 'label'} color={colors.textMuted}>
@@ -56,16 +82,7 @@ export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
-          refreshControl={
-            onRefresh ? (
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={refresh}
-                colors={[colors.primary]}
-                progressBackgroundColor={colors.surface}
-              />
-            ) : undefined
-          }>
+          refreshControl={refreshControl}>
           {title && !onBack ? (
             <View style={styles.header}>
               <View style={styles.headerText}>

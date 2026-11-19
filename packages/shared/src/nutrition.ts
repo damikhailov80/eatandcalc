@@ -87,21 +87,25 @@ export type EnergyCheck = {
   fromMacros: number;
   /** Entered kcal minus `fromMacros`; positive = macros give less than the kcal norm. */
   diff: number;
-  /** Within 3 % of the entered kcal. */
+  /** Within the tolerance (default 3 % of the entered kcal). */
   close: boolean;
   /** Share of each macro in `fromMacros`, 0..1. */
   shares: { protein: number; fat: number; carbs: number };
 };
 
-/** Compares entered kcal with the energy of the entered macros (norms editor, product editor). */
-export function energyCheck(n: Nutrients): EnergyCheck {
+/**
+ * Compares entered kcal with the energy of the entered macros (norms editor, product editor).
+ * `tolerance` is a share of kcal, `minKcal` an absolute floor (products: real data uses food-specific
+ * factors, so ±10 % / 10 kcal; norms: 3 %).
+ */
+export function energyCheck(n: Nutrients, { tolerance = 0.03, minKcal = 0 } = {}): EnergyCheck {
   const fromMacros = kcalFromMacros(n);
   const diff = n.kcal - fromMacros;
   const total = fromMacros || 1;
   return {
     fromMacros,
     diff,
-    close: Math.abs(diff) <= n.kcal * 0.03,
+    close: Math.abs(diff) <= Math.max(n.kcal * tolerance, minKcal),
     shares: { protein: (n.protein * 4) / total, fat: (n.fat * 9) / total, carbs: (n.carbs * 4) / total },
   };
 }
