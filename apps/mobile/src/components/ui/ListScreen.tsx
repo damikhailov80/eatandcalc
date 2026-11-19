@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { FlatList, KeyboardAvoidingView, StyleSheet, type FlatListProps } from 'react-native';
+import { FlatList, KeyboardAvoidingView, StyleSheet, View, type FlatListProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useSwipeLockZone } from '@/lib/swipeLock';
 import { colors, spacing } from '@/theme';
 import { ScreenHeader, useRefreshControl } from './Screen';
 
@@ -22,16 +23,18 @@ export type ListScreenProps<T> = Pick<
  */
 export function ListScreen<T>({ title, actions, header, onRefresh, ...list }: ListScreenProps<T>) {
   const refreshControl = useRefreshControl(onRefresh);
+  // The whole header (title, search, chip rows) is a no-swipe zone between tabs.
+  const swipeLockZone = useSwipeLockZone();
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <KeyboardAvoidingView style={styles.root} behavior="height">
         <FlatList
           {...list}
           ListHeaderComponent={
-            <>
+            <View style={styles.headerInner} {...swipeLockZone}>
               <ScreenHeader title={title} actions={actions} />
               {header}
-            </>
+            </View>
           }
           ListHeaderComponentStyle={styles.header}
           contentContainerStyle={styles.content}
@@ -50,5 +53,6 @@ export function ListScreen<T>({ title, actions, header, onRefresh, ...list }: Li
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.xl },
-  header: { gap: spacing.md, marginBottom: spacing.md },
+  header: { marginBottom: spacing.md },
+  headerInner: { gap: spacing.md },
 });

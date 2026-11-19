@@ -3,19 +3,23 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { IconButton, MacroBar, Text } from '@/components/ui';
+import { IconButton, MacroBar, Text, type IconName } from '@/components/ui';
 import type { RecipeView } from '@/lib/recipes';
 import { colors, fonts, radii, shadow, spacing } from '@/theme';
+
+export type RecipeRowAction = { icon: IconName; label: string; onPress: (view: RecipeView) => void };
 
 export type RecipeRowProps = {
   view: RecipeView;
   /** Keep stable (useCallback): rows are memoized for the virtualized list. */
   onPress?: (view: RecipeView) => void;
   onToggleFavorite?: (view: RecipeView) => void;
+  /** Trailing button instead of ♥ (reset in "Изменённые", restore in "Скрытые"). */
+  action?: RecipeRowAction;
 };
 
 /** Recipe card: name and kcal of the whole dish, ingredients, macro bar, raw weight and kcal per 100 g. */
-export const RecipeRow = memo(function RecipeRow({ view, onPress, onToggleFavorite }: RecipeRowProps) {
+export const RecipeRow = memo(function RecipeRow({ view, onPress, onToggleFavorite, action }: RecipeRowProps) {
   const { recipe, totals, ingredients } = view;
   const n = totals.nutrients;
   const badge = recipe.source === 'own' ? 'свой' : recipe.modified ? 'изменён' : null;
@@ -56,7 +60,14 @@ export const RecipeRow = memo(function RecipeRow({ view, onPress, onToggleFavori
           </Text>
         </View>
       </View>
-      {onToggleFavorite ? (
+      {action ? (
+        <IconButton
+          icon={action.icon}
+          label={`${action.label} — ${recipe.name}`}
+          onPress={() => action.onPress(view)}
+          style={styles.action}
+        />
+      ) : onToggleFavorite ? (
         <IconButton
           icon={recipe.favorite ? 'heart' : 'heart-outline'}
           variant="plain"
@@ -94,4 +105,5 @@ const styles = StyleSheet.create({
   badgeModified: { backgroundColor: colors.warnSoft },
   badgeText: { fontFamily: fonts.bodySemibold, fontSize: 11 },
   heart: { marginTop: -10, marginRight: -spacing.sm },
+  action: { marginTop: -6 },
 });

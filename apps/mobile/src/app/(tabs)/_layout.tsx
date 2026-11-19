@@ -1,9 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TopTabs, type MaterialTopTabBarProps } from 'expo-router/js-top-tabs';
-import type { ComponentProps } from 'react';
+import { useCallback, useState, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/Text';
+import { SwipeLockContext } from '@/lib/swipeLock';
 import { useHouseholdSync } from '@/lib/sync';
 import { colors, fonts, radii } from '@/theme';
 
@@ -59,17 +60,22 @@ function TabBar({ state, descriptors, emitter, navigateToTab, insets }: Material
 
 export default function TabsLayout() {
   useHouseholdSync();
+  // Off while a finger is on a chip row (useSwipeLock), so the row scrolls instead of the tabs.
+  const [swipeEnabled, setSwipeEnabled] = useState(true);
+  const lockSwipe = useCallback((locked: boolean) => setSwipeEnabled(!locked), []);
   return (
-    <TopTabs
-      tabBarPosition="bottom"
-      tabBar={(props) => <TabBar {...props} />}
-      screenOptions={{ sceneStyle: { backgroundColor: colors.bg } }}>
-      <TopTabs.Screen name="index" options={{ title: 'День' }} />
-      <TopTabs.Screen name="cooking" options={{ title: 'Готовка' }} />
-      <TopTabs.Screen name="recipes" options={{ title: 'Рецепты' }} />
-      <TopTabs.Screen name="products" options={{ title: 'Продукты' }} />
-      <TopTabs.Screen name="family" options={{ title: 'Семья' }} />
-    </TopTabs>
+    <SwipeLockContext value={lockSwipe}>
+      <TopTabs
+        tabBarPosition="bottom"
+        tabBar={(props) => <TabBar {...props} />}
+        screenOptions={{ sceneStyle: { backgroundColor: colors.bg }, swipeEnabled }}>
+        <TopTabs.Screen name="index" options={{ title: 'День' }} />
+        <TopTabs.Screen name="cooking" options={{ title: 'Готовка' }} />
+        <TopTabs.Screen name="recipes" options={{ title: 'Рецепты' }} />
+        <TopTabs.Screen name="products" options={{ title: 'Продукты' }} />
+        <TopTabs.Screen name="family" options={{ title: 'Семья' }} />
+      </TopTabs>
+    </SwipeLockContext>
   );
 }
 

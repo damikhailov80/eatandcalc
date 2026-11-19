@@ -11,7 +11,7 @@ import { blankDraft, fromDraft, newIngredient, RecipeForm, toDraft, type RecipeD
 import { Button, Card, IconButton, Screen, StateMessage, StickyFooter, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { queryClient, queryKeys } from '@/lib/query';
-import { ingredientsLine, productsById } from '@/lib/recipes';
+import { ingredientsLine, productsById, useRecipeFlags } from '@/lib/recipes';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 const NEW = 'new';
@@ -79,6 +79,7 @@ function Editor({
 
   const busy = save.isPending || reset.isPending || remove.isPending;
   const [showOriginal, setShowOriginal] = useState(false);
+  const { toggleFavorite, setHidden } = useRecipeFlags();
 
   if (picking) return <ProductPicker products={products} onPick={pick} onClose={closePicker} />;
 
@@ -102,9 +103,30 @@ function Editor({
   const actions = recipe ? (
     <View style={styles.actions}>
       {badge}
+      <IconButton
+        icon={recipe.favorite ? 'heart' : 'heart-outline'}
+        variant="plain"
+        color={recipe.favorite ? colors.danger : colors.textMuted}
+        label={recipe.favorite ? 'Убрать из избранного' : 'В избранное'}
+        accessibilityState={{ selected: recipe.favorite }}
+        onPress={() => toggleFavorite(recipe)}
+      />
       {recipe.source === 'own' ? (
         <IconButton icon="trash-can-outline" variant="plain" color={colors.textMuted} label="Удалить" disabled={busy} onPress={confirmDelete} />
-      ) : null}
+      ) : recipe.hidden ? (
+        <IconButton icon="eye-outline" variant="plain" label="Вернуть из скрытых" onPress={() => setHidden(recipe, false)} />
+      ) : (
+        <IconButton
+          icon="eye-off-outline"
+          variant="plain"
+          color={colors.textMuted}
+          label="Скрыть"
+          onPress={() => {
+            setHidden(recipe, true);
+            router.back();
+          }}
+        />
+      )}
     </View>
   ) : null;
 

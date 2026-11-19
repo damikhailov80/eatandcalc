@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { router, usePathname } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,8 @@ const SIZE = touch;
  */
 export function DevLogButton() {
   const pathname = usePathname();
+  // The hook, not the global `router`: it stays bound to this tree even if a dev reload leaves the global one unbound.
+  const router = useRouter();
   const diagnostics = useDiagnostics();
   const insets = useSafeAreaInsets();
   const [offset] = useState(() => new Animated.ValueXY());

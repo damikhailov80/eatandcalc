@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, type ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
 
+import { useSwipeLockZone } from '@/lib/swipeLock';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { Text } from './Text';
 
@@ -29,9 +30,11 @@ export function Chip({ label, selected, onPress, style }: ChipProps) {
 
 /** Horizontally scrolling chip row that bleeds to the screen edges (inside `Screen`'s padding). */
 export function ChipRow({ children }: { children: ReactNode }) {
+  const swipeLockZone = useSwipeLockZone();
   return (
     <ScrollView
       horizontal
+      {...swipeLockZone}
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       style={styles.row}

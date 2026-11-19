@@ -49,48 +49,52 @@ export function filterProducts(
 }
 
 type Flag = 'favorite' | 'hidden';
-const FLAG_MUTATION = ['products', 'flag'];
 type FlagChange = { id: string; flag: Flag; value: boolean };
+type Flagged = { id: string } & Pick<ListFlags, Flag>;
 
-/** Puts the flag into the cached list and the cached product right away. */
-function patchCache({ id, flag, value }: FlagChange) {
-  queryClient.setQueryData<ProductDto[]>(queryKeys.products, (list) =>
-    list?.map((p) => (p.id === id ? { ...p, [flag]: value } : p)),
-  );
-  queryClient.setQueryData<ProductDto>([...queryKeys.products, id], (p) => (p ? { ...p, [flag]: value } : p));
+/** Puts the flag into the cached list and the cached item right away. */
+function patchCache(key: readonly string[], { id, flag, value }: FlagChange) {
+  queryClient.setQueryData<Flagged[]>(key, (list) => list?.map((p) => (p.id === id ? { ...p, [flag]: value } : p)));
+  queryClient.setQueryData<Flagged>([...key, id], (p) => (p ? { ...p, [flag]: value } : p));
 }
 
 /**
- * ♥ and hiding with an optimistic cache update (rolled back on error).
+ * ♥ and hiding of products or recipes with an optimistic cache update (rolled back on error).
  * The returned functions are stable, so memoized rows don't re-render.
  */
-export function useProductFlags() {
+export function useListFlags(
+  key: readonly string[],
+  request: (id: string, flag: Flag, value: boolean) => Promise<unknown>,
+) {
+  const mutationKey = [...key, 'flag'];
   const { mutate } = useMutation({
-    mutationKey: FLAG_MUTATION,
-    mutationFn: ({ id, flag, value }: FlagChange) =>
-      flag === 'favorite' ? api.setProductFavorite(id, value) : api.setProductHidden(id, value),
+    mutationKey,
+    mutationFn: ({ id, flag, value }: FlagChange) => request(id, flag, value),
     onMutate: async (change) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.products });
-      patchCache(change);
+      await queryClient.cancelQueries({ queryKey: key });
+      patchCache(key, change);
     },
     onError: (e, change) => {
-      patchCache({ ...change, value: !change.value });
+      patchCache(key, { ...change, value: !change.value });
       Alert.alert('Не получилось', familyErrorMessage(e));
     },
     // Refetch after the last of quick successive taps, so an early refetch doesn't undo a later one.
     onSettled: () => {
-      if (queryClient.isMutating({ mutationKey: FLAG_MUTATION }) <= 1) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.products });
-      }
+      if (queryClient.isMutating({ mutationKey }) <= 1) queryClient.invalidateQueries({ queryKey: key });
     },
   });
   const toggleFavorite = useCallback(
-    (p: Pick<ProductDto, 'id' | 'favorite'>) => mutate({ id: p.id, flag: 'favorite', value: !p.favorite }),
+    (p: Pick<Flagged, 'id' | 'favorite'>) => mutate({ id: p.id, flag: 'favorite', value: !p.favorite }),
     [mutate],
   );
   const setHidden = useCallback(
-    (p: Pick<ProductDto, 'id'>, hidden: boolean) => mutate({ id: p.id, flag: 'hidden', value: hidden }),
+    (p: Pick<Flagged, 'id'>, hidden: boolean) => mutate({ id: p.id, flag: 'hidden', value: hidden }),
     [mutate],
   );
   return { toggleFavorite, setHidden };
 }
+
+const productFlag = (id: string, flag: Flag, value: boolean) =>
+  flag === 'favorite' ? api.setProductFavorite(id, value) : api.setProductHidden(id, value);
+
+export const useProductFlags = () => useListFlags(queryKeys.products, productFlag);

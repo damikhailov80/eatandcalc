@@ -143,6 +143,28 @@ export async function deleteRecipe(me: RequestUser, id: string): Promise<void> {
   if (count === 0) throw new HttpError(404, ApiErrors.notFound);
 }
 
+/** Hides a catalog recipe for the family or brings it back. Own recipes are deleted instead. */
+export async function setRecipeHidden(me: RequestUser, id: string, hidden: boolean): Promise<RecipeDto> {
+  const where = hidden ? { id, householdId: null } : { id, ...visibleTo(me.householdId) };
+  const r = await prisma.recipe.findFirst({ where, select: { id: true } });
+  if (!r) throw new HttpError(404, ApiErrors.notFound);
+  await writeState(me.householdId, id, { hiddenAt: hidden ? new Date() : null });
+  return getRecipe(me, id);
+}
+
+/** ♥ of the current account (not shared with the family). */
+export async function setRecipeFavorite(me: RequestUser, id: string, favorite: boolean): Promise<RecipeDto> {
+  const r = await prisma.recipe.findFirst({ where: { id, ...visibleTo(me.householdId) }, select: { id: true } });
+  if (!r) throw new HttpError(404, ApiErrors.notFound);
+  const key = { userId: me.user.id, recipeId: id };
+  if (favorite) {
+    await prisma.recipeFavorite.upsert({ where: { userId_recipeId: key }, create: key, update: {} });
+  } else {
+    await prisma.recipeFavorite.deleteMany({ where: key });
+  }
+  return getRecipe(me, id);
+}
+
 /** Updates the family's state row; removes it when neither an override nor hiding is left. */
 async function writeState(
   householdId: string,

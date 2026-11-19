@@ -1,22 +1,32 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View, type ListRenderItem } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View, type ListRenderItem } from 'react-native';
 
-import { RecipeRow } from '@/components/recipes/RecipeRow';
+import { familyErrorMessage } from '@/components/family/errors';
+import { RecipeRow, type RecipeRowAction } from '@/components/recipes/RecipeRow';
 import { Button, Card, Chip, ChipRow, ListScreen, SearchField, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { filterLabels } from '@/lib/products';
-import { queryKeys, refreshAll } from '@/lib/query';
-import { filterRecipes, productsById, toRecipeView, type RecipeFilter, type RecipeView } from '@/lib/recipes';
+import { queryClient, queryKeys, refreshAll } from '@/lib/query';
+import {
+  filterRecipes,
+  productsById,
+  toRecipeView,
+  useRecipeFlags,
+  type RecipeFilter,
+  type RecipeView,
+} from '@/lib/recipes';
 import { colors, spacing } from '@/theme';
 
-const FILTERS: readonly RecipeFilter[] = ['mine', 'all', 'own', 'modified'];
+const FILTERS: readonly RecipeFilter[] = ['mine', 'all', 'favorites', 'own', 'modified', 'hidden'];
 
 const emptyText: Partial<Record<RecipeFilter, string>> = {
   mine: 'Здесь будут избранные и добавленные',
   own: 'Добавленных рецептов нет',
+  favorites: 'Избранных нет',
   modified: 'Изменённых рецептов нет',
+  hidden: 'Скрытых нет',
 };
 
 const openRecipe = (id: string, name?: string) =>
@@ -33,6 +43,32 @@ export default function RecipesScreen() {
   const [query, setQuery] = useState('');
   const [chosenFilter, setFilter] = useState<RecipeFilter | null>(null);
 
+  const reset = useMutation({
+    mutationFn: api.resetRecipe,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.recipes }),
+    onError: (e) => Alert.alert('Не получилось', familyErrorMessage(e)),
+  });
+  const { mutate: resetMutate } = reset;
+  const resetAction = useMemo<RecipeRowAction>(
+    () => ({
+      icon: 'restore',
+      label: 'Вернуть стандартный',
+      onPress: ({ recipe }) =>
+        Alert.alert(`Вернуть стандартный рецепт «${recipe.name}»?`, undefined, [
+          { text: 'Отмена', style: 'cancel' },
+          { text: 'Вернуть', style: 'destructive', onPress: () => resetMutate(recipe.id) },
+        ]),
+    }),
+    [resetMutate],
+  );
+
+  const { toggleFavorite, setHidden } = useRecipeFlags();
+  const restoreAction = useMemo<RecipeRowAction>(
+    () => ({ icon: 'eye-outline', label: 'Вернуть', onPress: ({ recipe }) => setHidden(recipe, false) }),
+    [setHidden],
+  );
+  const onToggleFavorite = useCallback((v: RecipeView) => toggleFavorite(v.recipe), [toggleFavorite]);
+
   const byId = useMemo(() => productsById(products.data), [products.data]);
   const list = recipes.data;
   const mineCount = useMemo(
@@ -41,6 +77,7 @@ export default function RecipesScreen() {
   );
   // "Свои" is the quick list; while it's empty start with all recipes.
   const filter = chosenFilter ?? (mineCount > 0 ? 'mine' : 'all');
+  // Pin the starting filter once loaded, so the first ♥ doesn't switch the list under the finger.
   if (list && chosenFilter == null) setFilter(filter);
 
   const visible = useMemo(
@@ -48,7 +85,11 @@ export default function RecipesScreen() {
     [list, byId, filter, query],
   );
 
-  const renderItem = useCallback<ListRenderItem<RecipeView>>(({ item }) => <RecipeRow view={item} onPress={onRowPress} />, []);
+  const action = filter === 'modified' ? resetAction : filter === 'hidden' ? restoreAction : undefined;
+  const renderItem = useCallback<ListRenderItem<RecipeView>>(
+    ({ item }) => <RecipeRow view={item} onPress={onRowPress} onToggleFavorite={onToggleFavorite} action={action} />,
+    [onToggleFavorite, action],
+  );
 
   if (recipes.isPending || products.isPending) {
     return (

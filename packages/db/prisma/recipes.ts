@@ -31,4 +31,24 @@ export const RECIPES: CatalogRecipe[] = [
       i('cat-voda', 100, 'ml'),
     ],
   },
+  {
+    // One portion.
+    id: 'rcp-borshch-s-govyadinoy',
+    name: 'Борщ с говядиной',
+    items: [
+      i('cat-govyadina-dlya-tusheniya', 100, 'g'),
+      i('cat-svekla', 0.5, 'pieceS'),
+      i('cat-kapusta-belokochannaya', 80, 'g'),
+      i('cat-kartofel', 1, 'pieceM'),
+      i('cat-morkov', 0.5, 'pieceS'),
+      i('cat-luk-repchatyy', 0.5, 'pieceS'),
+      i('cat-chesnok-zubchik', 1, 'pieceM'),
+      i('cat-tomatnaya-pasta', 1, 'tbsp'),
+      i('cat-maslo-podsolnechnoe', 1, 'tsp'),
+      i('cat-sol', 0.5, 'tsp'),
+      i('cat-voda', 350, 'ml'),
+      i('cat-smetana-20', 1, 'tbsp'),
+      i('cat-ukrop', 1, 'tbsp'),
+    ],
+  },
 ];

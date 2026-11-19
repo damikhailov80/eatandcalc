@@ -199,4 +199,18 @@ export const api = {
   deleteRecipe: async (id: string): Promise<void> => {
     await apiRequest(`/api/recipes/${encodeURIComponent(id)}`, OkResponseSchema, { method: 'DELETE' });
   },
+  /** Catalog recipe hidden for the whole family / brought back. */
+  setRecipeHidden: async (id: string, hidden: boolean): Promise<RecipeDto> =>
+    (
+      await apiRequest(`/api/recipes/${encodeURIComponent(id)}/hidden`, RecipeResponseSchema, {
+        method: hidden ? 'PUT' : 'DELETE',
+      })
+    ).recipe,
+  /** ♥ of the signed-in account. */
+  setRecipeFavorite: async (id: string, favorite: boolean): Promise<RecipeDto> =>
+    (
+      await apiRequest(`/api/recipes/${encodeURIComponent(id)}/favorite`, RecipeResponseSchema, {
+        method: favorite ? 'PUT' : 'DELETE',
+      })
+    ).recipe,
 };

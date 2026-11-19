@@ -9,7 +9,9 @@ import {
   type RecipeTotals,
 } from '@eatandcalc/shared';
 
-import { matchesListFilter, type ListFilter } from '@/lib/products';
+import { api } from '@/lib/api';
+import { matchesListFilter, useListFlags, type ListFilter } from '@/lib/products';
+import { queryKeys } from '@/lib/query';
 
 export type RecipeFilter = ListFilter;
 
@@ -56,3 +58,9 @@ export function filterRecipes(
 ): RecipeDto[] {
   return recipes.filter((r) => matchesListFilter(r, filter) && matchesRecipeSearch(r, products, query));
 }
+
+const recipeFlag = (id: string, flag: 'favorite' | 'hidden', value: boolean) =>
+  flag === 'favorite' ? api.setRecipeFavorite(id, value) : api.setRecipeHidden(id, value);
+
+/** ♥ and hiding of recipes, optimistic like products. */
+export const useRecipeFlags = () => useListFlags(queryKeys.recipes, recipeFlag);
