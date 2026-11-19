@@ -1,3 +1,5 @@
+// app.config.ts runs in Node (expo CLI); the app tsconfig has no Node types.
+/// <reference types="node" />
 import { networkInterfaces } from 'node:os';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
