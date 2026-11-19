@@ -59,7 +59,7 @@ edit TS → npm run prod:update -- "…"   (eas-cli update, Android only, channe
 ```
 
 - Enabled by `expo-updates`; channel `production` is set in the build profile.
-- **Compatibility guard:** `runtimeVersion` policy `appVersion` (`apps/mobile/app.json`). An APK only receives updates published for the same `expo.version`. After a native change: bump `version` in `app.json` (e.g. `1.0.0` → `1.1.0`), run `npm run prod:release`, install the new APK; old APKs keep running their last compatible bundle.
+- **Compatibility guard:** `runtimeVersion` policy `appVersion` (`apps/mobile/app.json`). An APK only receives updates published for the same `expo.version`. After a native change: bump `version` in `app.json` (e.g. `0.0.1` → `0.0.2`; stays `0.x` while in development), run `npm run prod:release`, install the new APK; old APKs keep running their last compatible bundle.
 - Rollback: `npx eas-cli update:rollback` (or republish the previous commit).
 - Free EAS plan is far above two users.
 - **API compatibility:** a phone may run the old bundle until its next restart, so API changes and DB migrations must stay backward compatible.

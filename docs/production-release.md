@@ -126,7 +126,7 @@ Neither value is a secret (both end up in the APK). Change one with `npx eas-cli
 Needed for the first install and after any native change (new native module, `app.json` change, Expo SDK upgrade). JS-only changes go through OTA updates (next section).
 
 1. **Prepare.** Commit the changes (EAS builds the working tree, but keep the repo in sync with what ships). Make sure the API is deployed and `/api/health` is OK, and that migrations needed by the new version are applied.
-2. **Bump the version** in `apps/mobile/app.json` → `expo.version` (e.g. `1.0.0` → `1.1.0`) when the native shell changed. `runtimeVersion` follows it (`policy: appVersion`), so OTA updates for the old version don't reach the new APK and vice versa. `versionCode` is incremented by EAS automatically; don't touch it.
+2. **Bump the version** in `apps/mobile/app.json` → `expo.version` (e.g. `0.0.1` → `0.0.2`; stays `0.x` while in development) when the native shell changed. `runtimeVersion` follows it (`policy: appVersion`), so OTA updates for the old version don't reach the new APK and vice versa. `versionCode` is incremented by EAS automatically; don't touch it.
 3. **Build and publish** from the repo root:
 
    ```bash
