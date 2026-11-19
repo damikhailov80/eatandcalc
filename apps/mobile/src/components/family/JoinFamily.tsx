@@ -11,6 +11,7 @@ import { authClient, signInWithGoogle } from '@/lib/auth';
 import { queryClient, queryKeys, resetHouseholdData } from '@/lib/query';
 import { colors, radii, spacing } from '@/theme';
 import { familyErrorMessage } from './errors';
+import { InviteScanner } from './InviteScanner';
 
 const goHome = () => router.replace('/family');
 const back = () => (router.canGoBack() ? router.back() : goHome());
@@ -40,8 +41,9 @@ function SignInStep() {
   );
 }
 
-function JoinStep({ initialCode }: { initialCode: string }) {
+function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean }) {
   const [code, setCode] = useState(formatInviteCode(normalizeInviteCode(initialCode)));
+  const [scanning, setScanning] = useState(scan);
   const me = useQuery({ queryKey: queryKeys.me, queryFn: api.me });
   const join = useMutation({
     mutationFn: () => api.join(normalizeInviteCode(code)),
@@ -67,6 +69,7 @@ function JoinStep({ initialCode }: { initialCode: string }) {
           autoCorrect={false}
           maxLength={INVITE_CODE_LENGTH + 1}
         />
+        <Button title="Сканировать QR-код" variant="soft" onPress={() => setScanning(true)} />
         {me.data ? (
           <Text variant="caption">
             Вы войдёте как {me.data.user.email}.
@@ -97,12 +100,25 @@ function JoinStep({ initialCode }: { initialCode: string }) {
         disabled={!valid || join.isPending || othersInFamily}
         onPress={() => join.mutate()}
       />
+
+      <InviteScanner
+        visible={scanning}
+        onClose={() => setScanning(false)}
+        onCode={(scanned) => {
+          setCode(formatInviteCode(scanned));
+          setScanning(false);
+          join.reset();
+        }}
+      />
     </>
   );
 }
 
-/** Join a household by invite: from a deep link (`eatandcalc://join/<code>`) or a typed code. */
-export function JoinFamily({ code = '' }: { code?: string }) {
+/**
+ * Join a household by invite: from a deep link (`eatandcalc://join/<code>`), a typed code or a scanned QR
+ * (`scan` opens the camera right away).
+ */
+export function JoinFamily({ code = '', scan = false }: { code?: string; scan?: boolean }) {
   const { data: session, isPending } = authClient.useSession();
   return (
     <Screen title="Присоединиться к семье" onBack={back}>
@@ -112,7 +128,7 @@ export function JoinFamily({ code = '' }: { code?: string }) {
       {isPending ? (
         <ActivityIndicator color={colors.primary} />
       ) : session ? (
-        <JoinStep initialCode={code} />
+        <JoinStep initialCode={code} scan={scan} />
       ) : (
         <SignInStep />
       )}

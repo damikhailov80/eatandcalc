@@ -72,9 +72,8 @@ export default async function InvitePage({ params }: Props) {
         </section>
 
         <section className="card code-card">
-          <p className="meta">Код приглашения: «Семья» → «Присоединиться по коду»</p>
+          <p className="meta">Код приглашения: «Семья» → «Аккаунты» → «Ввести код»</p>
           <div className="code">{formatInviteCode(code)}</div>
-          <p className="meta">Код действует 7 дней.</p>
         </section>
       </div>
     </main>

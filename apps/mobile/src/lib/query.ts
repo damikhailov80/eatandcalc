@@ -34,8 +34,15 @@ export const queryKeys = {
   products: ['products'] as const,
 };
 
-/** After joining/leaving/removing the household everything cached belongs to another family. */
-export const resetHouseholdData = () => queryClient.invalidateQueries();
+/**
+ * After joining/leaving/removing the household everything cached belongs to another family. The invite is
+ * dropped, not refetched: it is owner-only, and the owner's invite block may still be mounted for a moment
+ * after the joiner became a member (refetching it then fails with OWNER_ONLY).
+ */
+export function resetHouseholdData() {
+  queryClient.removeQueries({ queryKey: queryKeys.invite });
+  return queryClient.invalidateQueries();
+}
 
 /** Pull-to-refresh: refetch everything on screen (and the sync marker, so it doesn't refetch again). */
 export async function refreshAll() {

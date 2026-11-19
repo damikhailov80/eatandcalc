@@ -15,8 +15,9 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-nat
 
 import { familyErrorMessage } from '@/components/family/errors';
 import { blankDraft, fromDraft, ProductForm, toDraft, type ProductDraft } from '@/components/products/ProductForm';
-import { Button, Card, Screen, StateMessage, StickyFooter, Text } from '@/components/ui';
+import { Button, Card, IconButton, Screen, StateMessage, StickyFooter, Text } from '@/components/ui';
 import { api } from '@/lib/api';
+import { useProductFlags } from '@/lib/products';
 import { queryClient, queryKeys } from '@/lib/query';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -67,7 +68,22 @@ function Editor({ product, initial }: { product: ProductDto | null; initial: Pro
       { text: 'Вернуть', style: 'destructive', onPress: () => reset.mutate() },
     ]);
 
-  const busy = save.isPending || reset.isPending;
+  const remove = useMutation({
+    mutationFn: () => api.deleteProduct(product!.id),
+    onSuccess: () => {
+      router.back();
+      queryClient.setQueryData<ProductDto[]>(queryKeys.products, (list) => list?.filter((p) => p.id !== product!.id));
+      queryClient.invalidateQueries({ queryKey: queryKeys.products, exact: true });
+    },
+    onError,
+  });
+  const confirmDelete = () =>
+    Alert.alert(`Удалить «${product!.name}»?`, undefined, [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить', style: 'destructive', onPress: () => remove.mutate() },
+    ]);
+
+  const busy = save.isPending || reset.isPending || remove.isPending;
   const [showOriginal, setShowOriginal] = useState(false);
   const badge = product?.original ? (
     <Pressable
@@ -86,11 +102,42 @@ function Editor({ product, initial }: { product: ProductDto | null; initial: Pro
     </View>
   ) : null;
 
+  const { toggleFavorite, setHidden } = useProductFlags();
+  const actions = product ? (
+    <View style={styles.actions}>
+      {badge}
+      <IconButton
+        icon={product.favorite ? 'heart' : 'heart-outline'}
+        variant="plain"
+        color={product.favorite ? colors.danger : colors.textMuted}
+        label={product.favorite ? 'Убрать из избранного' : 'В избранное'}
+        accessibilityState={{ selected: product.favorite }}
+        onPress={() => toggleFavorite(product)}
+      />
+      {product.source === 'own' && !product.hidden ? (
+        <IconButton icon="trash-can-outline" variant="plain" color={colors.textMuted} label="Удалить" disabled={busy} onPress={confirmDelete} />
+      ) : product.hidden ? (
+        <IconButton icon="eye-outline" variant="plain" label="Вернуть из скрытых" onPress={() => setHidden(product, false)} />
+      ) : (
+        <IconButton
+          icon="eye-off-outline"
+          variant="plain"
+          color={colors.textMuted}
+          label="Скрыть"
+          onPress={() => {
+            setHidden(product, true);
+            router.back();
+          }}
+        />
+      )}
+    </View>
+  ) : null;
+
   return (
     <Screen
       title={product ? 'Продукт' : 'Новый продукт'}
       onBack={() => router.back()}
-      actions={badge}
+      actions={actions}
       footer={
         <StickyFooter>
           <Button title="Сохранить" large disabled={!data || busy} onPress={() => data && save.mutate(data)} />
@@ -148,6 +195,7 @@ export default function ProductEditScreen() {
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   info: { gap: spacing.sm },
+  actions: { flexDirection: 'row', alignItems: 'center' },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',

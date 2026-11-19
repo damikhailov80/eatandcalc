@@ -31,6 +31,10 @@ export const colors = {
   onPrimary: '#FFFFFF',
   chipActiveBg: '#1D1C19',
   chipActiveFg: '#FFFFFF',
+
+  /** Camera viewfinder: black backdrop, dim overlay around the frame. */
+  camera: '#000000',
+  scrim: 'rgba(0, 0, 0, 0.55)',
 } as const;
 
 /** Colors for calories and macronutrients — use consistently in bars, legends, inputs. */

@@ -15,12 +15,11 @@ import { familyErrorMessage } from '@/components/family/errors';
 import { ProductRow, type ProductRowAction } from '@/components/products/ProductRow';
 import { Button, Card, Chip, ChipRow, ListScreen, SearchField, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
-import { filterLabels, filterProducts, type ProductFilter } from '@/lib/products';
+import { filterLabels, filterProducts, useProductFlags, type ProductFilter } from '@/lib/products';
 import { queryClient, queryKeys, refreshAll } from '@/lib/query';
 import { colors, spacing } from '@/theme';
 
-/** Filter chips shown so far (Избранное and Скрытые arrive with favorites and hiding). */
-const FILTERS: readonly ProductFilter[] = ['mine', 'all', 'own', 'modified'];
+const FILTERS: readonly ProductFilter[] = ['mine', 'all', 'favorites', 'own', 'modified', 'hidden'];
 
 const productsWord = ['продукт', 'продукта', 'продуктов'] as const;
 
@@ -30,7 +29,9 @@ const openProduct = (product: Pick<ProductDto, 'id'>, name?: string) =>
 const emptyText: Partial<Record<ProductFilter, string>> = {
   mine: 'Здесь будут избранные и добавленные',
   own: 'Добавленных продуктов нет',
+  favorites: 'Избранных нет',
   modified: 'Изменённых продуктов нет',
+  hidden: 'Скрытых нет',
 };
 
 const keyExtractor = (p: ProductDto) => p.id;
@@ -60,6 +61,12 @@ export default function ProductsScreen() {
     [resetMutate],
   );
 
+  const { toggleFavorite, setHidden } = useProductFlags();
+  const restoreAction = useMemo<ProductRowAction>(
+    () => ({ icon: 'eye-outline', label: 'Вернуть', onPress: (p) => setHidden(p, false) }),
+    [setHidden],
+  );
+
   const list = products.data;
   const mineCount = useMemo(
     () => (list ? filterProducts(list, { filter: 'mine', category: null, query: '' }).length : 0),
@@ -67,6 +74,8 @@ export default function ProductsScreen() {
   );
   // "Свои" is the quick list; while it's empty start with the whole catalog.
   const filter = chosenFilter ?? (mineCount > 0 ? 'mine' : 'all');
+  // Pin the starting filter once loaded, so the first ♥ doesn't switch the list under the finger.
+  if (list && chosenFilter == null) setFilter(filter);
 
   const visible = useMemo(
     () => (list ? filterProducts(list, { filter, category, query }) : []),
@@ -82,12 +91,19 @@ export default function ProductsScreen() {
   );
 
   const lastIndex = visible.length - 1;
-  const action = filter === 'modified' ? resetAction : undefined;
+  const action = filter === 'modified' ? resetAction : filter === 'hidden' ? restoreAction : undefined;
   const renderItem = useCallback<ListRenderItem<ProductDto>>(
     ({ item, index }) => (
-      <ProductRow product={item} first={index === 0} last={index === lastIndex} onPress={openProduct} action={action} />
+      <ProductRow
+        product={item}
+        first={index === 0}
+        last={index === lastIndex}
+        onPress={openProduct}
+        onToggleFavorite={toggleFavorite}
+        action={action}
+      />
     ),
-    [lastIndex, action],
+    [lastIndex, action, toggleFavorite],
   );
 
   if (products.isPending) {

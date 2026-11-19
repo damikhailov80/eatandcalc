@@ -15,3 +15,4 @@ export * from './Chip';
 export * from './SearchField';
 export * from './NumberField';
 export * from './ListScreen';
+export * from './QrCode';

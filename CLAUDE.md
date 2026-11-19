@@ -6,7 +6,7 @@ Monorepo (npm workspaces): Expo / React Native Android app for family nutrition 
 
 Current stage: **1 (backend & auth) built; local development only** (Docker DB, local API, dev build on two phones over Wi-Fi; Google OAuth setup in README "One-time setup → Local"). Vercel, Neon, EAS and the APK landing are **postponed to the final release**; don't push work toward them unless asked. Stage 4 (family, roles, invites) is built ahead of order. In progress: **Stage 2, products** (step plan in `ROADMAP.md` → "Stage 2 plan").
 
-Decided: Android only; Google sign-in only, allowlist `ALLOWED_EMAILS` filters who can sign in; each account starts with its own household as **owner**, others join by **invite** (link/code, 7 days) as **member**; everyone edits data, only the owner invites/removes accounts, a member can leave; the app is **online-only** (TanStack Query is a request cache, no offline writes); domains `*.vercel.app` for now.
+Decided: Android only; Google sign-in only, allowlist `ALLOWED_EMAILS` filters who can sign in; each account starts with its own household as **owner**, others join by **invite** (link/code/QR, valid until the owner revokes or replaces it) as **member**; everyone edits data, only the owner invites/removes accounts, a member can leave; the app is **online-only** (TanStack Query is a request cache, no offline writes); domains `*.vercel.app` for now.
 
 ## Rules
 
@@ -56,7 +56,7 @@ cd apps/mobile && npx expo-doctor
 Types: `packages/shared/src/domain.ts`; DB schema: `packages/db/prisma/schema.prisma` (so far auth tables + `household`, `household_user` (with `role`), `household_invite`, `family_member`, `product`, `household_product`, `product_favorite`; other domain tables arrive with their stages). Everything belongs to a **Household**; several accounts share one household.
 
 ```
-Household ─┬─ HouseholdUser (account, role owner|member), HouseholdInvite (code, expiresAt)
+Household ─┬─ HouseholdUser (account, role owner|member), HouseholdInvite (code; no expiry)
            ├─ FamilyMember (norms; not an account, archived on delete)
            ├─ Product (own; catalog rows have no household) + HouseholdProduct (override, hidden)
            ├─ Recipe ── RecipeItem[] ──► Product
@@ -65,7 +65,7 @@ Household ─┬─ HouseholdUser (account, role owner|member), HouseholdInvite 
                                      └─ Consumption[] ──► FamilyMember (grams)
 ```
 
-- **Product:** `nutrients` always per **100 g**; `units` = grams per one unit for a fixed set (`ml`, `tsp`, `tbsp`, `pieceS/M/L`; `g` is implicit), a missing key = not measured that way. One `product` table: `household_id` null = shared **catalog** (seeded from `packages/db/prisma/catalog.ts`, permanent `cat-…` ids), set = the family's **own** product. Catalog values are exactly USDA FoodData Central (SR Legacy, FDC id per row in `catalog.ts`); only products present there; `npm run db:seed` upserts and drops unreferenced removed rows. Families never touch catalog rows: `household_product` holds their `override` (full copy, reset = drop it) and `hidden_at` (also for own products; nothing is hard-deleted). Favorites (`product_favorite`) are per **account**. `GET /api/products` returns the merged list, `PATCH /api/products/:id` edits an own product or saves the family's override (equal to catalog = no override), `DELETE …/override` resets (`ProductDto`: `source`, `modified`, `hidden`, `favorite`, `original`); filtering and search run on the client (`lib/products.ts`, `matchesSearch`).
+- **Product:** `nutrients` always per **100 g**; `units` = grams per one unit for a fixed set (`ml`, `tsp`, `tbsp`, `pieceS/M/L`; `g` is implicit), a missing key = not measured that way. One `product` table: `household_id` null = shared **catalog** (seeded from `packages/db/prisma/catalog.ts`, permanent `cat-…` ids), set = the family's **own** product. Catalog values are exactly USDA FoodData Central (SR Legacy, FDC id per row in `catalog.ts`); only products present there; `npm run db:seed` upserts and drops unreferenced removed rows. Families never touch catalog rows: `household_product` holds their `override` (full copy, reset = drop it) and `hidden_at` (catalog products only; own products are deleted, `DELETE /api/products/:id`). Favorites (`product_favorite`) are per **account**. `GET /api/products` returns the merged list, `PATCH /api/products/:id` edits an own product or saves the family's override (equal to catalog = no override), `DELETE …/override` resets, `PUT|DELETE …/hidden` and `…/favorite` hide / ♥ (the app updates the cache optimistically, `useProductFlags`) (`ProductDto`: `source`, `modified`, `hidden`, `favorite`, `original`); filtering and search run on the client (`lib/products.ts`, `matchesSearch`).
 - **Recipe** = template: items, `totalWeightG` (`null` = sum of raw weights), `portions`. **Never modified by cooking**; "В рецепт…" is an explicit separate action.
 - **CookingSession** = one real pot: `date`, optional `recipeId` / `copiedFromId`, `items[]` is a **snapshot** (name, amount, grams, nutrients copied), `cookedWeightG` (weighed finished dish), `portions`. Leftover = `cookedWeightG − Σ consumptions`.
 - **Meal** (`breakfast | lunch | dinner | snack`, several snacks allowed) → **MealDish** (one session; the same session can appear in several meals/days) → **Consumption** (`memberId`, `grams`). One dish, many members, no copies.
@@ -99,7 +99,7 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 | `Family` | Family tab | member cards: norm, today's bar, macro chips |
 | `MemberEdit` | Member profile | color; name; sex; norm steppers; macro energy check |
 
-Components to build as needed: ProgressRing, MacroBar, MemberChip, DateStrip, SwipeRow, BottomSheet, NumericKeypad (built: Chip/ChipRow, SearchField, NumberField, SegmentedControl, Stepper, ProgressBar, MemberAvatar, StickyFooter, TextField, IconButton).
+Components to build as needed: ProgressRing, MacroBar, MemberChip, DateStrip, SwipeRow, BottomSheet, NumericKeypad (built: Chip/ChipRow, SearchField, NumberField, SegmentedControl, Stepper, ProgressBar, MemberAvatar, StickyFooter, TextField, IconButton, QrCode).
 
 ## File map
 
@@ -109,17 +109,17 @@ Components to build as needed: ProgressRing, MacroBar, MemberChip, DateStrip, Sw
 | `apps/mobile/src/app/sign-in.tsx` | Google sign-in screen |
 | `apps/mobile/src/app/member/[id].tsx` | member profile editor (`new` = create) |
 | `apps/mobile/src/app/diagnostics.tsx`, `components/DevLogButton.tsx` | temporary debug «Журнал»: floating button on every screen (off with `EXPO_PUBLIC_DEV_LOG=0`) → log with tag filter, share as text |
-| `apps/mobile/src/app/join/` | join by invite: `[code]` (deep link `eatandcalc://join/<code>`), `index` (typed code); outside the auth guard |
+| `apps/mobile/src/app/join/` | join by invite: `[code]` (deep link `eatandcalc://join/<code>`), `index` (typed code; `?scan=1` opens the QR scanner); outside the auth guard |
 | `apps/mobile/src/app/product/[id].tsx` | product editor (`new` = own product, `?name=` prefills); catalog product → family override, reset |
-| `apps/mobile/src/components/products/` | Products pieces: `ProductRow` (badges, trailing action), `ProductForm` (draft ↔ `ProductData`, KBJU, units) |
-| `apps/mobile/src/components/family/` | Family tab pieces: `MemberCard`, `MemberForm`, `AccountsCard` (roles, invite), `JoinFamily`, `errors` |
+| `apps/mobile/src/components/products/` | Products pieces: `ProductRow` (badges, ♥ or a trailing action), `ProductForm` (draft ↔ `ProductData`, KBJU, units) |
+| `apps/mobile/src/components/family/` | Family tab pieces: `MemberCard`, `MemberForm`, `AccountsCard` (roles, invite with QR), `JoinFamily`, `InviteScanner` (expo-camera QR → `parseInviteCode`), `errors` |
 | `apps/mobile/src/app/(tabs)/` | tab screens (День, Готовка, Рецепты, Продукты, Семья) |
-| `apps/mobile/src/components/ui/` | Screen (`onBack`, `footer`, `onRefresh`), ListScreen (virtualized FlatList page for long lists), Text, Card, Button, IconButton, TextField, Stepper, SegmentedControl, ProgressBar, MemberAvatar, StickyFooter, Placeholder, StateMessage |
-| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` (client, focus/online wiring, `refreshAll`), `sync` (`useHouseholdSync`), `products` (list filters), `diagnostics` (SecureStore ring buffer, `diag(tag, msg, level)`, console/crash capture, auto sign-out reason) |
-| `apps/mobile/scripts/` | `android-dev` (local Gradle build → `dist/eatandcalc-dev.apk` + `dist/dev.json`), `android-sha1`, `android-env` (JDK/SDK, keystore) |
+| `apps/mobile/src/components/ui/` | Screen (`onBack`, `footer`, `onRefresh`), ListScreen (virtualized FlatList page for long lists), QrCode (pure-JS `qrcode` matrix drawn with Views), Text, Card, Button, IconButton, TextField, Stepper, SegmentedControl, ProgressBar, MemberAvatar, StickyFooter, Placeholder, StateMessage |
+| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` (client, focus/online wiring, `refreshAll`), `sync` (`useHouseholdSync`), `products` (list filters, `useProductFlags`), `diagnostics` (SecureStore ring buffer, `diag(tag, msg, level)`, console/crash capture, auto sign-out reason) |
+| `apps/mobile/scripts/` | `android-dev` (local Gradle build → `dist-dev/eatandcalc-dev.apk` + `dist-dev/dev.json`), `android-sha1`, `android-env` (JDK/SDK, keystore) |
 | `apps/mobile/eas.json` | build profiles (development / production APK), update channels |
 | `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `http` (`HttpError`, `parseBody`), `household` (membership, invites, join/leave/remove), `family`, `products` (merged list), `env`, `log` (`authLog`: JSON lines `"tag":"auth"` for Vercel Logs) |
-| `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `sync`, `health`, `household/{invite,join,leave,accounts/[userId]}`, `family-members[/id]`, `products[/id[/override]]` |
+| `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `sync`, `health`, `household/{invite,join,leave,accounts/[userId]}`, `family-members[/id]`, `products[/id[/override|hidden|favorite]]` |
 | `apps/api/src/app/invite/[code]/` | legacy invite link: redirects to the landing's invite page |
 | `apps/web/src/app/page.tsx` | landing: headline + QR to itself, download card; under `next dev` the same card serves the local dev APK |
 | `apps/web/src/app/invite/[code]/` | public invite page (shared link): opens the app via Android intent, else offers the APK; shows the code |

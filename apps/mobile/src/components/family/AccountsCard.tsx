@@ -1,5 +1,5 @@
 import {
-  formatDayMonth,
+  ApiErrors,
   formatInviteCode,
   type Account,
   type MeResponse,
@@ -7,11 +7,11 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
 
-import { Button, Card, MemberAvatar, Text } from '@/components/ui';
-import { api, inviteUrl } from '@/lib/api';
+import { Button, Card, MemberAvatar, QrCode, Text } from '@/components/ui';
+import { api, apiErrorCode, inviteUrl } from '@/lib/api';
 import { queryClient, queryKeys, resetHouseholdData } from '@/lib/query';
 import { colors, fonts, memberColors, radii, spacing } from '@/theme';
 import { familyErrorMessage } from './errors';
@@ -90,9 +90,9 @@ function InviteBlock() {
   return (
     <View style={styles.invite}>
       <View style={styles.codeBox}>
-        <Text variant="caption">Код приглашения</Text>
+        <QrCode value={inviteUrl(current.code)} size={200} />
+        <Text variant="caption" style={styles.codeLabel}>Код приглашения</Text>
         <Text selectable style={styles.code}>{formatInviteCode(current.code)}</Text>
-        <Text variant="caption">действует до {formatDayMonth(new Date(current.expiresAt))}</Text>
       </View>
       <Button title="Поделиться ссылкой" onPress={() => share(current.code)} disabled={busy} />
       <View style={styles.inviteActions}>
@@ -117,7 +117,26 @@ export function AccountsCard({ me }: { me: MeResponse }) {
     resetHouseholdData();
   };
   const remove = useMutation({ mutationFn: api.removeAccount, onSuccess: onChanged, onError: showError });
-  const leave = useMutation({ mutationFn: api.leave, onSuccess: onChanged, onError: showError });
+  // One leave at a time: a double tap could confirm twice, and the second request (already out, now the owner
+  // of a fresh household) fails with OWNER_CANNOT_LEAVE.
+  const leaving = useRef(false);
+  const leave = useMutation({
+    mutationFn: api.leave,
+    onSuccess: onChanged,
+    onError: (e) => {
+      // OWNER_CANNOT_LEAVE here means an earlier request already moved the account out: just catch up.
+      if (apiErrorCode(e) !== ApiErrors.ownerCannotLeave) showError(e);
+      void resetHouseholdData();
+    },
+    onSettled: () => {
+      leaving.current = false;
+    },
+  });
+  const doLeave = () => {
+    if (leaving.current) return;
+    leaving.current = true;
+    leave.mutate();
+  };
 
   const confirmRemove = (account: Account) =>
     Alert.alert(
@@ -132,7 +151,7 @@ export function AccountsCard({ me }: { me: MeResponse }) {
   const confirmLeave = () =>
     Alert.alert('Выйти из семьи?', 'Вы потеряете доступ к данным этой семьи и начнёте с пустой.', [
       { text: 'Отмена', style: 'cancel' },
-      { text: 'Выйти', style: 'destructive', onPress: () => leave.mutate() },
+      { text: 'Выйти', style: 'destructive', onPress: doLeave },
     ]);
 
   return (
@@ -168,6 +187,10 @@ function AccountsBody({ me, isOwner, alone, onRemove, onLeave, leaving }: {
   onLeave: () => void;
   leaving: boolean;
 }) {
+  // Same cache entry as InviteBlock. While we share our own invite, joining someone else's makes no sense.
+  const invite = useQuery({ queryKey: queryKeys.invite, queryFn: api.invite, enabled: isOwner });
+  const canJoin = alone && invite.isSuccess && !invite.data;
+
   return (
     <>
       {me.accounts.map((account, i) => (
@@ -182,8 +205,16 @@ function AccountsBody({ me, isOwner, alone, onRemove, onLeave, leaving }: {
 
       {isOwner ? <InviteBlock /> : null}
 
-      {alone ? (
-        <Button title="Присоединиться по коду" variant="ghost" onPress={() => router.push('/join')} />
+      {canJoin ? (
+        <View style={styles.inviteActions}>
+          <Button
+            title="Сканировать QR-код"
+            variant="soft"
+            onPress={() => router.push({ pathname: '/join', params: { scan: '1' } })}
+            style={styles.flex}
+          />
+          <Button title="Ввести код" variant="ghost" onPress={() => router.push('/join')} style={styles.flex} />
+        </View>
       ) : null}
       {!isOwner ? (
         <Button title="Выйти из семьи" variant="danger" disabled={leaving} onPress={onLeave} />
@@ -205,6 +236,7 @@ const styles = StyleSheet.create({
   remove: { paddingHorizontal: spacing.sm },
   invite: { gap: spacing.md, borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: spacing.md },
   codeBox: { alignItems: 'center', gap: 2, backgroundColor: colors.bg, borderRadius: radii.lg, padding: spacing.lg },
+  codeLabel: { marginTop: spacing.sm },
   code: { fontSize: 26, letterSpacing: 2, fontFamily: fonts.headingHeavy },
   inviteActions: { flexDirection: 'row', gap: spacing.sm },
   flex: { flex: 1 },

@@ -14,12 +14,21 @@ export type ProductRowProps = {
   last?: boolean;
   /** Keep stable (useCallback): rows are memoized for long virtualized lists. */
   onPress?: (product: ProductDto) => void;
-  /** Trailing button after the kcal column ("Сбросить" in the "Изменённые" filter). */
+  /** ♥ after the kcal column (stable callback). */
+  onToggleFavorite?: (product: ProductDto) => void;
+  /** Trailing button instead of ♥ (reset in "Изменённые", restore in "Скрытые"). */
   action?: ProductRowAction;
 };
 
 /** One line of the products list: category tile, name with badges, macros, kcal per 100 g. */
-export const ProductRow = memo(function ProductRow({ product, first, last, onPress, action }: ProductRowProps) {
+export const ProductRow = memo(function ProductRow({
+  product,
+  first,
+  last,
+  onPress,
+  onToggleFavorite,
+  action,
+}: ProductRowProps) {
   const { nutrients: n } = product;
   const tile = categoryColors[product.category];
   const badge = product.source === 'own' ? 'свой' : product.modified ? 'изменён' : null;
@@ -48,7 +57,7 @@ export const ProductRow = memo(function ProductRow({ product, first, last, onPre
             </View>
           ) : null}
           <Text variant="caption">
-            Б {formatOne(n.protein)} · Ж {formatOne(n.fat)} · У {formatOne(n.carbs)}
+            {`Б\u00A0${formatOne(n.protein)} · Ж\u00A0${formatOne(n.fat)} · У\u00A0${formatOne(n.carbs)}`}
           </Text>
         </View>
       </View>
@@ -58,6 +67,16 @@ export const ProductRow = memo(function ProductRow({ product, first, last, onPre
       </View>
       {action ? (
         <IconButton icon={action.icon} label={`${action.label} — ${product.name}`} onPress={() => action.onPress(product)} />
+      ) : onToggleFavorite ? (
+        <IconButton
+          icon={product.favorite ? 'heart' : 'heart-outline'}
+          variant="plain"
+          color={product.favorite ? colors.danger : colors.textDisabled}
+          label={product.favorite ? `Убрать из избранного — ${product.name}` : `В избранное — ${product.name}`}
+          accessibilityState={{ selected: product.favorite }}
+          onPress={() => onToggleFavorite(product)}
+          style={styles.heart}
+        />
       ) : null}
     </Pressable>
   );
@@ -81,7 +100,8 @@ const styles = StyleSheet.create({
   abbr: { fontFamily: fonts.bodyBold, fontSize: 12 },
   main: { flex: 1, gap: 2 },
   name: { fontFamily: fonts.bodySemibold, fontSize: 15 },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  // The macros move under the badge when they don't fit next to it.
+  meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: 2 },
   badge: { borderRadius: radii.pill, paddingHorizontal: 6, paddingVertical: 1 },
   badgeOwn: { backgroundColor: colors.primarySoft },
   badgeModified: { backgroundColor: colors.warnSoft },
@@ -89,4 +109,5 @@ const styles = StyleSheet.create({
   kcal: { alignItems: 'flex-end', gap: 2 },
   kcalValue: { fontFamily: fonts.bodyBold, fontSize: 15 },
   basis: { fontSize: 11, fontFamily: fonts.body },
+  heart: { marginRight: -spacing.sm },
 });

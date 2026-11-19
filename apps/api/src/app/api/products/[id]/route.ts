@@ -1,6 +1,6 @@
-import { ProductDataSchema, ProductResponseSchema } from '@eatandcalc/shared';
+import { OkResponseSchema, ProductDataSchema, ProductResponseSchema } from '@eatandcalc/shared';
 
-import { getProduct, updateProduct } from '@/lib/products';
+import { deleteProduct, getProduct, updateProduct } from '@/lib/products';
 import { parseBody, withUser } from '@/lib/session';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -16,4 +16,10 @@ export const PATCH = withUser<Ctx>(async (request, me, { params }) => {
   const input = await parseBody(request, ProductDataSchema);
   const product = await updateProduct(me, id, input);
   return Response.json(ProductResponseSchema.parse({ product }));
+});
+
+/** Own product only: deleted for good (catalog products are hidden instead). */
+export const DELETE = withUser<Ctx>(async (_request, me, { params }) => {
+  await deleteProduct(me, (await params).id);
+  return Response.json(OkResponseSchema.parse({ ok: true }));
 });

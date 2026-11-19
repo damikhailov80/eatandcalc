@@ -115,12 +115,13 @@ model HouseholdUser {
   @@map("household_user")
 }
 
-/// Invite link/code to join a household. One active invite per household; reusable until it expires or is revoked.
+/// Invite link/code to join a household. One active invite per household; reusable until the owner revokes it
+/// or replaces it with a new code. `expires_at` is legacy (invites used to last 7 days) and is ignored.
 model HouseholdInvite {
   code        String    @id
   householdId String    @map("household_id")
   createdById String    @map("created_by_id")
-  expiresAt   DateTime  @map("expires_at")
+  expiresAt   DateTime? @map("expires_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 

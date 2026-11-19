@@ -3,12 +3,12 @@ import { networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 
 /**
- * Local-only: the dev APK built by `npm run dev:build` (apps/mobile/dist).
+ * Local-only: the dev APK built by `npm run dev:build` (apps/mobile/dist-dev; not `dist`, which `eas update` wipes).
  * Never available in production builds of the landing page.
  */
 export const DEV_BUILD_ENABLED = process.env.NODE_ENV === 'development';
 
-const DIST_DIR = join(process.cwd(), '..', 'mobile', 'dist');
+const DIST_DIR = join(process.cwd(), '..', 'mobile', 'dist-dev');
 export const DEV_APK_PATH = join(DIST_DIR, 'eatandcalc-dev.apk');
 
 export type DevBuild = { version: string; builtAt: string; sizeBytes: number };

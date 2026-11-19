@@ -12,7 +12,6 @@ import { HttpError } from './http';
 import type { RequestUser } from './session';
 
 const DEFAULT_HOUSEHOLD_NAME = 'Семья';
-const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 type Tx = Prisma.TransactionClient;
 
@@ -83,13 +82,10 @@ function generateInviteCode() {
 }
 
 export async function getActiveInvite(householdId: string) {
-  return prisma.householdInvite.findFirst({
-    where: { householdId, expiresAt: { gt: new Date() } },
-    orderBy: { createdAt: 'desc' },
-  });
+  return prisma.householdInvite.findFirst({ where: { householdId }, orderBy: { createdAt: 'desc' } });
 }
 
-/** Replaces the household's invite with a fresh code valid for 7 days. */
+/** Replaces the household's invite with a fresh code; it stays valid until revoked or replaced. */
 export async function createInvite(me: RequestUser) {
   return prisma.$transaction(async (tx) => {
     await tx.householdInvite.deleteMany({ where: { householdId: me.householdId } });
@@ -98,7 +94,6 @@ export async function createInvite(me: RequestUser) {
         code: generateInviteCode(),
         householdId: me.householdId,
         createdById: me.user.id,
-        expiresAt: new Date(Date.now() + INVITE_TTL_MS),
       },
     });
   });
@@ -115,7 +110,7 @@ export async function revokeInvites(householdId: string) {
 export async function joinHousehold(me: RequestUser, code: string) {
   await prisma.$transaction(async (tx) => {
     const invite = await tx.householdInvite.findUnique({ where: { code } });
-    if (!invite || invite.expiresAt <= new Date()) throw new HttpError(404, ApiErrors.inviteInvalid);
+    if (!invite) throw new HttpError(404, ApiErrors.inviteInvalid);
     if (invite.householdId === me.householdId) throw new HttpError(409, ApiErrors.alreadyMember);
 
     const others = await tx.householdUser.count({

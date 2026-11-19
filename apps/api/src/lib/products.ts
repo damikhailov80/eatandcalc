@@ -126,15 +126,52 @@ export async function resetProduct(me: RequestUser, id: string): Promise<Product
   return getProduct(me, id);
 }
 
-/** Writes the override; removes the state row when nothing is left in it. */
-async function setOverride(householdId: string, productId: string, override: ProductData | null) {
+/**
+ * Hides a catalog product for the family or brings it back. Own products are deleted instead;
+ * bringing back still works for any product (own ones hidden by an older app version).
+ */
+export async function setHidden(me: RequestUser, id: string, hidden: boolean): Promise<ProductDto> {
+  const where = hidden ? { id, householdId: null } : { id, ...visibleTo(me.householdId) };
+  const p = await prisma.product.findFirst({ where, select: { id: true } });
+  if (!p) throw new HttpError(404, ApiErrors.notFound);
+  await writeState(me.householdId, id, { hiddenAt: hidden ? new Date() : null });
+  return getProduct(me, id);
+}
+
+/** Deletes the family's own product for good (its state and favorites cascade). Catalog products → 404. */
+export async function deleteProduct(me: RequestUser, id: string): Promise<void> {
+  const { count } = await prisma.product.deleteMany({ where: { id, householdId: me.householdId } });
+  if (count === 0) throw new HttpError(404, ApiErrors.notFound);
+}
+
+/** ♥ of the current account (not shared with the family). */
+export async function setFavorite(me: RequestUser, id: string, favorite: boolean): Promise<ProductDto> {
+  const p = await prisma.product.findFirst({ where: { id, ...visibleTo(me.householdId) }, select: { id: true } });
+  if (!p) throw new HttpError(404, ApiErrors.notFound);
+  const key = { userId: me.user.id, productId: id };
+  if (favorite) {
+    await prisma.productFavorite.upsert({ where: { userId_productId: key }, create: key, update: {} });
+  } else {
+    await prisma.productFavorite.deleteMany({ where: key });
+  }
+  return getProduct(me, id);
+}
+
+const setOverride = (householdId: string, productId: string, override: ProductData | null) =>
+  writeState(householdId, productId, { override: override ?? Prisma.DbNull });
+
+/** Updates the family's state row; removes it when neither an override nor hiding is left. */
+async function writeState(
+  householdId: string,
+  productId: string,
+  patch: { override?: ProductData | typeof Prisma.DbNull; hiddenAt?: Date | null },
+) {
   const key = { householdId_productId: { householdId, productId } };
-  const json = override ?? Prisma.DbNull;
   await prisma.$transaction(async (tx) => {
     const state = await tx.householdProduct.upsert({
       where: key,
-      create: { householdId, productId, override: json },
-      update: { override: json },
+      create: { householdId, productId, ...patch },
+      update: patch,
     });
     if (!state.override && !state.hiddenAt) await tx.householdProduct.delete({ where: key });
   });

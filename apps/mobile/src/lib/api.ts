@@ -148,4 +148,22 @@ export const api = {
         method: 'DELETE',
       })
     ).product,
+  /** Own product only, for good. */
+  deleteProduct: async (id: string): Promise<void> => {
+    await apiRequest(`/api/products/${encodeURIComponent(id)}`, OkResponseSchema, { method: 'DELETE' });
+  },
+  /** Catalog product hidden for the whole family / brought back. */
+  setProductHidden: async (id: string, hidden: boolean): Promise<ProductDto> =>
+    (
+      await apiRequest(`/api/products/${encodeURIComponent(id)}/hidden`, ProductResponseSchema, {
+        method: hidden ? 'PUT' : 'DELETE',
+      })
+    ).product,
+  /** ♥ of the signed-in account. */
+  setProductFavorite: async (id: string, favorite: boolean): Promise<ProductDto> =>
+    (
+      await apiRequest(`/api/products/${encodeURIComponent(id)}/favorite`, ProductResponseSchema, {
+        method: favorite ? 'PUT' : 'DELETE',
+      })
+    ).product,
 };

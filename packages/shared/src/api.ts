@@ -48,10 +48,19 @@ export const INVITE_CODE_LENGTH = 8;
 /** Normalizes user input ("abcd-efgh", spaces) to the stored form ("ABCDEFGH"). */
 export const normalizeInviteCode = (input: string) => input.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-export const InviteSchema = z.object({
-  code: z.string(),
-  expiresAt: z.iso.datetime(),
-});
+/**
+ * Invite code from a scanned QR: the landing link (`…/invite/<code>`), the deep link (`eatandcalc://join/<code>`)
+ * or a bare code. `null` when the text is not an invite.
+ */
+export function parseInviteCode(text: string): string | null {
+  const fromLink = /\/(?:invite|join)\/([^/?#\s]+)/.exec(text.trim())?.[1];
+  const code = normalizeInviteCode(fromLink ?? text);
+  const valid = code.length === INVITE_CODE_LENGTH && [...code].every((c) => INVITE_ALPHABET.includes(c));
+  return valid ? code : null;
+}
+
+/** Valid until the owner revokes it or creates a new code (no expiry). */
+export const InviteSchema = z.object({ code: z.string() });
 export type Invite = z.infer<typeof InviteSchema>;
 
 export const InviteResponseSchema = z.object({ invite: InviteSchema.nullable() });

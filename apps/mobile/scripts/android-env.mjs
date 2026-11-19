@@ -7,9 +7,9 @@ import { fileURLToPath } from 'node:url';
 
 export const MOBILE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const ANDROID_DIR = join(MOBILE_DIR, 'android');
-export const DIST_APK = join(MOBILE_DIR, 'dist', 'eatandcalc-dev.apk');
+export const DIST_APK = join(MOBILE_DIR, 'dist-dev', 'eatandcalc-dev.apk');
 /** Build info next to the APK; the local landing page (apps/web) reads it. */
-export const DIST_MANIFEST = join(MOBILE_DIR, 'dist', 'dev.json');
+export const DIST_MANIFEST = join(MOBILE_DIR, 'dist-dev', 'dev.json');
 
 /** Where Gradle expects the debug key; overwritten with the saved keystore before each build. */
 const BUILD_KEYSTORE = join(ANDROID_DIR, 'app', 'debug.keystore');

@@ -51,4 +51,5 @@ next-env.d.ts
 # Prisma generated client
 packages/db/src/generated/
 /apps/mobile/dist
+/apps/mobile/dist-dev
 /apps/mobile/credentials

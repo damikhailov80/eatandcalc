@@ -3,7 +3,7 @@ import { ApiErrors } from '@eatandcalc/shared';
 import { apiErrorCode } from '@/lib/api';
 
 const messages: Record<string, string> = {
-  [ApiErrors.inviteInvalid]: 'Код не найден или истёк. Попросите новую ссылку.',
+  [ApiErrors.inviteInvalid]: 'Код не найден или отозван. Попросите новую ссылку.',
   [ApiErrors.alreadyMember]: 'Вы уже в этой семье.',
   [ApiErrors.householdNotEmpty]: 'В вашей семье есть другие аккаунты. Сначала удалите их или выйдите из семьи.',
   [ApiErrors.ownerCannotLeave]: 'Владелец не может выйти из своей семьи.',

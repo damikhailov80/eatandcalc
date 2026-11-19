@@ -2,7 +2,7 @@
   "expo": {
     "name": "Eat And Calc",
     "slug": "eatandcalc",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "eatandcalc",
@@ -35,6 +35,14 @@
         }
       ],
       "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Камера нужна, чтобы отсканировать QR-код приглашения в семью.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
       "@react-native-google-signin/google-signin",
       [
         "expo-dev-client",

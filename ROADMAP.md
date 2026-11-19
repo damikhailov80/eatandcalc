@@ -20,7 +20,7 @@ Development goes in stages; each stage ends with a working app.
 - Android only (APK from the landing page, no Google Play); iOS later if ever.
 - Backend: Next.js Route Handlers (`apps/api`) on Vercel, Prisma 7 → Neon PostgreSQL (Frankfurt); Docker Postgres locally.
 - Auth: Better Auth, Google only, native ID-token sign-in; access limited by `ALLOWED_EMAILS`.
-- Households: each account gets its own on first sign-in and is its owner; others join by invite (link `<landing>/invite/<code>` → `eatandcalc://join/<code>` or the APK download if not installed, or the code typed in; valid 7 days, one active per household). Owner: invites, removes accounts; member: can leave. Everyone edits data. `ALLOWED_EMAILS` still filters who can sign in.
+- Households: each account gets its own on first sign-in and is its owner; others join by invite (link `<landing>/invite/<code>` → `eatandcalc://join/<code>` or the APK download if not installed, the code typed in or the QR scanned in the app; valid until revoked or replaced, one active per household). Owner: invites, removes accounts; member: can leave. Everyone edits data. `ALLOWED_EMAILS` still filters who can sign in.
 - Online-only: no offline writes or sync; TanStack Query is just a request cache.
 - Domains: `*.vercel.app` until a real domain is bought.
 - Until the release stage everything runs locally: Docker DB, API on the Mac, dev build (built locally, no EAS) on two phones over Wi-Fi.
@@ -30,7 +30,7 @@ Development goes in stages; each stage ends with a working app.
 Decisions:
 - One global **catalog** (277 common products, seeded from `packages/db/prisma/catalog.ts`, stable slug ids `cat-…`; values exactly from USDA FoodData Central SR Legacy with the FDC id per row, carbs by difference incl. fiber; products missing in USDA are not in the catalog) plus the family's **own** products in the same `product` table (`household_id` set).
 - KBJU always **per 100 g**. Units are a fixed set, each converted to grams per product and editable: г (always 1), мл (grams per ml), ч. л., ст. л., шт мал/сред/бол.
-- Per **family** (`household_product`): an override of a catalog product (full copy, can be reset to the catalog values) and hiding (restorable). Own products are edited in place and hidden the same way; nothing is hard-deleted (history keeps values).
+- Per **family** (`household_product`): an override of a catalog product (full copy, can be reset to the catalog values) and hiding (restorable). Own products are edited in place and deleted (not hidden); once recipes exist, a product used in them can't be deleted.
 - Per **account** (`product_favorite`): favorites (♥).
 - Filters: Свои (= избранное + добавленные, the quick list), Все, Избранное, Добавленные, Изменённые (reset), Скрытые (restore); category chips; instant name search on the client (case- and ё-insensitive).
 - Release note: production needs `npm run db:seed` (catalog upsert) after migrations; wire it into the `migrate` workflow at the release stage.
@@ -39,7 +39,7 @@ Decisions:
 Steps (each one ends with a test on the phones, then commit):
 1. [x] Catalog + read-only list: migration, shared types / nutrition / schemas, catalog seed, `GET /api/products`, Products tab with search, categories, filters Свои / Все.
 2. [x] Edit & add: product editor (KBJU, energy check, units), create own product, override catalog product, reset; filters Добавленные / Изменённые.
-3. [ ] Hide & favorites: hide / restore, ♥, filters Скрытые / Избранное, Свои as the default list.
+3. [x] Hide & favorites: hide / restore catalog products, delete own ones, ♥, filters Скрытые / Избранное, Свои as the default list.
 4. [ ] Join merge: conflict preview and picker in the join flow, merge in the join transaction.
 
 ## Open questions

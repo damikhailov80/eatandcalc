@@ -60,13 +60,13 @@ npm run dev:build    # build the dev APK on this Mac, install on USB phones (onl
 node apps/mobile/scripts/android-sha1.mjs   # SHA-1 of the dev signing key, for Google Cloud
 ```
 
-**Installing the dev build on a phone:** with `npm run dev` running, open `http://localhost:3001` on the Mac and scan the QR code with the phone (or open `http://<Mac LAN IP>:3001` on the phone) → "Скачать APK" → install. Under `next dev` the landing's download card serves the dev APK from `apps/mobile/dist` (built by `npm run dev:build`); in production it serves the published release.
+**Installing the dev build on a phone:** with `npm run dev` running, open `http://localhost:3001` on the Mac and scan the QR code with the phone (or open `http://<Mac LAN IP>:3001` on the phone) → "Скачать APK" → install. Under `next dev` the landing's download card serves the dev APK from `apps/mobile/dist-dev` (built by `npm run dev:build`); in production it serves the published release.
 
 **Connecting to Metro:** the dev build has `http://<Mac LAN IP>:8081` baked in at build time and opens it on launch; if the Mac's IP changes, rebuild (`npm run dev:build`). Fallback: the launcher's Enter URL manually. Metro's interactive keys (`r` reload) are unavailable inside `npm run dev`; run `npm run dev:mobile` in its own terminal when you need them.
 
 The dev build only needs rebuilding (`npm run dev:build`) after adding a native library or changing `app.json`; JS changes arrive through Metro. It is signed with `apps/mobile/credentials/debug.keystore` (gitignored, created on first run): keep it, Google Cloud knows its SHA-1.
 
-**Inviting the second phone locally:** sign in on phone A (owner) → Семья → «Пригласить в семью» → «Поделиться ссылкой». The link is `http://<Mac LAN IP>:3001/invite/<code>` (the landing), so phone B must be on the same Wi-Fi; «Открыть в приложении» opens the app at `eatandcalc://join/<code>`, and if the app isn't installed the page jumps to its «Скачать APK» step; or type the code in Семья → «Присоединиться по коду». The account must still be in `ALLOWED_EMAILS`. Joining deletes the joiner's own (empty) household.
+**Inviting the second phone locally:** sign in on phone A (owner) → Семья → «Пригласить в семью» → «Поделиться ссылкой», or scan the QR in the invite block: in the app on phone B (Семья → Аккаунты → «Сканировать QR-код», fills the code) or with its system camera (it encodes the same link). The link is `http://<Mac LAN IP>:3001/invite/<code>` (the landing), so phone B must be on the same Wi-Fi; «Открыть в приложении» opens the app at `eatandcalc://join/<code>`, and if the app isn't installed the page jumps to its «Скачать APK» step; or type the code in Семья → Аккаунты → «Ввести код». The account must still be in `ALLOWED_EMAILS`. Joining deletes the joiner's own (empty) household.
 
 Checks: `npm run typecheck`, `npm run lint`, `cd apps/mobile && npx expo-doctor`. A husky `pre-commit` hook (installed by `npm install`) runs `npm run typecheck`; skip once with `git commit --no-verify`.
 
