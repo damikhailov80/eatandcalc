@@ -22,7 +22,7 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 ### Dev build (native shell)
 
 - `npm run dev:build` (`apps/mobile/scripts/android-dev.mjs`):
-  1. `expo prebuild` generates or refreshes `apps/mobile/android/` (gitignored, never edited by hand) with `APP_VARIANT=development`, so the launcher name is **Eat And Calc (dev)** and the package is `com.eatandcalc.app.dev` (`apps/mobile/app.config.ts`; production builds are **Eat And Calc**, `com.eatandcalc.app`). Different packages = two separate apps: dev and production install side by side, each with its own sign-in. Both register the `eatandcalc://` scheme, so an invite link asks which one to open;
+  1. `expo prebuild` generates or refreshes `apps/mobile/android/` (gitignored, never edited by hand) with `APP_VARIANT=development`, so the launcher name is **Eat And Calc (dev)** and the package is `com.eatandcalc.app.dev` (`apps/mobile/app.config.ts`; production builds are **Eat And Calc**, `com.eatandcalc.app`). Different packages = two separate apps: dev and production install side by side, each with its own sign-in. Both register the `eatandcalc://` scheme; the invite page targets one by package (dev under `next dev`, release in production);
   2. copies `apps/mobile/credentials/debug.keystore` into it (stable SHA-1 for Google, see `docs/google-oauth.md`);
   3. `./gradlew app:assembleDebug` with JDK/SDK from Android Studio, `arm64-v8a` only (override: `ANDROID_ARCHS`);
   4. copies the APK to `apps/mobile/dist/eatandcalc-dev.apk`, writes `dist/dev.json` (version, build time, size) and installs it on every phone connected over USB.
@@ -46,7 +46,7 @@ Everything visible (screens, colors, texts, nutrition math) is JavaScript compil
 
 - `npm run prod:release` (`apps/web/scripts/release-android.mjs`): EAS cloud build with profile `production` (`apps/mobile/eas.json`) → downloads the APK → uploads `android/eatandcalc.apk` and `android/latest.json` to Vercel Blob → the landing page shows version, date and the download button.
 - Step-by-step setup, release checklist and troubleshooting: [production-release.md](production-release.md).
-- The production APK contains the JS bundle, `EXPO_PUBLIC_API_URL=https://eat-and-calc-api.vercel.app` (EAS env `production`), and is signed with the EAS-managed keystore. `versionCode` is incremented by EAS (`appVersionSource: remote`, `autoIncrement`).
+- The production APK contains the JS bundle, `EXPO_PUBLIC_API_URL=https://eat-and-calc-api.vercel.app` and `EXPO_PUBLIC_WEB_URL=https://eat-and-calc-web.vercel.app` (invite links; EAS env `production`), and is signed with the EAS-managed keystore. `versionCode` is incremented by EAS (`appVersionSource: remote`, `autoIncrement`).
 - Phones install it from the landing page once (allow installs from the browser).
 
 ### Over-the-air updates (JS only)

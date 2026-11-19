@@ -20,7 +20,7 @@ Development goes in stages; each stage ends with a working app.
 - Android only (APK from the landing page, no Google Play); iOS later if ever.
 - Backend: Next.js Route Handlers (`apps/api`) on Vercel, Prisma 7 → Neon PostgreSQL (Frankfurt); Docker Postgres locally.
 - Auth: Better Auth, Google only, native ID-token sign-in; access limited by `ALLOWED_EMAILS`.
-- Households: each account gets its own on first sign-in and is its owner; others join by invite (link `<API>/invite/<code>` → `eatandcalc://join/<code>`, or the code typed in; valid 7 days, one active per household). Owner: invites, removes accounts; member: can leave. Everyone edits data. `ALLOWED_EMAILS` still filters who can sign in.
+- Households: each account gets its own on first sign-in and is its owner; others join by invite (link `<landing>/invite/<code>` → `eatandcalc://join/<code>` or the APK download if not installed, or the code typed in; valid 7 days, one active per household). Owner: invites, removes accounts; member: can leave. Everyone edits data. `ALLOWED_EMAILS` still filters who can sign in.
 - Online-only: no offline writes or sync; TanStack Query is just a request cache.
 - Domains: `*.vercel.app` until a real domain is bought.
 - Until the release stage everything runs locally: Docker DB, API on the Mac, dev build (built locally, no EAS) on two phones over Wi-Fi.

@@ -66,7 +66,7 @@ node apps/mobile/scripts/android-sha1.mjs   # SHA-1 of the dev signing key, for 
 
 The dev build only needs rebuilding (`npm run dev:build`) after adding a native library or changing `app.json`; JS changes arrive through Metro. It is signed with `apps/mobile/credentials/debug.keystore` (gitignored, created on first run): keep it, Google Cloud knows its SHA-1.
 
-**Inviting the second phone locally:** sign in on phone A (owner) → Семья → «Пригласить в семью» → «Поделиться ссылкой». The link is `http://<Mac LAN IP>:3000/invite/<code>` (the API), so phone B must be on the same Wi-Fi; the page opens the app at `eatandcalc://join/<code>`, or type the code in Семья → «Присоединиться по коду». The account must still be in `ALLOWED_EMAILS`. Joining deletes the joiner's own (empty) household.
+**Inviting the second phone locally:** sign in on phone A (owner) → Семья → «Пригласить в семью» → «Поделиться ссылкой». The link is `http://<Mac LAN IP>:3001/invite/<code>` (the landing), so phone B must be on the same Wi-Fi; «Открыть в приложении» opens the app at `eatandcalc://join/<code>`, and if the app isn't installed the page jumps to its «Скачать APK» step; or type the code in Семья → «Присоединиться по коду». The account must still be in `ALLOWED_EMAILS`. Joining deletes the joiner's own (empty) household.
 
 Checks: `npm run typecheck`, `npm run lint`, `cd apps/mobile && npx expo-doctor`. A husky `pre-commit` hook (installed by `npm install`) runs `npm run typecheck`; skip once with `git commit --no-verify`.
 
@@ -90,7 +90,7 @@ Postponed until the app is ready; the code is in place.
 | `DATABASE_URL` (Neon pooled), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS` | Vercel env, project `eat-and-calc-api`; locally `apps/api/.env.local` |
 | `DIRECT_URL` (Neon unpooled) | GitHub → Settings → Environments → `production` secret |
 | `BLOB_STORE_ID` / `BLOB_READ_WRITE_TOKEN` | Vercel env, project `eat-and-calc-web` (auto from the connected Blob store); locally the read-write token in `apps/web/.env.local` for releases |
-| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_API_URL` | not secret (in the bundle): EAS env, environment `production` |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_WEB_URL` | not secret (in the bundle): EAS env, environment `production` |
 | Android keystore | dev: `apps/mobile/credentials/debug.keystore` (gitignored); prod: EAS managed credentials |
 
 `.env*.local` files are gitignored. Keep master copies in a password manager.
@@ -114,7 +114,7 @@ Detailed guides: [docs/google-oauth.md](docs/google-oauth.md) (sign-in, troubles
 ### Production (later)
 
 1. **Google Cloud**: one more Android client with the SHA-1 of the EAS keystore (`npx eas-cli credentials -p android`).
-2. **Expo**: `cd apps/mobile && npx eas-cli login && npx eas-cli init && npx eas-cli update:configure`; `npx eas-cli env:create --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value <id> --visibility plaintext --environment production --environment development` and `EXPO_PUBLIC_API_URL=https://eat-and-calc-api.vercel.app` for `production`.
+2. **Expo**: `cd apps/mobile && npx eas-cli login && npx eas-cli init && npx eas-cli update:configure`; `npx eas-cli env:create --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value <id> --visibility plaintext --environment production --environment development` and `EXPO_PUBLIC_API_URL=https://eat-and-calc-api.vercel.app`, `EXPO_PUBLIC_WEB_URL=https://eat-and-calc-web.vercel.app` for `production`.
 3. **Vercel**: import the GitHub repo twice — `eat-and-calc-api` (Root Directory `apps/api`) and `eat-and-calc-web` (Root Directory `apps/web`). In `eat-and-calc-api`: Storage → Neon (region Frankfurt), then add the API env vars above with `BETTER_AUTH_URL=https://eat-and-calc-api.vercel.app`. In `eat-and-calc-web`: Storage → Blob.
 4. **GitHub**: environment `production` with secret `DIRECT_URL` = Neon `DATABASE_URL_UNPOOLED`. Run the "Migrate database" workflow once.
 5. `npm run prod:release` and open the landing page.

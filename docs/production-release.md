@@ -57,6 +57,7 @@ The order matters only where noted. Everything below is already configured; repe
 | `BETTER_AUTH_SECRET` | new `openssl rand -base64 32`, not the local one. Changing it later signs everyone out |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | the same Web client as locally (`eatandcalc web`) |
 | `ALLOWED_EMAILS` | comma-separated family accounts |
+| `WEB_URL` | optional; landing for legacy `/invite/<code>` redirects, default `https://eat-and-calc-web.vercel.app` |
 
 - Env vars are read at request time, not at build time (`apps/api/src/lib/env.ts`, lazy `getAuth()` and `prisma`), so the build passes without them; a missing one shows up as a 500 with `X is not set` in Vercel → Logs.
 - After changing env vars: Deployments → Redeploy.
@@ -100,6 +101,8 @@ npx eas-cli env:create --name EXPO_PUBLIC_API_URL --value https://eat-and-calc-a
   --environment production --visibility plaintext
 npx eas-cli env:create --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value <GOOGLE_CLIENT_ID> \
   --environment production --visibility plaintext
+npx eas-cli env:create --name EXPO_PUBLIC_WEB_URL --value https://eat-and-calc-web.vercel.app \
+  --environment production --visibility plaintext   # invite links point to the landing
 npx eas-cli env:list --environment production   # check
 ```
 
@@ -146,7 +149,7 @@ npm run prod:update -- "what changed"
 
 From the repo root; it runs `npx eas-cli update --platform android --channel production --environment production --message "…"` in `apps/mobile`. Without a message (`npm run prod:update`) the last commit subject is used.
 
-- `--environment production` is required: it injects `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` into the bundle.
+- `--environment production` is required: it injects `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_WEB_URL` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` into the bundle.
 - The app downloads the update on launch and runs it on the next start.
 - Only APKs with the same `expo.version` receive it.
 - Rollback: `npx eas-cli update:rollback`.

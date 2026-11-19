@@ -110,13 +110,15 @@ Components to build as needed: Chip, SearchField, NumberField, ProgressRing, Mac
 | `apps/mobile/src/components/family/` | Family tab pieces: `MemberCard`, `MemberForm`, `AccountsCard` (roles, invite), `JoinFamily`, `errors` |
 | `apps/mobile/src/app/(tabs)/` | tab screens (День, Готовка, Рецепты, Продукты, Семья) |
 | `apps/mobile/src/components/ui/` | Screen (`onBack`, `footer`), Text, Card, Button, IconButton, TextField, Stepper, SegmentedControl, ProgressBar, MemberAvatar, StickyFooter, Placeholder, StateMessage |
-| `apps/mobile/src/lib/` | `config` (API URL), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` |
+| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` |
 | `apps/mobile/scripts/` | `android-dev` (local Gradle build → `dist/eatandcalc-dev.apk` + `dist/dev.json`), `android-sha1`, `android-env` (JDK/SDK, keystore) |
 | `apps/mobile/eas.json` | build profiles (development / production APK), update channels |
 | `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `http` (`HttpError`, `parseBody`), `household` (membership, invites, join/leave/remove), `family`, `env` |
 | `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `health`, `household/{invite,join,leave,accounts/[userId]}`, `family-members[/id]` |
-| `apps/api/src/app/invite/[code]/` | public invite page (opens the app, shows the code) |
+| `apps/api/src/app/invite/[code]/` | legacy invite link: redirects to the landing's invite page |
 | `apps/web/src/app/page.tsx` | landing: headline + QR to itself, download card; under `next dev` the same card serves the local dev APK |
+| `apps/web/src/app/invite/[code]/` | public invite page (shared link): opens the app via Android intent, else offers the APK; shows the code |
+| `apps/web/src/app-download.ts` | APK to offer: local dev build under `next dev`, else the Blob release |
 | `apps/web/src/dev-build.ts`, `app/download/dev/` | local-only dev APK info and download (404 in production) |
 | `apps/web/scripts/release-android.mjs` | EAS build → Vercel Blob (`android/eatandcalc.apk`, `android/latest.json`) |
 | `packages/db/prisma/` | `schema.prisma`, `migrations/`, `seed.ts`; config `packages/db/prisma.config.ts` |

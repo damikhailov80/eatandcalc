@@ -14,5 +14,19 @@ function resolveApiUrl(): string {
 
 export const API_URL = resolveApiUrl();
 
+/**
+ * Landing URL (invite links). Builds and OTA updates get it from EXPO_PUBLIC_WEB_URL; in development the Metro
+ * host on port 3001 (`npm run dev:web`). Without it, the API's legacy `/invite/<code>` redirects to the landing.
+ */
+function resolveWebUrl(): string {
+  const fromEnv = process.env.EXPO_PUBLIC_WEB_URL;
+  if (fromEnv) return fromEnv.replace(/\/$/, '');
+  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+  if (__DEV__ && host) return `http://${host}:3001`;
+  return API_URL;
+}
+
+export const WEB_URL = resolveWebUrl();
+
 /** OAuth client of type "Web application"; the server verifies ID tokens against it. */
 export const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';

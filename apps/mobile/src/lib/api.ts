@@ -13,7 +13,7 @@ import {
 import type { z } from 'zod';
 
 import { authClient } from './auth';
-import { API_URL } from './config';
+import { API_URL, WEB_URL } from './config';
 
 export class ApiRequestError extends Error {
   constructor(
@@ -62,8 +62,8 @@ export async function apiRequest<S extends z.ZodType>(
 /** Error code from the API (`ApiErrors`), or null for network/other failures. */
 export const apiErrorCode = (e: unknown) => (e instanceof ApiRequestError ? e.message : null);
 
-/** Public link to share: opens the app through the API's invite page. */
-export const inviteUrl = (code: string) => `${API_URL}/invite/${code}`;
+/** Public link to share: the landing's invite page opens the app or offers to install it. */
+export const inviteUrl = (code: string) => `${WEB_URL}/invite/${code}`;
 
 export const api = {
   me: (): Promise<MeResponse> => apiRequest('/api/me', MeResponseSchema),
