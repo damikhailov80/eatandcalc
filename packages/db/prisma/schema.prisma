@@ -14,17 +14,18 @@ datasource db {
 // ---------- Better Auth ----------
 
 model User {
-  id            String            @id
-  name          String
-  email         String            @unique
-  emailVerified Boolean           @default(false)
-  image         String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  household     HouseholdUser?
-  favorites     ProductFavorite[]
+  id              String            @id
+  name            String
+  email           String            @unique
+  emailVerified   Boolean           @default(false)
+  image           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  household       HouseholdUser?
+  favorites       ProductFavorite[]
+  recipeFavorites RecipeFavorite[]
 
   @@map("user")
 }
@@ -90,6 +91,8 @@ model Household {
   members       FamilyMember[]
   products      Product[]
   productStates HouseholdProduct[]
+  recipes       Recipe[]
+  recipeStates  HouseholdRecipe[]
 
   @@map("household")
 }
@@ -230,4 +233,54 @@ model ProductFavorite {
   @@id([userId, productId])
   @@index([productId])
   @@map("product_favorite")
+}
+
+// ---------- Recipes ----------
+
+/// A recipe template: products in their units, in display order. `household_id` null = shared catalog recipe
+/// (seeded from `prisma/recipes.ts`, stable `rcp-…` id); set = the family's own recipe. Weight and nutrition
+/// are not stored: they follow from the products (raw weight = sum of ingredient grams).
+model Recipe {
+  id          String            @id @default(cuid())
+  householdId String?           @map("household_id")
+  name        String
+  /// `[{ productId, amount, unit }]` (`RecipeItemSchema`).
+  items       Json              @default("[]")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  household   Household?        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  states      HouseholdRecipe[]
+  favorites   RecipeFavorite[]
+
+  @@index([householdId])
+  @@map("recipe")
+}
+
+/// The family's view of a recipe: an override of a catalog recipe (full `RecipeDataSchema` copy,
+/// null = catalog values) and hiding (null = visible). Same rules as `household_product`.
+model HouseholdRecipe {
+  householdId String    @map("household_id")
+  recipeId    String    @map("recipe_id")
+  override    Json?
+  hiddenAt    DateTime? @map("hidden_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([householdId, recipeId])
+  @@index([recipeId])
+  @@map("household_recipe")
+}
+
+/// Recipe favorites (♥) belong to an account.
+model RecipeFavorite {
+  userId    String   @map("user_id")
+  recipeId  String   @map("recipe_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId])
+  @@index([recipeId])
+  @@map("recipe_favorite")
 }

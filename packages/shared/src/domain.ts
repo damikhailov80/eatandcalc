@@ -77,14 +77,11 @@ export type RecipeItem = Quantity & {
   productId: Id;
 };
 
+/** A template: ingredients only. Its weight is the sum of raw ingredient grams; cooking never changes it. */
 export type Recipe = {
   id: Id;
-  householdId: Id;
   name: string;
   items: RecipeItem[];
-  /** Weight of the finished dish; null = use the sum of raw ingredient weights. */
-  totalWeightG: number | null;
-  portions: number;
 };
 
 // ---------- Cooking sessions (concrete pots) ----------

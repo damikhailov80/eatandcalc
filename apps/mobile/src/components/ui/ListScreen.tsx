@@ -7,7 +7,7 @@ import { ScreenHeader, useRefreshControl } from './Screen';
 
 export type ListScreenProps<T> = Pick<
   FlatListProps<T>,
-  'data' | 'renderItem' | 'keyExtractor' | 'ListEmptyComponent' | 'extraData'
+  'data' | 'renderItem' | 'keyExtractor' | 'ListEmptyComponent' | 'extraData' | 'ItemSeparatorComponent'
 > & {
   title: string;
   actions?: ReactNode;

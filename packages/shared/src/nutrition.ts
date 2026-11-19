@@ -2,7 +2,7 @@
  * Pure nutrition math. All screens must use these helpers instead of computing inline.
  * Formulas: CLAUDE.md → "Data model".
  */
-import type { CookingItem, Nutrients, Product, Quantity, UnitKey } from './domain';
+import type { CookingItem, Id, Nutrients, Product, Quantity, RecipeItem, UnitKey } from './domain';
 
 export const ZERO: Nutrients = { kcal: 0, protein: 0, fat: 0, carbs: 0 };
 
@@ -48,6 +48,37 @@ export function quantityGrams(product: Pick<Product, 'units'>, q: Quantity): num
 export function nutrientsOf(product: Pick<Product, 'units' | 'nutrients'>, q: Quantity): Nutrients | null {
   const grams = quantityGrams(product, q);
   return grams == null ? null : scale(product.nutrients, grams / 100);
+}
+
+export type RecipeTotals = {
+  /** Raw weight: sum of ingredient grams. */
+  grams: number;
+  nutrients: Nutrients;
+  per100: Nutrients;
+  /** Items left out of the sums: the product is gone or isn't measured in the item's unit any more. */
+  missing: RecipeItem[];
+};
+
+/** Weight and nutrition of a recipe from the products as the family sees them now. */
+export function recipeTotals(
+  items: readonly RecipeItem[],
+  productsById: ReadonlyMap<Id, Pick<Product, 'units' | 'nutrients'>>,
+): RecipeTotals {
+  let grams = 0;
+  const parts: Nutrients[] = [];
+  const missing: RecipeItem[] = [];
+  for (const item of items) {
+    const product = productsById.get(item.productId);
+    const g = product ? quantityGrams(product, item) : null;
+    if (product == null || g == null) {
+      missing.push(item);
+      continue;
+    }
+    grams += g;
+    parts.push(scale(product.nutrients, g / 100));
+  }
+  const nutrients = sum(parts);
+  return { grams, nutrients, per100: per100g(nutrients, grams), missing };
 }
 
 export function cookingTotals(items: readonly CookingItem[]): Nutrients {

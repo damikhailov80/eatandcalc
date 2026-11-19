@@ -151,6 +151,39 @@ export const JoinPreviewQuerySchema = z.object({ code: InviteCodeSchema });
 export const ProductsResponseSchema = z.object({ products: z.array(ProductSchema) });
 export const ProductResponseSchema = z.object({ product: ProductSchema });
 
+// ---------- Recipes ----------
+
+export const UnitKeySchema = z.enum(['g', ...UNIT_KEYS]);
+
+/** One ingredient: an amount of a product in one of its units. */
+export const RecipeItemSchema = z.object({
+  productId: z.string().min(1),
+  amount: z.number().positive().max(100_000),
+  unit: UnitKeySchema,
+});
+export type RecipeItemDto = z.infer<typeof RecipeItemSchema>;
+
+/** Editable recipe data (an own recipe, or a family's override of a catalog recipe). */
+export const RecipeDataSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  items: z.array(RecipeItemSchema).min(1).max(100),
+});
+export type RecipeData = z.infer<typeof RecipeDataSchema>;
+
+/** A recipe as the family sees it; flags mean the same as for products. Weight and KBJU follow from products. */
+export const RecipeSchema = RecipeDataSchema.extend({
+  id: z.string(),
+  source: ProductSourceSchema,
+  modified: z.boolean(),
+  hidden: z.boolean(),
+  favorite: z.boolean(),
+  original: RecipeDataSchema.nullable(),
+});
+export type RecipeDto = z.infer<typeof RecipeSchema>;
+
+export const RecipesResponseSchema = z.object({ recipes: z.array(RecipeSchema) });
+export const RecipeResponseSchema = z.object({ recipe: RecipeSchema });
+
 export const ApiErrorSchema = z.object({
   error: z.string(),
 });
@@ -169,4 +202,5 @@ export const ApiErrors = {
   householdNotEmpty: 'HOUSEHOLD_NOT_EMPTY',
   ownerCannotLeave: 'OWNER_CANNOT_LEAVE',
   cannotRemoveSelf: 'CANNOT_REMOVE_SELF',
+  productInUse: 'PRODUCT_IN_USE',
 } as const;

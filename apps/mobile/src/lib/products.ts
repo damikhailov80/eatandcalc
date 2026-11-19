@@ -1,4 +1,4 @@
-import { matchesSearch, type ProductCategory, type ProductDto } from '@eatandcalc/shared';
+import { matchesSearch, type ProductCategory, type ProductDto, type ProductSource } from '@eatandcalc/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
@@ -7,10 +7,14 @@ import { familyErrorMessage } from '@/components/family/errors';
 import { api } from '@/lib/api';
 import { queryClient, queryKeys } from '@/lib/query';
 
-/** Product list filters (chips). Hidden products show up only under `hidden`. */
-export type ProductFilter = 'mine' | 'all' | 'favorites' | 'own' | 'modified' | 'hidden';
+/** List filters (chips) of products and recipes. Hidden items show up only under `hidden`. */
+export type ListFilter = 'mine' | 'all' | 'favorites' | 'own' | 'modified' | 'hidden';
+export type ProductFilter = ListFilter;
 
-export const filterLabels: Record<ProductFilter, string> = {
+/** What the filters look at: products and recipes carry the same flags. */
+export type ListFlags = { favorite: boolean; source: ProductSource; modified: boolean; hidden: boolean };
+
+export const filterLabels: Record<ListFilter, string> = {
   mine: 'Свои',
   all: 'Все',
   favorites: 'Избранное',
@@ -19,7 +23,7 @@ export const filterLabels: Record<ProductFilter, string> = {
   hidden: 'Скрытые',
 };
 
-const predicates: Record<ProductFilter, (p: ProductDto) => boolean> = {
+const predicates: Record<ListFilter, (p: ListFlags) => boolean> = {
   mine: (p) => p.favorite || p.source === 'own',
   all: () => true,
   favorites: (p) => p.favorite,
@@ -28,14 +32,17 @@ const predicates: Record<ProductFilter, (p: ProductDto) => boolean> = {
   hidden: (p) => p.hidden,
 };
 
+/** The item belongs to the filter's list. */
+export const matchesListFilter = (item: ListFlags, filter: ListFilter) =>
+  (filter === 'hidden' || !item.hidden) && predicates[filter](item);
+
 export function filterProducts(
   products: readonly ProductDto[],
   { filter, category, query }: { filter: ProductFilter; category: ProductCategory | null; query: string },
 ): ProductDto[] {
   return products.filter(
     (p) =>
-      (filter === 'hidden' || !p.hidden) &&
-      predicates[filter](p) &&
+      matchesListFilter(p, filter) &&
       (category == null || p.category === category) &&
       matchesSearch(p.name, query),
   );

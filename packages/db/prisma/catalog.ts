@@ -71,6 +71,7 @@ export const CATALOG: CatalogProduct[] = [
   p('cat-kolbasa-salyami', 'Колбаса салями', 'meat', 407, 22.6, 33.7, 1.6, { pieceM: 10 }, 172938),
   p('cat-bekon', 'Бекон', 'meat', 393, 13.7, 37.1, 0, { pieceM: 15 }, 168277),
   p('cat-salo-svinoe', 'Сало свиное', 'meat', 812, 2.9, 88.7, 0, { pieceM: 10 }, 167811),
+  p('cat-tushenka-govyazhya', 'Тушёнка говяжья', 'meat', 250, 27.1, 14.9, 0, { tbsp: 20 }, 170602),
   p('cat-losos-semga', 'Лосось (сёмга)', 'fish', 208, 20.4, 13.4, 0, {}, 175167),
   p('cat-gorbusha', 'Горбуша', 'fish', 127, 20.5, 4.4, 0, {}, 175138),
   p('cat-keta', 'Кета', 'fish', 120, 20.1, 3.8, 0, {}, 173689),

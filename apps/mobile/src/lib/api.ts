@@ -8,6 +8,8 @@ import {
   OkResponseSchema,
   ProductResponseSchema,
   ProductsResponseSchema,
+  RecipeResponseSchema,
+  RecipesResponseSchema,
   SyncResponseSchema,
   type FamilyMemberDto,
   type FamilyMemberInput,
@@ -16,6 +18,7 @@ import {
   type MeResponse,
   type ProductData,
   type ProductDto,
+  type RecipeDto,
   type SyncResponse,
 } from '@eatandcalc/shared';
 import type { z } from 'zod';
@@ -171,4 +174,8 @@ export const api = {
         method: favorite ? 'PUT' : 'DELETE',
       })
     ).product,
+
+  recipes: async (): Promise<RecipeDto[]> => (await apiRequest('/api/recipes', RecipesResponseSchema)).recipes,
+  recipe: async (id: string): Promise<RecipeDto> =>
+    (await apiRequest(`/api/recipes/${encodeURIComponent(id)}`, RecipeResponseSchema)).recipe,
 };

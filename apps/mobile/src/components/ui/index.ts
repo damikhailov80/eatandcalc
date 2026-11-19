@@ -16,3 +16,4 @@ export * from './SearchField';
 export * from './NumberField';
 export * from './ListScreen';
 export * from './QrCode';
+export * from './MacroBar';

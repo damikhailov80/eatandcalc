@@ -43,6 +43,22 @@ Steps (each one ends with a test on the phones, then commit):
 3. [x] Hide & favorites: hide / restore catalog products, delete own ones, ♥, filters Скрытые / Избранное, Свои as the default list.
 4. [x] Join merge: conflict preview and picker in the join flow, merge in the join transaction; copy on leave / removal.
 
+## Stage 3 plan: recipes
+
+Decisions:
+- A recipe is a **template**: products in their units (г, мл, ч. л., ст. л., шт), in order. No cooked weight, no portions: the recipe's weight is the sum of raw ingredient grams, KBJU is the sum of the ingredients (total and per 100 g). Cooking (weight change, portions) belongs to cooking sessions, Stage 5.
+- Weight and KBJU are not stored: the app computes them from the products as the family sees them now (`recipeTotals`), so a product edit shows up in every recipe. An item whose product lost the unit is left out of the sums and flagged.
+- Same model as products: a shared **catalog** of recipes (`packages/db/prisma/recipes.ts`, permanent `rcp-…` ids, items point at catalog products; example: «Капуста тушёная с тушёнкой и яйцами», one portion) plus the family's **own** recipes in the same `recipe` table; per family an override (full copy, reset) and hiding (`household_recipe`); per account ♥ (`recipe_favorite`). Same filters as products; search by the recipe name or any of its products.
+- An own product used in a recipe (own or an override) can't be deleted.
+- Join / leave: the same rules as products (own recipes move, hiding united, edits added, the joiner picks whose edit stays; on leave the account gets copies with product ids re-pointed to its copied own products).
+- «Тушёнка говяжья» added to the product catalog (USDA SR Legacy 170602, canned beef).
+
+Steps (each one ends with a test on the phones, then commit):
+1. [x] Catalog + read-only list: migration, shared schemas, `recipeTotals`, recipe catalog seed, `GET /api/recipes`, Recipes tab with search and filters Свои / Все.
+2. [ ] Editor & own recipes: recipe editor with product picker, units, totals; create own / edit / override catalog / reset; filters Добавленные / Изменённые; product delete ban.
+3. [ ] Hide & favorites: hide / restore catalog recipes, delete own, ♥; filters Скрытые / Избранное.
+4. [ ] Join / leave: merge with conflict picker, copy on leave.
+
 ## Open questions
 
 - Postgres schema for Stage 2+: cooking snapshots as JSONB or a `cooking_items` table; numeric precision.

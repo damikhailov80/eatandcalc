@@ -4,7 +4,7 @@
 
 Monorepo (npm workspaces): Expo / React Native Android app for family nutrition planning, a Next.js API and a Next.js landing page: products, recipes (templates), cooking sessions (concrete pots), per-member consumption, daily planner with norms. The idea is in `README.md`, stages in `ROADMAP.md`, design in `design/mockups/`.
 
-Current stage: **1 (backend & auth) built; local development only** (Docker DB, local API, dev build on two phones over Wi-Fi; Google OAuth setup in README "One-time setup → Local"). Vercel, Neon, EAS and the APK landing are **postponed to the final release**; don't push work toward them unless asked. Stage 4 (family, roles, invites) is built ahead of order. Stage 2 (products) is done (decisions in `ROADMAP.md` → "Stage 2 plan"); next by the roadmap is Stage 3, recipes.
+Current stage: **1 (backend & auth) built; local development only** (Docker DB, local API, dev build on two phones over Wi-Fi; Google OAuth setup in README "One-time setup → Local"). Vercel, Neon, EAS and the APK landing are **postponed to the final release**; don't push work toward them unless asked. Stage 4 (family, roles, invites) is built ahead of order. Stage 2 (products) is done (decisions in `ROADMAP.md` → "Stage 2 plan"); Stage 3 (recipes) is in progress (`ROADMAP.md` → "Stage 3 plan").
 
 Decided: Android only; Google sign-in only, allowlist `ALLOWED_EMAILS` filters who can sign in; each account starts with its own household as **owner**, others join by **invite** (link/code/QR, valid until the owner revokes or replaces it) as **member**; everyone edits data, only the owner invites/removes accounts, a member can leave; the app is **online-only** (TanStack Query is a request cache, no offline writes); domains `*.vercel.app` for now.
 
@@ -25,7 +25,7 @@ npm run dev:api         # Next API on :3000
 npm run dev:mobile      # Expo (dev build, not Expo Go)
 npm run dev:web         # landing on :3001
 npm run dev             # db:up + api + web + mobile together (concurrently)
-npm run db:seed         # upsert the shared product catalog (packages/db/prisma/catalog.ts)
+npm run db:seed         # upsert the shared product + recipe catalogs (packages/db/prisma/catalog.ts, recipes.ts)
 npm run db:studio       # Prisma Studio on :5555
 npm run dev:build       # local dev APK build + install over USB (only after native changes)
 npm run prod:update     # OTA (EAS Update) of JS/TS to production; optional -- "msg", default = last commit subject
@@ -53,26 +53,27 @@ cd apps/mobile && npx expo-doctor
 
 ## Data model
 
-Types: `packages/shared/src/domain.ts`; DB schema: `packages/db/prisma/schema.prisma` (so far auth tables + `household`, `household_user` (with `role`), `household_invite`, `family_member`, `product`, `household_product`, `product_favorite`; other domain tables arrive with their stages). Everything belongs to a **Household**; several accounts share one household.
+Types: `packages/shared/src/domain.ts`; DB schema: `packages/db/prisma/schema.prisma` (so far auth tables + `household`, `household_user` (with `role`), `household_invite`, `family_member`, `product`, `household_product`, `product_favorite`, `recipe`, `household_recipe`, `recipe_favorite`; other domain tables arrive with their stages). Everything belongs to a **Household**; several accounts share one household.
 
 ```
 Household ─┬─ HouseholdUser (account, role owner|member), HouseholdInvite (code; no expiry)
            ├─ FamilyMember (norms; not an account, archived on delete)
            ├─ Product (own; catalog rows have no household) + HouseholdProduct (override, hidden)
-           ├─ Recipe ── RecipeItem[] ──► Product
+           ├─ Recipe (own; catalog rows have no household) + HouseholdRecipe ── items[] ──► Product
            ├─ CookingSession ── CookingItem[] (snapshot) ──► Recipe? (origin only)
            └─ Meal (date, type) ── MealDish ──► CookingSession
                                      └─ Consumption[] ──► FamilyMember (grams)
 ```
 
 - **Product:** `nutrients` always per **100 g**; `units` = grams per one unit for a fixed set (`ml`, `tsp`, `tbsp`, `pieceS/M/L`; `g` is implicit), a missing key = not measured that way. One `product` table: `household_id` null = shared **catalog** (seeded from `packages/db/prisma/catalog.ts`, permanent `cat-…` ids), set = the family's **own** product. Catalog values are exactly USDA FoodData Central (SR Legacy, FDC id per row in `catalog.ts`); only products present there; `npm run db:seed` upserts and drops unreferenced removed rows. Families never touch catalog rows: `household_product` holds their `override` (full copy, reset = drop it) and `hidden_at` (catalog products only; own products are deleted, `DELETE /api/products/:id`). Favorites (`product_favorite`) are per **account**. `GET /api/products` returns the merged list, `PATCH /api/products/:id` edits an own product or saves the family's override (equal to catalog = no override), `DELETE …/override` resets, `PUT|DELETE …/hidden` and `…/favorite` hide / ♥ (the app updates the cache optimistically, `useProductFlags`) (`ProductDto`: `source`, `modified`, `hidden`, `favorite`, `original`); filtering and search run on the client (`lib/products.ts`, `matchesSearch`). **Join** (`joinHousehold` → `mergeProductsOnJoin`): own products move, hiding is united, edits are added; `GET /api/household/join/preview?code=` lists products edited differently on both sides, the joiner's version wins unless its id is in `keepFamily` (picker `JoinConflicts`). **Leave / removal** (`moveToFreshHousehold` → `copyProductsOnLeave`): the family keeps all, the account gets a copy (own products with new ids, ♥ re-pointed, overrides, hiding).
-- **Recipe** = template: items, `totalWeightG` (`null` = sum of raw weights), `portions`. **Never modified by cooking**; "В рецепт…" is an explicit separate action.
+- **Recipe** = template: `items` (JSON `[{ productId, amount, unit }]`, display order) only. No cooked weight, no portions: weight = sum of raw ingredient grams, KBJU = sum of ingredients; both computed on the client from the current product list (`recipeTotals` in `nutrition.ts`, `lib/recipes.ts` in mobile), never stored. Catalog / own / override / hidden / ♥ work exactly like products (`recipe.household_id` null = catalog from `packages/db/prisma/recipes.ts`, `rcp-…` ids; `household_recipe`, `recipe_favorite`; `RecipeDto` has the same flags as `ProductDto`). Search matches the name or any ingredient. **Never modified by cooking**; "В рецепт…" is an explicit separate action.
 - **CookingSession** = one real pot: `date`, optional `recipeId` / `copiedFromId`, `items[]` is a **snapshot** (name, amount, grams, nutrients copied), `cookedWeightG` (weighed finished dish), `portions`. Leftover = `cookedWeightG − Σ consumptions`.
 - **Meal** (`breakfast | lunch | dinner | snack`, several snacks allowed) → **MealDish** (one session; the same session can appear in several meals/days) → **Consumption** (`memberId`, `grams`). One dish, many members, no copies.
 
 | Value | Formula |
 |---|---|
 | Ingredient | `nutrients × grams / 100`, grams = `amount × units[unit]` (`nutrientsOf`) |
+| Recipe | weight = Σ ingredient grams, KBJU = Σ ingredients, per 100 g = `total × 100 / weight` (`recipeTotals`) |
 | Per 100 g / portion | `total × 100 / cookedWeightG` / `total / portions` |
 | **Consumption** | `sessionTotal / cookedWeightG × gramsEaten` |
 | Remaining | `norm − eaten` (negative = exceeded) |
@@ -92,14 +93,14 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 | `CookingHistory` | Cooking tab | filters Все / С остатками / Без рецепта; by date; eaten progress, leftover; "Повторить сегодня", "Копировать и изменить" |
 | `CookingEdit` | Session editor | recipe multiplier; ingredient steppers vs. recipe; cooked weight; portions; totals, per 100 g, per portion; "В рецепт…", "Сохранить и распределить" |
 | `WeightPad` | Amount entry (sheet) | frequent products; unit switch (г / ст. л. / ч. л.); keypad; live kcal |
-| `Recipes` | Recipes tab | sort; card with kcal/portion, ingredients, macro bar; menu: cook today, edit, copy, delete |
-| `RecipeEdit` | Recipe editor | ingredient steppers in their units; total weight or sum; portions; per portion / dish / 100 g |
+| `Recipes` | Recipes tab | search (name or product); filter chips as in Products; card with kcal per dish, ingredients, macro bar, weight, kcal/100 g; menu: cook today, edit, copy, delete |
+| `RecipeEdit` | Recipe editor | ingredients in their units; weight = sum of ingredients (no total-weight field, no portions); per dish / 100 g |
 | `Products` | Products tab | search; category chips; rows with category tile, macros, basis; swipe edit/delete |
 | `ProductEdit` | Product editor | category; KBJU per 100 g (the basis switch is dropped); macro check; units with grams; hide / reset note |
 | `Family` | Family tab | member cards: norm, today's bar, macro chips |
 | `MemberEdit` | Member profile | color; name; sex; norm steppers; macro energy check |
 
-Components to build as needed: ProgressRing, MacroBar, MemberChip, DateStrip, SwipeRow, BottomSheet, NumericKeypad (built: Chip/ChipRow, SearchField, NumberField, SegmentedControl, Stepper, ProgressBar, MemberAvatar, StickyFooter, TextField, IconButton, QrCode).
+Components to build as needed: ProgressRing, MacroBar, MemberChip, DateStrip, SwipeRow, BottomSheet, NumericKeypad (built: MacroBar, Chip/ChipRow, SearchField, NumberField, SegmentedControl, Stepper, ProgressBar, MemberAvatar, StickyFooter, TextField, IconButton, QrCode).
 
 ## File map
 
@@ -112,21 +113,22 @@ Components to build as needed: ProgressRing, MacroBar, MemberChip, DateStrip, Sw
 | `apps/mobile/src/app/join/` | join by invite: `[code]` (deep link `eatandcalc://join/<code>`), `index` (typed code; `?scan=1` opens the QR scanner); outside the auth guard |
 | `apps/mobile/src/app/product/[id].tsx` | product editor (`new` = own product, `?name=` prefills); catalog product → family override, reset |
 | `apps/mobile/src/components/products/` | Products pieces: `ProductRow` (badges, ♥ or a trailing action), `ProductForm` (draft ↔ `ProductData`, KBJU, units) |
+| `apps/mobile/src/components/recipes/` | Recipes pieces: `RecipeRow` (card: kcal, ingredients, macro bar, weight) |
 | `apps/mobile/src/components/family/` | Family tab pieces: `MemberCard`, `MemberForm`, `AccountsCard` (roles, invite with QR), `JoinFamily`, `JoinConflicts` (whose product version stays), `InviteScanner` (expo-camera QR → `parseInviteCode`), `errors` |
 | `apps/mobile/src/app/(tabs)/` | tab screens (День, Готовка, Рецепты, Продукты, Семья) |
 | `apps/mobile/src/components/ui/` | Screen (`onBack`, `footer`, `onRefresh`), ListScreen (virtualized FlatList page for long lists), QrCode (pure-JS `qrcode` matrix drawn with Views), Text, Card, Button, IconButton, TextField, Stepper, SegmentedControl, ProgressBar, MemberAvatar, StickyFooter, Placeholder, StateMessage |
-| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` (client, focus/online wiring, `refreshAll`), `sync` (`useHouseholdSync`), `products` (list filters, `useProductFlags`), `diagnostics` (SecureStore ring buffer, `diag(tag, msg, level)`, console/crash capture, auto sign-out reason) |
+| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` (client, focus/online wiring, `refreshAll`), `sync` (`useHouseholdSync`), `products` (list filters shared with recipes, `useProductFlags`), `recipes` (totals view, ingredient line, search), `diagnostics` (SecureStore ring buffer, `diag(tag, msg, level)`, console/crash capture, auto sign-out reason) |
 | `apps/mobile/scripts/` | `android-dev` (local Gradle build → `dist-dev/eatandcalc-dev.apk` + `dist-dev/dev.json`), `android-sha1`, `android-env` (JDK/SDK, keystore) |
 | `apps/mobile/eas.json` | build profiles (development / production APK), update channels |
-| `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `http` (`HttpError`, `parseBody`), `household` (membership, invites, join/leave/remove), `family`, `products` (merged list, join merge / leave copy), `env`, `log` (`authLog`: JSON lines `"tag":"auth"` for Vercel Logs) |
-| `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `sync`, `health`, `household/{invite,join[/preview],leave,accounts/[userId]}`, `family-members[/id]`, `products[/id[/override|hidden|favorite]]` |
+| `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `http` (`HttpError`, `parseBody`), `household` (membership, invites, join/leave/remove), `family`, `products` (merged list, join merge / leave copy), `recipes` (merged list), `env`, `log` (`authLog`: JSON lines `"tag":"auth"` for Vercel Logs) |
+| `apps/api/src/app/api/` | route handlers: `auth/[...all]`, `me`, `sync`, `health`, `household/{invite,join[/preview],leave,accounts/[userId]}`, `family-members[/id]`, `products[/id[/override|hidden|favorite]]`, `recipes[/id]` |
 | `apps/api/src/app/invite/[code]/` | legacy invite link: redirects to the landing's invite page |
 | `apps/web/src/app/page.tsx` | landing: headline + QR to itself, download card; under `next dev` the same card serves the local dev APK |
 | `apps/web/src/app/invite/[code]/` | public invite page (shared link): opens the app via Android intent, else offers the APK; shows the code |
 | `apps/web/src/app-download.ts` | APK to offer: local dev build under `next dev`, else the Blob release |
 | `apps/web/src/dev-build.ts`, `app/download/dev/` | local-only dev APK info and download (404 in production) |
 | `apps/web/scripts/release-android.mjs` | EAS build → Vercel Blob (`android/eatandcalc.apk`, `android/latest.json`) |
-| `packages/db/prisma/` | `schema.prisma`, `migrations/`, `seed.ts`, `catalog.ts` (shared product catalog); config `packages/db/prisma.config.ts` |
+| `packages/db/prisma/` | `schema.prisma`, `migrations/`, `seed.ts`, `catalog.ts` (shared product catalog), `recipes.ts` (shared recipe catalog); config `packages/db/prisma.config.ts` |
 | `packages/shared/src/` | `domain`, `api` (zod), `nutrition`, `format`, `products` (labels, search), `tokens` |
 | `docker-compose.yml` | local Postgres 17 (+ shadow DB) |
 | `.husky/pre-commit` | git hook: `npm run typecheck` |

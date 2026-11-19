@@ -32,6 +32,7 @@ export const queryKeys = {
   invite: ['invite'] as const,
   familyMembers: ['family-members'] as const,
   products: ['products'] as const,
+  recipes: ['recipes'] as const,
 };
 
 /**
