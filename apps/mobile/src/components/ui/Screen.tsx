@@ -6,6 +6,8 @@ import { colors, fonts, spacing } from '@/theme';
 import { IconButton } from './IconButton';
 import { Text } from './Text';
 
+const MIN_SPINNER_MS = 700;
+
 export type ScreenProps = {
   title?: string;
   /** Small muted line (e.g. "Воскресенье · сегодня"): above the title, below it with `subtitleBelow`. */
@@ -28,7 +30,8 @@ export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer
   const refresh = async () => {
     setRefreshing(true);
     try {
-      await onRefresh?.();
+      // Local requests finish in a few ms: keep the spinner long enough to read as "refreshed".
+      await Promise.allSettled([onRefresh?.(), new Promise((r) => setTimeout(r, MIN_SPINNER_MS))]);
     } finally {
       setRefreshing(false);
     }

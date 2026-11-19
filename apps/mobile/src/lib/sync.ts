@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { api } from './api';
+import { diag } from './diagnostics';
 import { queryClient, queryKeys } from './query';
 
 const POLL_MS = 15_000;
@@ -25,6 +26,7 @@ export function useHouseholdSync() {
   useEffect(() => {
     if (!marker) return;
     if (seen.current !== null && seen.current !== marker) {
+      diag('sync', `данные изменились (${seen.current} → ${marker}), обновляю`);
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== queryKeys.sync[0] });
     }
     seen.current = marker;

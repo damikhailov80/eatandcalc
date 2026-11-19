@@ -2,6 +2,8 @@ import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query'
 import * as Network from 'expo-network';
 import { AppState } from 'react-native';
 
+import { diag } from './diagnostics';
+
 /**
  * The app is online-only; the query cache just avoids refetching on every screen focus.
  * Changes from other devices arrive through `useHouseholdSync` (`lib/sync.ts`).
@@ -35,4 +37,11 @@ export const queryKeys = {
 export const resetHouseholdData = () => queryClient.invalidateQueries();
 
 /** Pull-to-refresh: refetch everything on screen (and the sync marker, so it doesn't refetch again). */
-export const refreshAll = () => queryClient.refetchQueries({ type: 'active' });
+export async function refreshAll() {
+  const keys = queryClient
+    .getQueryCache()
+    .findAll({ type: 'active' })
+    .map((q) => q.queryKey.join('/'));
+  diag('sync', `обновление свайпом: ${keys.join(', ') || 'нет запросов на экране'}`);
+  await queryClient.refetchQueries({ type: 'active' });
+}

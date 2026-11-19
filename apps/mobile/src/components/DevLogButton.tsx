@@ -36,7 +36,7 @@ export function DevLogButton() {
   return (
     <Animated.View
       {...responder.panHandlers}
-      style={[styles.wrap, { top: insets.top + 120, transform: offset.getTranslateTransform() }]}>
+      style={[styles.wrap, { top: insets.top + 4, transform: offset.getTranslateTransform() }]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Журнал"
@@ -56,7 +56,7 @@ export function DevLogButton() {
 
 const styles = StyleSheet.create({
   // Above native-stack screens on Android (they draw with elevation).
-  wrap: { position: 'absolute', right: 8, zIndex: 1000, elevation: 1000 },
+  wrap: { position: 'absolute', right: 4, zIndex: 1000, elevation: 1000 },
   button: {
     width: SIZE,
     height: SIZE,
