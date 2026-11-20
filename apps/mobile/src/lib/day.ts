@@ -6,6 +6,7 @@ import {
   formatNumberInput,
   fromISODate,
   sum,
+  toISODate,
   shiftISODate,
   ZERO,
   unitGrams,
@@ -38,6 +39,36 @@ const STANDARD: readonly MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 export function weekStart(iso: string): string {
   const day = (fromISODate(iso).getDay() + 6) % 7; // Monday = 0
   return shiftISODate(iso, -day);
+}
+
+/** First day of the month `iso` falls in, shifted by `months`. */
+export function monthOf(iso: string, months = 0): string {
+  const d = fromISODate(iso);
+  return toISODate(new Date(d.getFullYear(), d.getMonth() + months, 1));
+}
+
+/** The 6 Monday-first weeks (42 days) shown for the month starting on `month`. */
+export const monthGridDays = (month: string) => {
+  const first = weekStart(month);
+  return Array.from({ length: 42 }, (_, i) => shiftISODate(first, i));
+};
+
+/** Days of the month starting on `month` (1st..last). */
+export function monthDays(month: string): string[] {
+  const next = monthOf(month, 1);
+  const days: string[] = [];
+  for (let d = month; d < next; d = shiftISODate(d, 1)) days.push(d);
+  return days;
+}
+
+/** Meals of the month calendar grid (shared by the day calendar and the history). */
+export function useMonthGridMeals(month: string) {
+  const days = monthGridDays(month);
+  return useQuery({
+    queryKey: queryKeys.mealsGrid(days[0]!),
+    queryFn: () => api.meals(days[0]!, days[days.length - 1]!),
+    placeholderData: keepPreviousData,
+  });
 }
 
 export const weekDays = (monday: string) => Array.from({ length: 7 }, (_, i) => shiftISODate(monday, i));

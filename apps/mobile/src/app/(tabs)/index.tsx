@@ -1,6 +1,6 @@
 import { formatDayMonth, formatWeekday, fromISODate, todayISO, type MealDishDto } from '@eatandcalc/shared';
 import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -12,11 +12,19 @@ import { IconButton, Screen, StateMessage } from '@/components/ui';
 import { api } from '@/lib/api';
 import { dayEaten, daySlots, useWeekMeals, type MealSlot } from '@/lib/day';
 import { queryKeys, refreshAll } from '@/lib/query';
-import { colors } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 export default function DayScreen() {
   const today = todayISO();
-  const [date, setDate] = useState(today);
+  // History opens a day here (`at` makes a repeated pick of the same day count).
+  const params = useLocalSearchParams<{ date?: string; at?: string }>();
+  const pick = params.date ? `${params.date}|${params.at ?? ''}` : '';
+  const [date, setDate] = useState(params.date ?? today);
+  const [seenPick, setSeenPick] = useState(pick);
+  if (pick !== seenPick) {
+    setSeenPick(pick);
+    if (params.date) setDate(params.date);
+  }
   const [calendar, setCalendar] = useState(false);
   const meals = useWeekMeals(date);
   const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
@@ -33,10 +41,12 @@ export default function DayScreen() {
 
   const weekday = formatWeekday(fromISODate(date));
   const subtitle = date === today ? `${weekday} · сегодня` : weekday;
-  const actions =
-    date === today ? null : (
-      <IconButton icon="calendar-today" label="Сегодня" onPress={() => setDate(today)} />
-    );
+  const actions = (
+    <View style={styles.actions}>
+      {date === today ? null : <IconButton icon="calendar-today" label="Сегодня" onPress={() => setDate(today)} />}
+      <IconButton icon="chart-box-outline" label="История питания" onPress={() => router.push('/history')} />
+    </View>
+  );
 
   let body;
   if ((meals.isPending && !list) || members.isPending) {
@@ -86,4 +96,5 @@ export default function DayScreen() {
 
 const styles = StyleSheet.create({
   loading: { paddingVertical: 48, alignItems: 'center' },
+  actions: { flexDirection: 'row', gap: spacing.sm },
 });

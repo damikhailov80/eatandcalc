@@ -42,6 +42,9 @@ const MONTHS = [
   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
 ] as const;
 
+/** "Ноя" (month chart labels). */
+export const formatMonthShort = (date: Date) => MONTHS[date.getMonth()].slice(0, 3);
+
 /** "Ноябрь 2026". */
 export const formatMonthYear = (date: Date) => `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 
