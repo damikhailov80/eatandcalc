@@ -1,4 +1,4 @@
-import type { ProductData, ProductDto, RecipeDto } from '@eatandcalc/shared';
+import { RESTAURANTS, type ProductData, type ProductDto, type RecipeDto, type Restaurant } from '@eatandcalc/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -19,9 +19,13 @@ const NEW = 'new';
 const productData = (p: ProductDto): ProductData => ({
   name: p.name,
   category: p.category,
+  restaurant: p.restaurant,
   nutrients: p.nutrients,
   units: p.units,
 });
+
+const asRestaurant = (value: string | undefined): Restaurant | null =>
+  (RESTAURANTS as readonly string[]).includes(value ?? '') ? (value as Restaurant) : null;
 
 function Editor({ product, initial }: { product: ProductDto | null; initial: ProductDraft }) {
   const [value, setValue] = useState(initial);
@@ -126,7 +130,9 @@ function Editor({ product, initial }: { product: ProductDto | null; initial: Pro
 
   return (
     <Screen
-      title={product ? 'Продукт' : 'Новый продукт'}
+      title={
+        value.restaurant ? (product ? 'Блюдо' : 'Новое блюдо') : product ? 'Продукт' : 'Новый продукт'
+      }
       onBack={() => router.back()}
       actions={actions}
       footer={
@@ -145,13 +151,15 @@ function Editor({ product, initial }: { product: ProductDto | null; initial: Pro
         value={value}
         onChange={setValue}
         reference={product?.source === 'catalog' ? (product.original ?? product).nutrients : undefined}
+        restaurantFixed={product?.source === 'catalog'}
       />
     </Screen>
   );
 }
 
 export default function ProductEditScreen() {
-  const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
+  // `restaurant` = a new fast-food dish of this chain.
+  const { id, name, restaurant } = useLocalSearchParams<{ id: string; name?: string; restaurant?: string }>();
   const isNew = id === NEW;
 
   const product = useQuery({
@@ -161,7 +169,7 @@ export default function ProductEditScreen() {
     initialData: () => queryClient.getQueryData<ProductDto[]>(queryKeys.products)?.find((p) => p.id === id),
   });
 
-  if (isNew) return <Editor product={null} initial={blankDraft(name ?? '')} />;
+  if (isNew) return <Editor product={null} initial={blankDraft(name ?? '', asRestaurant(restaurant))} />;
   if (product.isPending) {
     return (
       <View style={styles.loading}>

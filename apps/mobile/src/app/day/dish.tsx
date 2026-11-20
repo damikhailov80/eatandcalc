@@ -5,9 +5,11 @@ import {
   formatDayTitle,
   formatGrams,
   formatInt,
+  formatNumberInput,
   formatOne,
   fromISODate,
   recipeTotals,
+  restaurantLabels,
   shiftISODate,
   todayISO,
   type ConsumptionDto,
@@ -16,6 +18,7 @@ import {
   type Nutrients,
   type DishUnit,
   type ProductUnits,
+  type Restaurant,
 } from '@eatandcalc/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -57,7 +60,7 @@ type Params = {
 /** What the screen shows about the dish: the stored copy, or the source as it is now (new dish). */
 type DishInfo = {
   name: string;
-  /** "Готовка 15 ноября · 1 100 г", "Рецепт", "Продукт". */
+  /** "Готовка 15 ноября · 1 100 г", "Рецепт", "Продукт", "McDonald's". */
   source: string;
   per100: Nutrients;
   rawWeight: boolean;
@@ -65,6 +68,8 @@ type DishInfo = {
   units: ProductUnits;
   /** One portion = the whole recipe (recipes only). */
   portionG: number | null;
+  /** Fast-food chain of a product dish. */
+  restaurant: Restaurant | null;
 };
 
 const sessionSource = (date: string, weightG: number | null) =>
@@ -92,6 +97,21 @@ function initialSplit(
     }
   }
   return split;
+}
+
+/**
+ * «Разделить»: what the checked members have entered in total (one portion while nothing is entered) shared
+ * equally between them, in pieces. Null when there is nothing to share (fewer than two checked, no piece weight).
+ */
+function evenSplit(split: Split, measure: DishInfo): { split: Split; pieces: number; people: number } | null {
+  const piece = dishUnitGrams(measure, 'pieceM');
+  const on = Object.entries(split).filter(([, s]) => s.on);
+  if (!piece || on.length < 2) return null;
+  const entered = on.reduce((g, [, s]) => g + s.grams, 0);
+  const total = entered > 0 ? entered : piece;
+  const next: Split = { ...split };
+  for (const [id, s] of on) next[id] = { ...s, grams: total / on.length, unit: 'pieceM' };
+  return { split: next, pieces: total / piece, people: on.length };
 }
 
 /** Split a dish between family members (`Distribute`): a new dish of a meal, or who ate how much of an existing one. */
@@ -129,11 +149,21 @@ export default function DishScreen() {
         ? sessionSource(d.sourceDate, d.weightG)
         : d.recipeId
           ? `Рецепт${d.weightG ? ` · порция ${formatGrams(d.weightG)}` : ''}`
-          : d.productId
-            ? 'Продукт'
-            : '';
+          : d.restaurant
+            ? restaurantLabels[d.restaurant]
+            : d.productId
+              ? 'Продукт'
+              : '';
       const portionG = !d.sourceDate && d.weightG ? d.weightG : null;
-      return { name: d.name, source, per100: d.nutrients, rawWeight: d.rawWeight, units: d.units, portionG };
+      return {
+        name: d.name,
+        source,
+        per100: d.nutrients,
+        rawWeight: d.rawWeight,
+        units: d.units,
+        portionG,
+        restaurant: d.restaurant,
+      };
     }
     if (session) {
       const t = cookingTotals(session.items, cookedWeight(session.grossWeightG, session.potWeightG));
@@ -144,6 +174,7 @@ export default function DishScreen() {
         rawWeight: !t.weighed,
         units: {},
         portionG: null,
+        restaurant: null,
       };
     }
     if (recipe && products.data) {
@@ -155,16 +186,18 @@ export default function DishScreen() {
         rawWeight: false,
         units: {},
         portionG: t.grams > 0 ? t.grams : null,
+        restaurant: null,
       };
     }
     if (product) {
       return {
         name: product.name,
-        source: 'Продукт',
+        source: product.restaurant ? restaurantLabels[product.restaurant] : 'Продукт',
         per100: product.nutrients,
         rawWeight: false,
         units: product.units,
         portionG: null,
+        restaurant: product.restaurant,
       };
     }
     return null;
@@ -264,6 +297,8 @@ export default function DishScreen() {
   } else {
     const total = consumptions.reduce((g, c) => g + c.grams, 0);
     const unitOptions = dishUnits(info);
+    // Fast food is often shared: one fries between two.
+    const even = info.restaurant ? evenSplit(split, info) : null;
     body = (
       <>
         <Card style={styles.summary}>
@@ -290,13 +325,23 @@ export default function DishScreen() {
             <Text variant="h3" style={styles.splitTitle}>Кто сколько съест</Text>
             <Text style={styles.sum}>{formatGrams(total)}</Text>
           </View>
-          {previous ? (
-            <Button
-              title="Как в прошлый раз"
-              variant="soft"
-              style={styles.previous}
-              onPress={() => setSplit(initialSplit(members.data ?? [], previous, info))}
-            />
+          {previous || even ? (
+            <View style={styles.quick}>
+              {previous ? (
+                <Button
+                  title="Как в прошлый раз"
+                  variant="soft"
+                  onPress={() => setSplit(initialSplit(members.data ?? [], previous, info))}
+                />
+              ) : null}
+              {even ? (
+                <Button
+                  title={`Разделить ${formatNumberInput(even.pieces)} шт на ${even.people}`}
+                  variant="soft"
+                  onPress={() => setSplit(even.split)}
+                />
+              ) : null}
+            </View>
           ) : null}
           {members.data.length ? (
             members.data.map((m) => {
@@ -380,6 +425,6 @@ const styles = StyleSheet.create({
   split: { paddingBottom: spacing.sm },
   splitHead: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, paddingBottom: spacing.sm },
   splitTitle: { flex: 1 },
-  previous: { alignSelf: 'flex-start', marginBottom: spacing.sm },
+  quick: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   sum: { fontFamily: fonts.bodySemibold, fontSize: 13 },
 });

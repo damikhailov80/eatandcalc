@@ -66,6 +66,15 @@ export const categoryColors = {
   other: { bg: '#EDEAE2', fg: '#4A4740' },
 } as const;
 
+/** Fast-food chain tiles (keys = `RESTAURANTS`). */
+export const restaurantColors = {
+  mcdonalds: { bg: '#FBEFC8', fg: '#8A1F11' },
+  kfc: { bg: '#F7DCDC', fg: '#8E1B1F' },
+  burgerking: { bg: '#F6E4D2', fg: '#6B3410' },
+  pizzahut: { bg: '#F3DDE0', fg: '#7A1A2B' },
+  other: { bg: '#EDEAE2', fg: '#4A4740' },
+} as const;
+
 export const radii = {
   sm: 9,
   md: 12,

@@ -5,6 +5,7 @@ import {
   formatInt,
   formatKcal,
   fromISODate,
+  restaurantLabels,
   type FamilyMemberDto,
   type MealDishDto,
 } from '@eatandcalc/shared';
@@ -21,11 +22,12 @@ export type MealCardProps = {
   onDishPress: (dish: MealDishDto) => void;
 };
 
-/** "Готовка 15 ноя · 102 ккал / 100 г", "Рецепт · …", "Продукт · 52 ккал / 100 г". */
+/** "Готовка 15 ноя · 102 ккал / 100 г", "Рецепт · …", "Продукт · 52 ккал / 100 г", "McDonald's · …". */
 export function dishMeta(dish: MealDishDto) {
   const per100 = `${formatInt(dish.nutrients.kcal)} ккал / 100 г`;
   if (dish.sourceDate) return `Готовка ${formatDayMonthShort(fromISODate(dish.sourceDate))} · ${per100}`;
   if (dish.recipeId) return `Рецепт · ${per100}`;
+  if (dish.restaurant) return `${restaurantLabels[dish.restaurant]} · ${per100}`;
   return dish.productId ? `Продукт · ${per100}` : per100;
 }
 
@@ -39,7 +41,7 @@ function byMember(dishes: readonly MealDishDto[], members: ReadonlyMap<string, F
     for (const c of dish.consumptions) {
       const g = groups.get(c.memberId) ?? { memberId: c.memberId, member: members.get(c.memberId), kcal: 0, lines: [] };
       const kcal = dishConsumed(dish.nutrients, c.grams).kcal;
-      g.lines.push({ dish, amount: amountText(c), kcal });
+      g.lines.push({ dish, amount: amountText(c, dish), kcal });
       g.kcal += kcal;
       groups.set(c.memberId, g);
     }

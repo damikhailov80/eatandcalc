@@ -11,6 +11,7 @@ import {
   type ConsumptionInput,
   type MealDto,
   type Nutrients,
+  type Restaurant,
 } from '@eatandcalc/shared';
 
 import { dbDate, isoDate, rowItems } from './cooking';
@@ -40,6 +41,7 @@ const toMealDto = (m: MealRow): MealDto =>
       sessionId: d.sessionId,
       recipeId: d.recipeId,
       productId: d.productId,
+      restaurant: d.restaurant,
       name: d.name,
       nutrients: { kcal: d.kcal, protein: d.protein, fat: d.fat, carbs: d.carbs },
       sourceDate: d.sourceDate ? isoDate(d.sourceDate) : null,
@@ -95,6 +97,7 @@ type Snapshot = {
   sessionId: string | null;
   recipeId: string | null;
   productId: string | null;
+  restaurant: Restaurant | null;
   name: string;
   nutrients: Nutrients;
   sourceDate: Date | null;
@@ -113,6 +116,7 @@ async function snapshot(me: RequestUser, source: AddDishRequest['source']): Prom
       sessionId: s.id,
       recipeId: null,
       productId: null,
+      restaurant: null,
       name: s.name,
       nutrients: totals.per100,
       sourceDate: s.date,
@@ -132,6 +136,7 @@ async function snapshot(me: RequestUser, source: AddDishRequest['source']): Prom
       sessionId: null,
       recipeId: r.id,
       productId: null,
+      restaurant: null,
       name: r.name,
       nutrients: totals.per100,
       sourceDate: null,
@@ -148,6 +153,7 @@ async function snapshot(me: RequestUser, source: AddDishRequest['source']): Prom
     sessionId: null,
     recipeId: null,
     productId: p.id,
+    restaurant: p.restaurant,
     name: p.name,
     nutrients: p.nutrients,
     sourceDate: null,

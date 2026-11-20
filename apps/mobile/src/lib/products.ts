@@ -1,4 +1,10 @@
-import { matchesSearch, type ProductCategory, type ProductDto, type ProductSource } from '@eatandcalc/shared';
+import {
+  matchesSearch,
+  type ProductCategory,
+  type ProductDto,
+  type ProductSource,
+  type Restaurant,
+} from '@eatandcalc/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
@@ -35,14 +41,32 @@ const predicates: Record<ListFilter, (p: ListFlags) => boolean> = {
 export const matchesListFilter = (item: ListFlags, filter: ListFilter) =>
   (filter === 'hidden' || !item.hidden) && predicates[filter](item);
 
+/** `products` = groceries (no chain), `fastfood` = restaurant dishes («Фастфуд»). */
+export type ProductKind = 'products' | 'fastfood';
+
+export const isKind = (p: Pick<ProductDto, 'restaurant'>, kind: ProductKind) =>
+  kind === 'fastfood' ? p.restaurant != null : p.restaurant == null;
+
+export type ProductQuery = {
+  kind: ProductKind;
+  filter: ProductFilter;
+  /** Groceries only; null = all. */
+  category?: ProductCategory | null;
+  /** Fast food only; null = all chains. */
+  restaurant?: Restaurant | null;
+  query: string;
+};
+
 export function filterProducts(
   products: readonly ProductDto[],
-  { filter, category, query }: { filter: ProductFilter; category: ProductCategory | null; query: string },
+  { kind, filter, category = null, restaurant = null, query }: ProductQuery,
 ): ProductDto[] {
   return products.filter(
     (p) =>
+      isKind(p, kind) &&
       matchesListFilter(p, filter) &&
       (category == null || p.category === category) &&
+      (restaurant == null || p.restaurant === restaurant) &&
       matchesSearch(p.name, query),
   );
 }

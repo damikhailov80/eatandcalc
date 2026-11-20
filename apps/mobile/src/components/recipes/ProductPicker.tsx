@@ -22,14 +22,14 @@ export type ProductPickerProps = {
 export function ProductPicker({ products, onPick, onClose }: ProductPickerProps) {
   const [query, setQuery] = useState('');
   const mineCount = useMemo(
-    () => filterProducts(products, { filter: 'mine', category: null, query: '' }).length,
+    () => filterProducts(products, { kind: 'products', filter: 'mine', query: '' }).length,
     [products],
   );
   const [filter, setFilter] = useState<ProductFilter>(mineCount > 0 ? 'mine' : 'all');
   // A search looks through everything: a product missing from "Свои" is the usual case.
   const effective = query.trim() ? 'all' : filter;
   const visible = useMemo(
-    () => filterProducts(products, { filter: effective, category: null, query }),
+    () => filterProducts(products, { kind: 'products', filter: effective, query }),
     [products, effective, query],
   );
 

@@ -17,6 +17,7 @@ import {
   type MealDto,
   type Nutrients,
   type ProductUnits,
+  type Restaurant,
 } from '@eatandcalc/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
@@ -111,10 +112,10 @@ export const findDish = (meals: readonly MealDto[], dishId: string) => {
   return null;
 };
 
-/** "1 шт (сред.)", "1 порц." when entered in a unit, otherwise "150 г". */
-export const amountText = (c: ConsumptionDto) =>
+/** "1 шт (сред.)", "1 порц." (fast food: "1 шт") when entered in a unit, otherwise "150 г". */
+export const amountText = (c: ConsumptionDto, dish?: Pick<MealDishDto, 'restaurant'>) =>
   c.unit && c.unit !== 'g' && c.amount != null
-    ? `${formatNumberInput(c.amount)} ${dishUnitShort(c.unit)}`
+    ? `${formatNumberInput(c.amount)} ${dishUnitShort(c.unit, dish?.restaurant)}`
     : formatGrams(c.grams);
 
 export type MemberLine = { dish: MealDishDto; amount: string; eaten: Nutrients };
@@ -128,7 +129,7 @@ export function memberMeals(meals: readonly MealDto[], date: string, memberId: s
     for (const dish of slot.meal?.dishes ?? [])
       for (const c of dish.consumptions)
         if (c.memberId === memberId)
-          lines.push({ dish, amount: amountText(c), eaten: dishConsumed(dish.nutrients, c.grams) });
+          lines.push({ dish, amount: amountText(c, dish), eaten: dishConsumed(dish.nutrients, c.grams) });
     if (lines.length) result.push({ key: slot.key, title: slot.title, lines, eaten: sum(lines.map((l) => l.eaten)) });
   }
   return result;
@@ -165,7 +166,12 @@ export function useWeekMeals(date: string) {
 }
 
 /** How a dish is measured: its unit weights (products) and one portion (recipes). */
-export type DishMeasure = { units: ProductUnits; portionG: number | null };
+export type DishMeasure = {
+  units: ProductUnits;
+  portionG: number | null;
+  /** A fast-food dish: its piece is «шт», not «шт (сред.)». */
+  restaurant?: Restaurant | null;
+};
 
 /** Grams in one `unit` of the dish, or null when it isn't measured that way. */
 export const dishUnitGrams = (m: DishMeasure, unit: DishUnit) =>

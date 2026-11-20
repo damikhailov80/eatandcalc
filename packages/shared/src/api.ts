@@ -5,7 +5,7 @@
  */
 import { z } from 'zod';
 
-import { PRODUCT_CATEGORIES, UNIT_KEYS } from './domain';
+import { PRODUCT_CATEGORIES, RESTAURANTS, UNIT_KEYS } from './domain';
 import { memberColors } from './tokens';
 
 export const HouseholdSchema = z.object({
@@ -115,10 +115,17 @@ export const NutrientsSchema = z.object({
 /** Grams per one unit; keys from `UNIT_KEYS`. */
 export const ProductUnitsSchema = z.partialRecord(z.enum(UNIT_KEYS), unitWeight);
 
+export const RestaurantSchema = z.enum(RESTAURANTS);
+
 /** Editable product data (an own product, or a family's override of a catalog product). */
 export const ProductDataSchema = z.object({
   name: z.string().trim().min(1).max(80),
   category: z.enum(PRODUCT_CATEGORIES),
+  /**
+   * Fast-food chain (null = an ordinary product). Missing = unchanged (apps before fast food don't send it).
+   * A catalog product's chain is fixed: it is never part of the family's override.
+   */
+  restaurant: RestaurantSchema.nullable().optional(),
   /** Per 100 g. */
   nutrients: NutrientsSchema,
   units: ProductUnitsSchema,
@@ -130,6 +137,7 @@ export type ProductSource = z.infer<typeof ProductSourceSchema>;
 
 /** A product as the family sees it: catalog values with the family's edits applied, plus flags. */
 export const ProductSchema = ProductDataSchema.extend({
+  restaurant: RestaurantSchema.nullable().default(null),
   id: z.string(),
   /** `catalog` = from the shared list; `own` = added by the family. */
   source: ProductSourceSchema,
@@ -282,6 +290,8 @@ export const MealDishSchema = z.object({
   sessionId: z.string().nullable(),
   recipeId: z.string().nullable().default(null),
   productId: z.string().nullable(),
+  /** The product's chain when copied (fast food). */
+  restaurant: RestaurantSchema.nullable().default(null),
   name: z.string(),
   /** Per 100 g. */
   nutrients: NutrientsSchema,

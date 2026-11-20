@@ -1,9 +1,9 @@
-import { categoryAbbr, formatInt, formatOne, type ProductDto } from '@eatandcalc/shared';
+import { categoryAbbr, formatInt, formatOne, nutrientsOf, restaurantAbbr, type ProductDto } from '@eatandcalc/shared';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { IconButton, Text, type IconName } from '@/components/ui';
-import { categoryColors, colors, fonts, radii, spacing } from '@/theme';
+import { categoryColors, colors, fonts, radii, restaurantColors, spacing } from '@/theme';
 
 export type ProductRowAction = { icon: IconName; label: string; onPress: (product: ProductDto) => void };
 
@@ -20,7 +20,10 @@ export type ProductRowProps = {
   action?: ProductRowAction;
 };
 
-/** One line of the products list: category tile, name with badges, macros, kcal per 100 g. */
+/**
+ * One line of the products list: category tile, name with badges, macros, kcal per 100 g.
+ * A fast-food dish: chain tile, macros and kcal of one portion.
+ */
 export const ProductRow = memo(function ProductRow({
   product,
   first,
@@ -29,8 +32,10 @@ export const ProductRow = memo(function ProductRow({
   onToggleFavorite,
   action,
 }: ProductRowProps) {
-  const { nutrients: n } = product;
-  const tile = categoryColors[product.category];
+  const portion = product.restaurant ? nutrientsOf(product, { amount: 1, unit: 'pieceM' }) : null;
+  const n = portion ?? product.nutrients;
+  const tile = product.restaurant ? restaurantColors[product.restaurant] : categoryColors[product.category];
+  const abbr = product.restaurant ? restaurantAbbr[product.restaurant] : categoryAbbr[product.category];
   const badge = product.source === 'own' ? 'свой' : product.modified ? 'изменён' : null;
   return (
     <Pressable
@@ -44,7 +49,7 @@ export const ProductRow = memo(function ProductRow({
         pressed && styles.pressed,
       ]}>
       <View style={[styles.tile, { backgroundColor: tile.bg }]}>
-        <Text style={styles.abbr} color={tile.fg}>{categoryAbbr[product.category]}</Text>
+        <Text style={styles.abbr} color={tile.fg}>{abbr}</Text>
       </View>
       <View style={styles.main}>
         <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
@@ -63,7 +68,9 @@ export const ProductRow = memo(function ProductRow({
       </View>
       <View style={styles.kcal}>
         <Text style={styles.kcalValue}>{formatInt(n.kcal)} ккал</Text>
-        <Text style={styles.basis} color={colors.textMuted}>на 100 г</Text>
+        <Text style={styles.basis} color={colors.textMuted}>
+          {portion ? `за ${formatInt(product.units.pieceM ?? 0)} г` : 'на 100 г'}
+        </Text>
       </View>
       {action ? (
         <IconButton icon={action.icon} label={`${action.label} — ${product.name}`} onPress={() => action.onPress(product)} />

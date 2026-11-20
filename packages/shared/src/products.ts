@@ -1,7 +1,7 @@
 /**
  * Product helpers shared by the app and the API: Russian labels, search normalization.
  */
-import type { ExtraUnit, ProductCategory, UnitKey } from './domain';
+import type { ExtraUnit, ProductCategory, Restaurant, UnitKey } from './domain';
 
 export const categoryLabels: Record<ProductCategory, string> = {
   meat: 'Мясо и птица',
@@ -38,6 +38,23 @@ export const categoryAbbr: Record<ProductCategory, string> = {
   other: 'Ба',
 };
 
+export const restaurantLabels: Record<Restaurant, string> = {
+  mcdonalds: "McDonald's",
+  kfc: 'KFC',
+  burgerking: 'Burger King',
+  pizzahut: 'Pizza Hut',
+  other: 'Другое',
+};
+
+/** Two-letter tile text for a chain. */
+export const restaurantAbbr: Record<Restaurant, string> = {
+  mcdonalds: 'Mc',
+  kfc: 'KF',
+  burgerking: 'BK',
+  pizzahut: 'PH',
+  other: 'Др',
+};
+
 /** Short unit name for amounts: "2 ст. л.", "150 г". */
 export const unitShort: Record<UnitKey, string> = {
   g: 'г',
@@ -49,8 +66,13 @@ export const unitShort: Record<UnitKey, string> = {
   pieceL: 'шт (бол.)',
 };
 
+/** Fast-food dishes have one piece size: «шт» instead of «шт (сред.)». */
+export const unitShortFor = (unit: UnitKey, restaurant: Restaurant | null | undefined) =>
+  restaurant && unit === 'pieceM' ? 'шт' : unitShort[unit];
+
 /** Short name of a dish unit: a product unit or "порц." (a whole recipe). */
-export const dishUnitShort = (unit: UnitKey | 'portion') => (unit === 'portion' ? 'порц.' : unitShort[unit]);
+export const dishUnitShort = (unit: UnitKey | 'portion', restaurant?: Restaurant | null) =>
+  unit === 'portion' ? 'порц.' : unitShortFor(unit, restaurant);
 
 /** Unit name in the product editor ("1 ст. ложка"). */
 export const unitLong: Record<ExtraUnit, string> = {

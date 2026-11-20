@@ -1,5 +1,6 @@
 /**
- * Seed: upserts the shared product catalog (`prisma/catalog.ts`) and recipe catalog (`prisma/recipes.ts`).
+ * Seed: upserts the shared product catalog (`prisma/catalog.ts`), fast-food catalog (`prisma/fastfood.ts`, products
+ * with a restaurant) and recipe catalog (`prisma/recipes.ts`).
  * Safe to re-run after editing them. Catalog rows dropped from the files are deleted only while nothing
  * references them (no family edits, hiding, favorites; for products also no recipe); referenced ones are
  * kept and reported.
@@ -10,6 +11,7 @@ import { config } from 'dotenv';
 
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { CATALOG } from './catalog';
+import { FASTFOOD } from './fastfood';
 import { RECIPES } from './recipes';
 
 config({ path: ['.env.local', '.env'], quiet: true });
@@ -20,7 +22,7 @@ const prisma = new PrismaClient({
 
 async function main() {
   const ids = new Set<string>();
-  for (const { id } of CATALOG) {
+  for (const { id } of [...CATALOG, ...FASTFOOD]) {
     if (ids.has(id)) throw new Error(`Duplicate catalog id: ${id}`);
     ids.add(id);
   }
@@ -45,7 +47,12 @@ async function main() {
   await prisma.$transaction(
     async (tx) => {
       for (const { id, fdcId: _fdcId, ...data } of CATALOG) {
-        await tx.product.upsert({ where: { id }, create: { id, householdId: null, ...data }, update: data });
+        const row = { ...data, restaurant: null };
+        await tx.product.upsert({ where: { id }, create: { id, householdId: null, ...row }, update: row });
+      }
+      for (const { id, portionG, source: _source, ...rest } of FASTFOOD) {
+        const row = { ...rest, units: { pieceM: portionG } };
+        await tx.product.upsert({ where: { id }, create: { id, householdId: null, ...row }, update: row });
       }
       for (const { id, name, items } of RECIPES) {
         await tx.recipe.upsert({
@@ -57,7 +64,9 @@ async function main() {
     },
     { maxWait: 30_000, timeout: 300_000 },
   );
-  console.log(`Catalog: ${CATALOG.length} products, ${RECIPES.length} recipes upserted.`);
+  console.log(
+    `Catalog: ${CATALOG.length} products, ${FASTFOOD.length} fast-food dishes, ${RECIPES.length} recipes upserted.`,
+  );
 
   const staleRecipes = await prisma.recipe.findMany({
     where: { householdId: null, id: { notIn: [...recipeIds] } },

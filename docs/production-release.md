@@ -27,7 +27,7 @@ If an account or key is lost, the setup lives in: Vercel env of `eat-and-calc-ap
 
 **APK** (`npm run prod:release`, `apps/web/scripts/release-android.mjs`): asks to confirm → EAS build, profile `production` (10–20 min) → uploads APK + `latest.json` to Blob. EAS builds committed code. If the build finished but publishing failed: `npm run prod:release -- --build <build-id>`. `versionCode` is incremented by EAS. On each phone: landing → «Скачать APK»; it installs over the previous release, the session is kept.
 
-**Catalog seed** (after changing `catalog.ts` / `recipes.ts`; upserts, never touches family edits):
+**Catalog seed** (after changing `catalog.ts` / `fastfood.ts` / `recipes.ts`; upserts, never touches family edits). Run it only after the push has been migrated (migrate workflow green) and deployed to Vercel: the seed needs the new columns, and the old API would serve new rows without the new fields:
 
 ```bash
  DATABASE_URL='postgresql://…?sslmode=require' npm run db:seed   # Neon unpooled URL; leading space keeps it out of history

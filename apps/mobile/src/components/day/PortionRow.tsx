@@ -74,7 +74,7 @@ export function PortionRow({
       {on && units.length > 1 ? (
         <View style={styles.units}>
           {units.map((u) => (
-            <Chip key={u} label={dishUnitShort(u)} selected={u === unit} onPress={() => onChange({ unit: u })} />
+            <Chip key={u} label={dishUnitShort(u, measure.restaurant)} selected={u === unit} onPress={() => onChange({ unit: u })} />
           ))}
         </View>
       ) : null}
@@ -85,7 +85,7 @@ export function PortionRow({
             onChange={(amount) => onChange({ grams: amount * per })}
             step={stepOf(unit)}
             max={unit === 'g' || unit === 'ml' ? 5000 : 99}
-            unit={dishUnitShort(unit)}
+            unit={dishUnitShort(unit, measure.restaurant)}
             label={`Сколько — ${member.name}`}
             inputWidth={48}
           />

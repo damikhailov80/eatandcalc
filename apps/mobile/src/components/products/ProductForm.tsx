@@ -8,13 +8,16 @@ import {
   parseNumberInput,
   PRODUCT_CATEGORIES,
   ProductDataSchema,
+  RESTAURANTS,
+  restaurantLabels,
   UNIT_KEYS,
   unitLong,
-  unitShort,
+  unitShortFor,
   type ExtraUnit,
   type Nutrients,
   type ProductCategory,
   type ProductData,
+  type Restaurant,
 } from '@eatandcalc/shared';
 import { StyleSheet, View } from 'react-native';
 
@@ -27,6 +30,8 @@ type NutrientKey = keyof Nutrients;
 export type ProductDraft = {
   name: string;
   category: ProductCategory;
+  /** Set = a fast-food dish: a chain instead of a category, one portion (`pieceM`) instead of the units list. */
+  restaurant: Restaurant | null;
   nutrients: Record<NutrientKey, string>;
   units: Record<ExtraUnit, string>;
 };
@@ -46,6 +51,7 @@ export function toDraft(d: ProductData): ProductDraft {
   return {
     name: d.name,
     category: d.category,
+    restaurant: d.restaurant ?? null,
     nutrients: {
       kcal: num(d.nutrients.kcal),
       protein: num(d.nutrients.protein),
@@ -60,7 +66,7 @@ export function toDraft(d: ProductData): ProductDraft {
 export function productSummary(d: ProductData) {
   const n = d.nutrients;
   const units = UNIT_KEYS.filter((k) => d.units[k] != null)
-    .map((k) => `${unitShort[k]} ${formatNumberInput(d.units[k]!, k === 'ml' ? 3 : 1)} г`)
+    .map((k) => `${unitShortFor(k, d.restaurant)} ${formatNumberInput(d.units[k]!, k === 'ml' ? 3 : 1)} г`)
     .join(', ');
   return [
     `${formatInt(n.kcal)} ккал · Б ${formatOne(n.protein)} · Ж ${formatOne(n.fat)} · У ${formatOne(n.carbs)}`,
@@ -70,8 +76,8 @@ export function productSummary(d: ProductData) {
     .join('\n');
 }
 
-export const blankDraft = (name = ''): ProductDraft => ({
-  ...toDraft({ name, category: 'other', nutrients: { kcal: 0, protein: 0, fat: 0, carbs: 0 }, units: {} }),
+export const blankDraft = (name = '', restaurant: Restaurant | null = null): ProductDraft => ({
+  ...toDraft({ name, category: 'other', restaurant, nutrients: { kcal: 0, protein: 0, fat: 0, carbs: 0 }, units: {} }),
   nutrients: { kcal: '', protein: '', fat: '', carbs: '' },
 });
 
@@ -88,17 +94,27 @@ function draftNutrients(d: ProductDraft): Nutrients | null {
   return out;
 }
 
+/** Units the form edits: a fast-food dish has one portion size. */
+const unitKeysOf = (d: Pick<ProductDraft, 'restaurant'>): readonly ExtraUnit[] =>
+  d.restaurant ? ['pieceM'] : UNIT_KEYS;
+
 /** Valid product data from the form, or null (then the save button stays disabled). */
 export function fromDraft(d: ProductDraft): ProductData | null {
   const nutrients = draftNutrients(d);
   if (!nutrients) return null;
   const units: ProductData['units'] = {};
-  for (const key of UNIT_KEYS) {
+  for (const key of unitKeysOf(d)) {
     const v = parseOr(d.units[key], undefined);
     if (v === null) return null;
     if (v) units[key] = v;
   }
-  const parsed = ProductDataSchema.safeParse({ name: d.name, category: d.category, nutrients, units });
+  const parsed = ProductDataSchema.safeParse({
+    name: d.name,
+    category: d.category,
+    restaurant: d.restaurant,
+    nutrients,
+    units,
+  });
   return parsed.success ? parsed.data : null;
 }
 
@@ -107,6 +123,8 @@ export type ProductFormProps = {
   onChange: (value: ProductDraft) => void;
   /** Catalog values of a catalog product: while the form shows them, a mismatch is explained, not flagged. */
   reference?: Nutrients;
+  /** A catalog dish keeps its chain: no chain chips. */
+  restaurantFixed?: boolean;
 };
 
 /** Products: real data uses food-specific energy factors, so the check is looser than for norms. */
@@ -115,8 +133,11 @@ const PRODUCT_CHECK = { tolerance: 0.1, minKcal: 10 };
 const sameNutrients = (a: Nutrients, b: Nutrients) =>
   a.kcal === b.kcal && a.protein === b.protein && a.fat === b.fat && a.carbs === b.carbs;
 
-/** ProductEdit mockup body: name, category, KBJU per 100 g with an energy check, units in grams. */
-export function ProductForm({ value, onChange, reference }: ProductFormProps) {
+/**
+ * ProductEdit mockup body: name, category, KBJU per 100 g with an energy check, units in grams.
+ * A fast-food dish: chain instead of category, the weight of one portion instead of the units list.
+ */
+export function ProductForm({ value, onChange, reference, restaurantFixed }: ProductFormProps) {
   const set = <K extends keyof ProductDraft>(key: K, v: ProductDraft[K]) => onChange({ ...value, [key]: v });
   const nutrients = draftNutrients(value);
   const check = nutrients && nutrients.kcal > 0 ? energyCheck(nutrients, PRODUCT_CHECK) : null;
@@ -128,19 +149,37 @@ export function ProductForm({ value, onChange, reference }: ProductFormProps) {
         label="Название"
         value={value.name}
         onChangeText={(t) => set('name', t)}
-        placeholder="Например, Сыр тофу копчёный"
+        placeholder={value.restaurant ? 'Например, Чикенбургер' : 'Например, Сыр тофу копчёный'}
         maxLength={80}
         autoCapitalize="sentences"
       />
 
-      <View style={styles.section}>
-        <Text variant="label">Категория</Text>
-        <View style={styles.wrap}>
-          {PRODUCT_CATEGORIES.map((c) => (
-            <Chip key={c} label={categoryLabels[c]} selected={c === value.category} onPress={() => set('category', c)} />
-          ))}
+      {value.restaurant ? (
+        restaurantFixed ? null : (
+          <View style={styles.section}>
+            <Text variant="label">Ресторан</Text>
+            <View style={styles.wrap}>
+              {RESTAURANTS.map((r) => (
+                <Chip
+                  key={r}
+                  label={restaurantLabels[r]}
+                  selected={r === value.restaurant}
+                  onPress={() => set('restaurant', r)}
+                />
+              ))}
+            </View>
+          </View>
+        )
+      ) : (
+        <View style={styles.section}>
+          <Text variant="label">Категория</Text>
+          <View style={styles.wrap}>
+            {PRODUCT_CATEGORIES.map((c) => (
+              <Chip key={c} label={categoryLabels[c]} selected={c === value.category} onPress={() => set('category', c)} />
+            ))}
+          </View>
         </View>
-      </View>
+      )}
 
       <Card style={styles.card}>
         <View style={styles.cardHead}>
@@ -169,7 +208,8 @@ export function ProductForm({ value, onChange, reference }: ProductFormProps) {
           <View style={[styles.note, { backgroundColor: fromReference ? colors.bg : colors.warnSoft }]}>
             {fromReference ? (
               <Text variant="caption" color={colors.textSecondary}>
-                По БЖУ выходит {formatInt(check.fromMacros)} ккал — так в справочнике USDA
+                По БЖУ выходит {formatInt(check.fromMacros)} ккал — так в{' '}
+                {value.restaurant ? 'таблице ресторана' : 'справочнике USDA'}
               </Text>
             ) : (
               <Text variant="caption" style={styles.noteText} color={colors.warn}>
@@ -182,23 +222,24 @@ export function ProductForm({ value, onChange, reference }: ProductFormProps) {
 
       <Card style={styles.card}>
         <View style={styles.cardHead}>
-          <Text variant="h3">Единицы измерения</Text>
+          <Text variant="h3">{value.restaurant ? 'Порция' : 'Единицы измерения'}</Text>
           <Text variant="caption">граммов в одной</Text>
         </View>
-        {UNIT_KEYS.map((key) => {
+        {unitKeysOf(value).map((key) => {
           const text = value.units[key];
           const grams = parseOr(text, undefined);
           const kcal = nutrients && grams ? nutrientsOf({ nutrients, units: { [key]: grams } }, { amount: 1, unit: key }) : null;
+          const label = value.restaurant ? '1 шт' : unitLong[key];
           return (
             <View key={key} style={styles.row}>
               <View style={styles.flex}>
-                <Text variant="bodyStrong">{unitLong[key]}</Text>
+                <Text variant="bodyStrong">{label}</Text>
                 <Text variant="caption">
                   {kcal ? `${kcal.kcal < 10 ? formatOne(kcal.kcal) : formatInt(kcal.kcal)} ккал` : '—'}
                 </Text>
               </View>
               <NumberField
-                label={`${unitLong[key]}, граммов`}
+                label={`${label}, граммов`}
                 value={text}
                 onChangeText={(t) => set('units', { ...value.units, [key]: t })}
                 unit="г"

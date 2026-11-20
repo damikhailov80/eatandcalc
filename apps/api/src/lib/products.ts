@@ -22,6 +22,7 @@ function rowData(p: Product): ProductData {
   return {
     name: p.name,
     category: p.category,
+    restaurant: p.restaurant,
     nutrients: { kcal: p.kcal, protein: p.protein, fat: p.fat, carbs: p.carbs },
     units: units.success ? units.data : {},
   };
@@ -35,7 +36,10 @@ function overrideData(state: HouseholdProduct | undefined): ProductData | null {
   return parsed.success ? parsed.data : null;
 }
 
-/** Stable JSON form of product data (units in `UNIT_KEYS` order) for storing and comparing. */
+/**
+ * Stable JSON form of product data (units in `UNIT_KEYS` order) for storing and comparing.
+ * The chain is left out: a catalog product's chain is fixed, so overrides never carry it.
+ */
 function canonical(d: ProductData) {
   const units: ProductData['units'] = {};
   for (const key of UNIT_KEYS) if (d.units[key] != null) units[key] = d.units[key];
@@ -51,7 +55,7 @@ const sameData = (a: ProductData, b: ProductData) => JSON.stringify(canonical(a)
 
 const rowFields = (d: ProductData) => {
   const c = canonical(d);
-  return { name: c.name, category: c.category, ...c.nutrients, units: c.units };
+  return { name: c.name, category: c.category, restaurant: d.restaurant ?? null, ...c.nutrients, units: c.units };
 };
 
 export function toProductDto(p: Product, state: HouseholdProduct | undefined, favorite: boolean): ProductDto {
@@ -60,6 +64,7 @@ export function toProductDto(p: Product, state: HouseholdProduct | undefined, fa
   const override = own ? null : overrideData(state);
   return ProductSchema.parse({
     ...(override ?? base),
+    restaurant: p.restaurant,
     id: p.id,
     source: own ? 'own' : 'catalog',
     modified: override != null,
@@ -113,7 +118,9 @@ export async function updateProduct(me: RequestUser, id: string, data: ProductDa
   const p = await prisma.product.findFirst({ where: { id, ...visibleTo(me.householdId) } });
   if (!p) throw new HttpError(404, ApiErrors.notFound);
   if (p.householdId) {
-    await prisma.product.update({ where: { id }, data: rowFields(data) });
+    // An app from before fast food doesn't send the chain: keep it.
+    const restaurant = data.restaurant === undefined ? p.restaurant : data.restaurant;
+    await prisma.product.update({ where: { id }, data: rowFields({ ...data, restaurant }) });
   } else {
     const override = sameData(data, rowData(p)) ? null : canonical(data);
     await setOverride(me.householdId, id, override);

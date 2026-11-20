@@ -186,6 +186,17 @@ enum ProductCategory {
   @@map("product_category")
 }
 
+/// Fast-food chain of a restaurant dish; a product with a restaurant is shown under «Фастфуд», not «Продукты».
+enum Restaurant {
+  mcdonalds
+  kfc
+  burgerking
+  pizzahut
+  other
+
+  @@map("restaurant")
+}
+
 /// A product with nutrition per 100 g. `household_id` null = shared catalog row (seeded, stable `cat-…` id);
 /// set = the family's own product. Families never change catalog rows: edits go to `household_product.override`.
 model Product {
@@ -193,6 +204,8 @@ model Product {
   householdId String?            @map("household_id")
   name        String
   category    ProductCategory
+  /// Set = a fast-food dish of this chain (one portion = `units.pieceM`); null = an ordinary product.
+  restaurant  Restaurant?
   kcal        Float
   protein     Float
   fat         Float
@@ -355,6 +368,8 @@ model MealDish {
   sessionId    String?         @map("session_id")
   recipeId     String?         @map("recipe_id")
   productId    String?         @map("product_id")
+  /// The product's chain when copied (fast food); null otherwise.
+  restaurant   Restaurant?
   name         String
   /// Per 100 g.
   kcal         Float

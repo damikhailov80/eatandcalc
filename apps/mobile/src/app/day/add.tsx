@@ -1,4 +1,4 @@
-import { formatDayTitle, todayISO, type ProductDto } from '@eatandcalc/shared';
+import { formatDayTitle, RESTAURANTS, restaurantLabels, todayISO, type ProductDto, type Restaurant } from '@eatandcalc/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -19,12 +19,15 @@ import { colors, fonts, spacing } from '@/theme';
 
 type Params = { date: string; type: MealType; meal?: string };
 
-type Source = 'cooking' | 'recipes' | 'products';
+type Source = 'cooking' | 'recipes' | 'products' | 'fastfood';
 const SOURCES = [
   { value: 'cooking', label: 'Готовки' },
   { value: 'recipes', label: 'Рецепты' },
   { value: 'products', label: 'Продукты' },
+  { value: 'fastfood', label: 'Фастфуд' },
 ] as const;
+/** Sources listed from the products query. */
+const isProductSource = (s: Source): s is 'products' | 'fastfood' => s === 'products' || s === 'fastfood';
 /** «Избранное» / «Все» chips, the same for recipes and products. */
 const FILTERS = ['favorites', 'all'] as const satisfies readonly (RecipeFilter & ProductFilter)[];
 type FavoritesOrAll = (typeof FILTERS)[number];
@@ -43,7 +46,8 @@ const listProps = {
 
 /**
  * "+ Блюдо": what goes into the meal — a cooking session (weighed pot), a recipe (its KBJU per 100 g, e.g. coffee
- * with sugar) or a product. Then the split screen replaces this one, so "back" returns to the day.
+ * with sugar), a product or a fast-food dish (a product with a chain). Then the split screen replaces this one,
+ * so "back" returns to the day.
  */
 export default function AddDishScreen() {
   const { date, type, meal = '' } = useLocalSearchParams<Params>();
@@ -53,6 +57,7 @@ export default function AddDishScreen() {
   const [source, setSource] = useState<Source>('cooking');
   const [query, setQuery] = useState('');
   const [chosen, setFilter] = useState<FavoritesOrAll | null>(null);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
 
   const byId = useMemo(() => productsById(products.data), [products.data]);
   const recipesById = useMemo(() => new Map((recipes.data ?? []).map((r) => [r.id, r])), [recipes.data]);
@@ -65,8 +70,8 @@ export default function AddDishScreen() {
   // «Избранное» first when there is anything in it; a search looks through everything.
   const favoritesCount = useMemo(() => {
     if (source === 'recipes') return filterRecipes(recipes.data ?? [], byId, { filter: 'favorites', query: '' }).length;
-    if (source === 'products')
-      return filterProducts(products.data ?? [], { filter: 'favorites', category: null, query: '' }).length;
+    if (isProductSource(source))
+      return filterProducts(products.data ?? [], { kind: source, filter: 'favorites', query: '' }).length;
     return 0;
   }, [source, recipes.data, products.data, byId]);
   const filter: FavoritesOrAll = query.trim() ? 'all' : (chosen ?? (favoritesCount > 0 ? 'favorites' : 'all'));
@@ -81,8 +86,16 @@ export default function AddDishScreen() {
     [source, recipes.data, byId, filter, query],
   );
   const productList = useMemo(
-    () => (source === 'products' ? filterProducts(products.data ?? [], { filter, category: null, query }) : []),
-    [source, products.data, filter, query],
+    () =>
+      isProductSource(source)
+        ? filterProducts(products.data ?? [], {
+            kind: source,
+            filter,
+            restaurant: source === 'fastfood' ? restaurant : null,
+            query,
+          })
+        : [],
+    [source, products.data, filter, restaurant, query],
   );
 
   const pickSession = useCallback(
@@ -124,11 +137,15 @@ export default function AddDishScreen() {
     setSource(next);
     setQuery('');
     setFilter(null);
+    setRestaurant(null);
   };
 
-  const placeholder = { cooking: 'Название готовки', recipes: 'Рецепт или продукт', products: 'Поиск продукта' }[
-    source
-  ];
+  const placeholder = {
+    cooking: 'Название готовки',
+    recipes: 'Рецепт или продукт',
+    products: 'Поиск продукта',
+    fastfood: 'Поиск блюда',
+  }[source];
   const header = (
     <>
       <SearchField value={query} onChangeText={setQuery} placeholder={placeholder} />
@@ -139,6 +156,18 @@ export default function AddDishScreen() {
           ))}
         </ChipRow>
       )}
+      {source === 'fastfood' ? (
+        <ChipRow>
+          {RESTAURANTS.map((r) => (
+            <Chip
+              key={r}
+              label={restaurantLabels[r]}
+              selected={r === restaurant}
+              onPress={() => setRestaurant(r === restaurant ? null : r)}
+            />
+          ))}
+        </ChipRow>
+      ) : null}
     </>
   );
   const empty = (

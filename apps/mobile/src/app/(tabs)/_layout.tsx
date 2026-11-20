@@ -18,6 +18,7 @@ const ICONS: Record<string, IconName> = {
   cooking: 'pot-steam-outline',
   recipes: 'notebook-outline',
   products: 'food-apple-outline',
+  fastfood: 'hamburger',
   family: 'account-group-outline',
 };
 
@@ -73,6 +74,7 @@ export default function TabsLayout() {
         <TopTabs.Screen name="cooking" options={{ title: 'Готовка' }} />
         <TopTabs.Screen name="recipes" options={{ title: 'Рецепты' }} />
         <TopTabs.Screen name="products" options={{ title: 'Продукты' }} />
+        <TopTabs.Screen name="fastfood" options={{ title: 'Фастфуд' }} />
         <TopTabs.Screen name="family" options={{ title: 'Семья' }} />
       </TopTabs>
     </SwipeLockContext>

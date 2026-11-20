@@ -32,7 +32,9 @@ export function SegmentedControl<T extends string>({
             accessibilityState={{ checked: selected }}
             onPress={() => onChange(o.value)}
             style={[styles.segment, selected && styles.selected]}>
-            <Text style={styles.label}>{o.label}</Text>
+            <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+              {o.label}
+            </Text>
           </Pressable>
         );
       })}
@@ -42,7 +44,14 @@ export function SegmentedControl<T extends string>({
 
 const styles = StyleSheet.create({
   root: { flexDirection: 'row', gap: 4, padding: 3, borderRadius: radii.md, backgroundColor: colors.track },
-  segment: { flex: 1, height: 38, borderRadius: radii.sm, alignItems: 'center', justifyContent: 'center' },
+  segment: {
+    flex: 1,
+    height: 38,
+    paddingHorizontal: 2,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   selected: { backgroundColor: colors.surface, ...shadow.card, shadowOpacity: 0.12 },
   label: { fontFamily: fonts.bodySemibold, fontSize: 14 },
 });

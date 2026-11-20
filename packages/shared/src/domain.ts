@@ -47,6 +47,10 @@ export const PRODUCT_CATEGORIES = [
 ] as const;
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 
+/** Fast-food chains. A product with a restaurant is a fast-food dish (one portion = `units.pieceM`). */
+export const RESTAURANTS = ['mcdonalds', 'kfc', 'burgerking', 'pizzahut', 'other'] as const;
+export type Restaurant = (typeof RESTAURANTS)[number];
+
 /** Measures besides grams; each product says how many grams one of them weighs. */
 export const UNIT_KEYS = ['ml', 'tsp', 'tbsp', 'pieceS', 'pieceM', 'pieceL'] as const;
 export type ExtraUnit = (typeof UNIT_KEYS)[number];
@@ -60,6 +64,8 @@ export type Product = {
   id: Id;
   name: string;
   category: ProductCategory;
+  /** Set = a fast-food dish of this chain (shown under «Фастфуд»); null = an ordinary product. */
+  restaurant: Restaurant | null;
   /** Nutrition per 100 g. */
   nutrients: Nutrients;
   units: ProductUnits;
@@ -155,6 +161,8 @@ export type MealDish = {
   sessionId: Id | null;
   recipeId: Id | null;
   productId: Id | null;
+  /** The product's chain when copied (fast food); null otherwise. */
+  restaurant: Restaurant | null;
   name: string;
   /** Per 100 g. */
   nutrients: Nutrients;
