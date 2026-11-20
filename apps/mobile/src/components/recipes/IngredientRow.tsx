@@ -65,7 +65,7 @@ export type IngredientRowProps = {
   edited?: boolean;
 };
 
-/** Ingredient: name, weight and kcal, amount field with unit chips (switching a unit keeps the weight). */
+/** Ingredient: name, weight and kcal, KBJU per 100 g, amount field with unit chips (switching a unit keeps the weight). */
 export function IngredientRow({
   product,
   amount: text,
@@ -97,6 +97,11 @@ export function IngredientRow({
                 ? `${formatGrams(grams)} · ${kcalText(kcal)}`
                 : '—'}
           </Text>
+          {product ? (
+            <Text variant="caption" color={colors.textMuted}>
+              {`100 г: ${kcalText(product.nutrients.kcal)} · ${macrosText(product.nutrients)}`}
+            </Text>
+          ) : null}
           {hint ? (
             <Text variant="caption" color={hintChanged ? colors.warn : colors.textMuted}>{hint}</Text>
           ) : null}
