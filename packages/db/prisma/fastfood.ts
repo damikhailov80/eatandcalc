@@ -53,7 +53,7 @@ const f = (
 
 export const FASTFOOD: FastFoodItem[] = [
   // McDonald's
-  f('ff-mcd-mcmuffin-farmerskiy', 'McMuffin Фермерский', 'mcdonalds', 'other', 302, 14, 18, 21, 124.6, MCD),
+  f('ff-mcd-mcmuffin-farmerskiy', 'Макмаффин Фермерский (McMuffin Farmerski)', 'mcdonalds', 'other', 302, 14, 18, 21, 124.6, MCD),
   f('ff-mcd-zimniy-chay', 'Зимний чай с яблоками (без доп. сахара)', 'mcdonalds', 'drinks', 46, 0, 0, 11, 401.5, MCD),
   f('ff-mcd-latte-sredniy', 'Латте средний (без сахара)', 'mcdonalds', 'drinks', 49, 2.6, 2.6, 3.8, 296.6, MCD),
   f('ff-mcd-kofe-s-molokom-sredniy', 'Кофе с молоком средний (без сахара)', 'mcdonalds', 'drinks', 22, 1.3, 1.1, 1.7, 293.5, MCD),
