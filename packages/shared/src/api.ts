@@ -92,6 +92,13 @@ export const NormsSchema = z.object({ kcal: norm, protein: norm, fat: norm, carb
 export const MemberNormSchema = z.object({ date: ISODateSchema, norms: NormsSchema });
 export type MemberNormDto = z.infer<typeof MemberNormSchema>;
 
+/** Body weight, kilograms. */
+export const WeightKgSchema = z.number().min(1).max(400);
+
+/** A member's weight on `date` (one per day). */
+export const MemberWeightSchema = z.object({ date: ISODateSchema, kg: WeightKgSchema });
+export type MemberWeightDto = z.infer<typeof MemberWeightSchema>;
+
 export const FamilyMemberInputSchema = z.object({
   name: z.string().trim().min(1).max(40),
   sex: z.enum(['male', 'female']),
@@ -115,6 +122,8 @@ export const FamilyMemberSchema = FamilyMemberInputSchema.omit({ normsDate: true
   norms: NormsSchema,
   /** Norm records by date ascending; empty from an old server. */
   normHistory: z.array(MemberNormSchema).default([]),
+  /** Weight records by date ascending; empty from an old server. */
+  weights: z.array(MemberWeightSchema).default([]),
 });
 export type FamilyMemberDto = z.infer<typeof FamilyMemberSchema>;
 
@@ -128,6 +137,14 @@ export const PutMemberNormRequestSchema = z.object({
   from: ISODateSchema.optional(),
 });
 export type PutMemberNormRequest = z.infer<typeof PutMemberNormRequestSchema>;
+
+/** PUT /api/family-members/:id/weights: the record on `date` (replaced if it exists); `from` = the record moved here. */
+export const PutMemberWeightRequestSchema = z.object({
+  date: ISODateSchema,
+  kg: WeightKgSchema,
+  from: ISODateSchema.optional(),
+});
+export type PutMemberWeightRequest = z.infer<typeof PutMemberWeightRequestSchema>;
 
 // ---------- Products ----------
 

@@ -6,6 +6,12 @@ export const formatInt = (n: number) => int.format(Math.round(n));
 export const formatOne = (n: number) => one.format(n);
 export const formatKcal = (n: number) => `${formatInt(n)} ккал`;
 export const formatGrams = (n: number) => `${formatInt(n)} г`;
+export const formatKg = (n: number) => `${formatOne(n)} кг`;
+/** Signed weight change: "+0,4 кг", "−1,8 кг", "0,0 кг". */
+export const formatKgChange = (n: number) => {
+  const r = Math.round(n * 10) / 10;
+  return `${r > 0 ? '+' : r < 0 ? '−' : ''}${formatKg(Math.abs(r))}`;
+};
 
 /** Russian plural: pluralRu(3, ['человек', 'человека', 'человек']) → "человека". */
 export function pluralRu(n: number, [one, few, many]: readonly [string, string, string]): string {

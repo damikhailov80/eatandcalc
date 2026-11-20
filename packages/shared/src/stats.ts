@@ -2,7 +2,7 @@
  * History and stats math (pure): what a member or the family ate per day and how a day compares with the norm.
  * Norms are dated: a day is compared with the norm in effect on it (`normOn`).
  */
-import type { ISODate, Id, Meal, NormRecord, Nutrients } from './domain';
+import type { ISODate, Id, Meal, NormRecord, Nutrients, WeightRecord } from './domain';
 import { add, dishConsumed, scale, sum, ZERO } from './nutrition';
 
 export type DayStatus = 'ok' | 'over' | 'under';
@@ -61,6 +61,28 @@ export const withNormsOn = <M extends WithNorms>(members: readonly M[], date: IS
 /** The family's norm on `date` (sum of the members' norms in effect then). */
 export const familyNormOn = (members: readonly WithNorms[], date: ISODate) =>
   sum(members.map((m) => memberNormOn(m, date)));
+
+/** The weight recorded on exactly `date`, or null. */
+export const weightOn = (records: readonly WeightRecord[], date: ISODate) =>
+  records.find((r) => r.date === date)?.kg ?? null;
+
+/** The latest weight recorded on or before `date` (`records` by date ascending), or null. */
+export function lastWeightOn(records: readonly WeightRecord[], date: ISODate): number | null {
+  let found: number | null = null;
+  for (const r of records) {
+    if (r.date > date) break;
+    found = r.kg;
+  }
+  return found;
+}
+
+/** Records within `from..to` (inclusive), the latest weight and its change since the first of them. */
+export function weightPeriod(records: readonly WeightRecord[], from: ISODate, to: ISODate) {
+  const points = records.filter((r) => r.date >= from && r.date <= to);
+  const first = points[0];
+  const last = points.at(-1);
+  return { points, last: last?.kg ?? null, change: first && last ? last.kg - first.kg : 0 };
+}
 
 export type PeriodSummary = {
   /** Days with anything eaten. */

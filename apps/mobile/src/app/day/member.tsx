@@ -1,8 +1,12 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   formatDayTitle,
   formatInt,
   formatKcal,
+  formatKg,
   remaining,
+  todayISO,
+  weightOn,
   type FamilyMemberDto,
   type Nutrients,
 } from '@eatandcalc/shared';
@@ -71,6 +75,7 @@ export default function MemberDayScreen() {
     body = (
       <>
         <Switcher members={members.data} selected={memberId} onSelect={setMemberId} />
+        {date <= todayISO() ? <WeightRow member={member} date={date} /> : null}
         <Summary member={member} eaten={eatenOf(eaten, member.id)} />
         <NormTable member={member} eaten={eatenOf(eaten, member.id)} />
         {byMeal.length ? (
@@ -137,6 +142,29 @@ function Switcher({
         );
       })}
     </ChipRow>
+  );
+}
+
+/** The member's weight on the day; a tap opens `member/weight` to record or edit it (not for future days). */
+function WeightRow({ member, date }: { member: FamilyMemberDto; date: string }) {
+  const kg = weightOn(member.weights, date);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={kg != null ? `Вес ${formatKg(kg)}` : 'Записать вес'}
+      onPress={() => router.push({ pathname: '/member/weight', params: { member: member.id, date } })}
+      style={({ pressed }) => pressed && styles.pressed}>
+      <Card style={styles.weight}>
+        <MaterialCommunityIcons name="scale-bathroom" size={24} color={colors.primary} />
+        <Text variant="h3" style={styles.flex}>Вес</Text>
+        {kg != null ? (
+          <Text style={styles.weightValue}>{formatKg(kg)}</Text>
+        ) : (
+          <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
+        )}
+        <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+      </Card>
+    </Pressable>
   );
 }
 
@@ -245,6 +273,8 @@ const styles = StyleSheet.create({
   personOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   personName: { fontFamily: fonts.bodySemibold, fontSize: 14 },
   card: { gap: spacing.md },
+  weight: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 64 },
+  weightValue: { fontFamily: fonts.headingHeavy, fontSize: 20, fontVariant: ['tabular-nums'] },
   kcalHead: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
   kcalBig: { fontFamily: fonts.headingHeavy, fontSize: 40, letterSpacing: -0.6, fontVariant: ['tabular-nums'] },
   kcalOf: { fontFamily: fonts.bodyMedium, fontSize: 15, fontVariant: ['tabular-nums'] },

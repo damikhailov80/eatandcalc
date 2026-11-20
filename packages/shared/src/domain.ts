@@ -128,6 +128,9 @@ export type Sex = 'male' | 'female';
 
 export type NormRecord = { date: ISODate; norms: Nutrients };
 
+/** Body weight on a day, kilograms. */
+export type WeightRecord = { date: ISODate; kg: number };
+
 export type FamilyMember = {
   id: Id;
   householdId: Id;
@@ -139,6 +142,8 @@ export type FamilyMember = {
   norms: Nutrients;
   /** Norm records by date ascending: each applies from its date to the next; before the first, the first. */
   normHistory: NormRecord[];
+  /** Weight records by date ascending (one per day). */
+  weights: WeightRecord[];
   archived?: boolean;
 };
 

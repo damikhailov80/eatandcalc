@@ -6,13 +6,17 @@ import {
   formatDayTitle,
   formatInt,
   formatKcal,
+  formatKg,
+  formatKgChange,
   formatMonthShort,
   formatMonthYear,
   fromISODate,
   familyNormOn,
   periodSummary,
   todayISO,
+  weightPeriod,
   type DayStatus,
+  type FamilyMemberDto,
   type Nutrients,
 } from '@eatandcalc/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +26,8 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { MonthGrid, type DayMark } from '@/components/day/MonthGrid';
 import { BarChart } from '@/components/stats/BarChart';
-import { Button, Card, Chip, ChipRow, ProgressBar, Screen, StateMessage, Text } from '@/components/ui';
+import { WeightChart } from '@/components/stats/WeightChart';
+import { Button, Card, Chip, ChipRow, MemberAvatar, ProgressBar, Screen, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { monthDays, monthOf, useMonthGridMeals } from '@/lib/day';
 import { queryKeys } from '@/lib/query';
@@ -286,6 +291,8 @@ export default function HistoryScreen() {
           )}
         </Card>
 
+        <WeightCard members={chosen} from={rangeFrom} today={today} />
+
         {past.length ? (
           <>
             <Text variant="h2" style={styles.section}>Прошлые дни</Text>
@@ -327,6 +334,50 @@ export default function HistoryScreen() {
     <Screen title="История питания" onBack={() => router.back()}>
       {body}
     </Screen>
+  );
+}
+
+/** «Вес»: per chosen member with records in `from..today`, the weight line and its change; hidden without records. */
+function WeightCard({ members, from, today }: { members: readonly FamilyMemberDto[]; from: string; today: string }) {
+  const [selected, setSelected] = useState<{ member: string; date: string } | null>(null);
+  const rows = members
+    .map((m) => ({ member: m, ...weightPeriod(m.weights, from, today) }))
+    .filter((r) => r.points.length);
+  if (!rows.length) return null;
+  const ticks = Array.from({ length: MONTHS_BACK + 1 }, (_, i) => {
+    const m = monthOf(today, i - MONTHS_BACK);
+    return [m, formatMonthShort(fromISODate(m))] as const;
+  });
+  return (
+    <Card style={styles.card}>
+      <Text variant="h3">Вес</Text>
+      {rows.map(({ member, points, last, change }) => {
+        const pick = selected?.member === member.id ? points.find((p) => p.date === selected.date) : undefined;
+        return (
+          <View key={member.id} style={styles.weight}>
+            <View style={styles.chartHead}>
+              <MemberAvatar name={member.name} color={member.color} size={24} />
+              <Text style={styles.weightName} numberOfLines={1}>{member.name}</Text>
+              <Text style={styles.chartValue} color={colors.textSecondary}>
+                {pick
+                  ? `${formatDayMonthShort(fromISODate(pick.date))} · ${formatKg(pick.kg)}`
+                  : `${formatKg(last!)} · ${formatKgChange(change)}`}
+              </Text>
+            </View>
+            <WeightChart
+              points={points}
+              from={from}
+              to={today}
+              color={member.color}
+              height={rows.length > 1 ? 90 : 130}
+              ticks={ticks}
+              selected={selected?.member === member.id ? selected.date : null}
+              onSelect={(date) => setSelected(date ? { member: member.id, date } : null)}
+            />
+          </View>
+        );
+      })}
+    </Card>
   );
 }
 
@@ -393,6 +444,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.track,
   },
   section: { marginTop: spacing.sm },
+  weight: { gap: spacing.sm },
+  weightName: { flex: 1, fontFamily: fonts.bodySemibold, fontSize: 15 },
   day: { gap: spacing.sm, padding: spacing.md },
   dayHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dayTitle: { flex: 1, fontFamily: fonts.bodySemibold, fontSize: 15 },

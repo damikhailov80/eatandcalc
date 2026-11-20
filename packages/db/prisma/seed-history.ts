@@ -2,12 +2,13 @@
  * Local-only test data: fills a family's meal history (the last 90 days up to yesterday) with dishes copied from
  * catalog products, each member eating about 75–125 % of their kcal norm on that day, so the history shows days in
  * norm, over and under. Each member also gets a dated norm history (the current norm ×0.85 from 90 days ago, ×0.93
- * from 45 days ago, ×1 from 14 days ago), replacing their records with --reset or when they have only one.
+ * from 45 days ago, ×1 from 14 days ago), replacing their records with --reset or when they have only one, and a
+ * weight record every 1–4 days with a slow downward trend (members that already have weights are skipped).
  * Days that already have meals are skipped; today is never touched.
  *
  *   npm run db:seed-history                      # the only household with family members
  *   npm run db:seed-history -- --household <id>  # a specific one
- *   npm run db:seed-history -- --reset           # first delete the family's meals before today, redo norms
+ *   npm run db:seed-history -- --reset           # first delete the family's meals and weights before today, redo norms
  *
  * Refuses to run against a non-local database.
  */
@@ -193,6 +194,30 @@ async function main() {
   /** The norm in effect on `day` (latest record on or before it; before the first, the first). */
   const kcalNormOn = (m: (typeof members)[number], day: string) =>
     (m.norms.filter((n) => iso(n.date) <= day).at(-1) ?? m.norms[0] ?? m).kcal;
+
+  // Weights: a start by sex (varied per member), a slow loss over the period, daily noise; every 1–4 days.
+  if (reset) {
+    const { count } = await prisma.memberWeight.deleteMany({
+      where: { memberId: { in: members.map((m) => m.id) }, date: { lt: dbDate(today) } },
+    });
+    console.log(`Deleted ${count} weights before ${today}.`);
+  }
+  const weighed = new Set(
+    (await prisma.memberWeight.findMany({ where: { memberId: { in: members.map((m) => m.id) } }, distinct: ['memberId'] }))
+      .map((w) => w.memberId),
+  );
+  for (const m of members) {
+    if (weighed.has(m.id)) continue;
+    const start = (m.sex === 'male' ? 86 : 66) + between(-6, 6);
+    const loss = between(2, 4);
+    const records: { memberId: string; date: Date; kg: number }[] = [];
+    for (let i = DAYS; i >= 1; i -= 1 + Math.floor(random() * 4)) {
+      const kg = start - (loss * (DAYS - i)) / DAYS + between(-0.4, 0.4);
+      records.push({ memberId: m.id, date: dbDate(daysAgo(i)), kg: Math.round(kg * 10) / 10 });
+    }
+    await prisma.memberWeight.createMany({ data: records });
+    console.log(`Weights: ${m.name} ${records.length} records, ${records[0]!.kg} → ${records.at(-1)!.kg} kg`);
+  }
 
   const taken = new Set(
     (await prisma.meal.findMany({ where: { householdId }, select: { date: true } })).map((m) => iso(m.date)),

@@ -1,4 +1,4 @@
-import { prisma, type FamilyMember, type MemberNorm } from '@eatandcalc/db';
+import { prisma, type FamilyMember, type MemberNorm, type MemberWeight } from '@eatandcalc/db';
 import {
   ApiErrors,
   FamilyMemberSchema,
@@ -10,10 +10,13 @@ import {
 import { dbDate, isoDate } from './cooking';
 import { HttpError } from './http';
 
-/** Include for member queries: norm records by date ascending. */
-export const withNorms = { norms: { orderBy: { date: 'asc' } } } as const;
+/** Include for member queries: norm and weight records by date ascending. */
+export const withHistory = {
+  norms: { orderBy: { date: 'asc' } },
+  weights: { orderBy: { date: 'asc' } },
+} as const;
 
-type MemberWithNorms = FamilyMember & { norms: MemberNorm[] };
+type MemberWithHistory = FamilyMember & { norms: MemberNorm[]; weights: MemberWeight[] };
 
 const normsOf = (n: Pick<MemberNorm, 'kcal' | 'protein' | 'fat' | 'carbs'>): Nutrients => ({
   kcal: n.kcal,
@@ -22,7 +25,7 @@ const normsOf = (n: Pick<MemberNorm, 'kcal' | 'protein' | 'fat' | 'carbs'>): Nut
   carbs: n.carbs,
 });
 
-export const toFamilyMemberDto = (m: MemberWithNorms): FamilyMemberDto => {
+export const toFamilyMemberDto = (m: MemberWithHistory): FamilyMemberDto => {
   const latest = m.norms.at(-1);
   return FamilyMemberSchema.parse({
     id: m.id,
@@ -31,6 +34,7 @@ export const toFamilyMemberDto = (m: MemberWithNorms): FamilyMemberDto => {
     color: m.color,
     norms: normsOf(latest ?? m),
     normHistory: m.norms.map((n) => ({ date: isoDate(n.date), norms: normsOf(n) })),
+    weights: m.weights.map((w) => ({ date: isoDate(w.date), kg: w.kg })),
   });
 };
 
@@ -56,7 +60,7 @@ const sameNorms = (a: Nutrients, b: Nutrients) =>
   a.kcal === b.kcal && a.protein === b.protein && a.fat === b.fat && a.carbs === b.carbs;
 
 /** Old apps send the norm with every PATCH: a changed one becomes today's record. */
-export async function saveLegacyNorms(member: MemberWithNorms, norms: Nutrients) {
+export async function saveLegacyNorms(member: MemberWithHistory, norms: Nutrients) {
   const latest = member.norms.at(-1);
   if (latest && sameNorms(normsOf(latest), norms)) return;
   await upsertNorm(member.id, serverToday(), norms);
@@ -66,7 +70,7 @@ export async function saveLegacyNorms(member: MemberWithNorms, norms: Nutrients)
 export async function findFamilyMember(householdId: string, id: string) {
   const member = await prisma.familyMember.findFirst({
     where: { id, householdId, archivedAt: null },
-    include: withNorms,
+    include: withHistory,
   });
   if (!member) throw new HttpError(404, ApiErrors.notFound);
   return member;

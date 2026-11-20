@@ -6,14 +6,14 @@ import {
 } from '@eatandcalc/shared';
 
 import { dbDate } from '@/lib/cooking';
-import { familyMemberData, serverToday, toFamilyMemberDto, withNorms } from '@/lib/family';
+import { familyMemberData, serverToday, toFamilyMemberDto, withHistory } from '@/lib/family';
 import { parseBody, withUser } from '@/lib/session';
 
 export const GET = withUser(async (_request, me) => {
   const members = await prisma.familyMember.findMany({
     where: { householdId: me.householdId, archivedAt: null },
     orderBy: { createdAt: 'asc' },
-    include: withNorms,
+    include: withHistory,
   });
   return Response.json(FamilyMembersResponseSchema.parse({ members: members.map(toFamilyMemberDto) }));
 });
@@ -28,7 +28,7 @@ export const POST = withUser(async (request, me) => {
       ...input.norms,
       norms: { create: { date: dbDate(input.normsDate ?? serverToday()), ...input.norms } },
     },
-    include: withNorms,
+    include: withHistory,
   });
   return Response.json(FamilyMemberResponseSchema.parse({ member: toFamilyMemberDto(member) }), {
     status: 201,

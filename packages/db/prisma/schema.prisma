@@ -162,6 +162,7 @@ model FamilyMember {
   household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
   consumptions Consumption[]
   norms        MemberNorm[]
+  weights      MemberWeight[]
 
   @@index([householdId])
   @@map("family_member")
@@ -182,6 +183,19 @@ model MemberNorm {
 
   @@id([memberId, date])
   @@map("member_norm")
+}
+
+/// A member's body weight on `date`, kilograms; at most one per day.
+model MemberWeight {
+  memberId  String       @map("member_id")
+  date      DateTime     @db.Date
+  kg        Float
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  member    FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@id([memberId, date])
+  @@map("member_weight")
 }
 
 // ---------- Products ----------

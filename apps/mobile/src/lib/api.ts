@@ -24,6 +24,7 @@ import {
   type FamilyMemberInput,
   type FamilyMemberUpdate,
   type PutMemberNormRequest,
+  type PutMemberWeightRequest,
   type Invite,
   type JoinPreviewResponse,
   type MeResponse,
@@ -164,6 +165,22 @@ export const api = {
     (
       await apiRequest(
         `/api/family-members/${encodeURIComponent(id)}/norms/${encodeURIComponent(date)}`,
+        FamilyMemberResponseSchema,
+        { method: 'DELETE' },
+      )
+    ).member,
+  /** Saves the weight on `date`; `from` = the record moved from another date. */
+  putMemberWeight: async (id: string, input: PutMemberWeightRequest): Promise<FamilyMemberDto> =>
+    (
+      await apiRequest(`/api/family-members/${encodeURIComponent(id)}/weights`, FamilyMemberResponseSchema, {
+        method: 'PUT',
+        json: input,
+      })
+    ).member,
+  deleteMemberWeight: async (id: string, date: string): Promise<FamilyMemberDto> =>
+    (
+      await apiRequest(
+        `/api/family-members/${encodeURIComponent(id)}/weights/${encodeURIComponent(date)}`,
         FamilyMemberResponseSchema,
         { method: 'DELETE' },
       )

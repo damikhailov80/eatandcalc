@@ -2,7 +2,7 @@
 
 Android app for a family's nutrition: how many kcal, protein, fat and carbs each member ate today vs. their norm. No cooking instructions, only composition and numbers. UI is in Russian.
 
-Chain: **products → recipes (templates) → cooking sessions (real pots, weighed) → who ate how many grams** of which dish on the day plan (plus fast-food dishes of McDonald's, KFC, Burger King, Pizza Hut); history shows days in / over / under the norm. Google sign-in for the family's accounts only; one household shared by invite; online-only.
+Chain: **products → recipes (templates) → cooking sessions (real pots, weighed) → who ate how many grams** of which dish on the day plan (plus fast-food dishes of McDonald's, KFC, Burger King, Pizza Hut); history shows days in / over / under the norm and each member's weight trend. Google sign-in for the family's accounts only; one household shared by invite; online-only.
 
 ## Architecture
 
