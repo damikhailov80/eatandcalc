@@ -1,4 +1,4 @@
-import { todayISO, type CookingData, type CookingDto, type ProductDto, type RecipeDto } from '@eatandcalc/shared';
+import { todayISO, type CookingData, type CookingItemDto, type CookingDto, type ProductDto, type RecipeDto } from '@eatandcalc/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -11,6 +11,7 @@ import {
   toRowDraft,
   type CookingDraft,
 } from '@/components/cooking/CookingForm';
+import { CookingItemEditor } from '@/components/cooking/CookingItemEditor';
 import { familyErrorMessage } from '@/components/family/errors';
 import { LoadError } from '@/components/LoadError';
 import { ProductPicker } from '@/components/recipes/ProductPicker';
@@ -56,6 +57,7 @@ function Editor({
   const [value, setValue] = useState(initial);
   const [picking, setPicking] = useState(false);
   const [focusKey, setFocusKey] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const byId = useMemo(() => productsById(products), [products]);
   const recipe = value.recipeId ? recipes.find((r) => r.id === value.recipeId) : undefined;
   const data = fromCookingDraft(value);
@@ -94,8 +96,20 @@ function Editor({
     setPicking(false);
   }, []);
   const closePicker = useCallback(() => setPicking(false), []);
+  const closeEditor = useCallback(() => setEditing(null), []);
+  const saveRow = useCallback(
+    (item: CookingItemDto) => {
+      setValue((v) => ({ ...v, items: v.items.map((r) => (r.key === editing ? { ...r, item } : r)) }));
+      setEditing(null);
+    },
+    [editing],
+  );
 
   if (picking) return <ProductPicker products={products} onPick={pick} onClose={closePicker} />;
+  const editingRow = editing ? value.items.find((r) => r.key === editing) : undefined;
+  if (editingRow) {
+    return <CookingItemEditor item={editingRow.item} products={byId} onDone={saveRow} onClose={closeEditor} />;
+  }
 
   return (
     <Screen
@@ -134,6 +148,7 @@ function Editor({
         recipe={recipe}
         products={byId}
         onAddProduct={() => setPicking(true)}
+        onEditRow={setEditing}
         focusKey={focusKey}
       />
     </Screen>

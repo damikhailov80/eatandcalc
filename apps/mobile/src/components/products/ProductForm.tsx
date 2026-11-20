@@ -26,13 +26,16 @@ import { colors, fonts, macroColors, radii, spacing } from '@/theme';
 
 type NutrientKey = keyof Nutrients;
 
+/** KBJU per 100 g as typed. */
+export type NutrientsDraft = Record<NutrientKey, string>;
+
 /** Form state: numbers stay as typed text until saving. */
 export type ProductDraft = {
   name: string;
   category: ProductCategory;
   /** Set = a fast-food dish: a chain instead of a category, one portion (`pieceM`) instead of the units list. */
   restaurant: Restaurant | null;
-  nutrients: Record<NutrientKey, string>;
+  nutrients: NutrientsDraft;
   units: Record<ExtraUnit, string>;
 };
 
@@ -45,6 +48,13 @@ const NUTRIENT_ROWS: { key: NutrientKey; label: string; unit: string }[] = [
 
 const num = (n: number | undefined, digits = 1) => (n == null ? '' : formatNumberInput(n, digits));
 
+export const nutrientsText = (n: Nutrients): NutrientsDraft => ({
+  kcal: num(n.kcal),
+  protein: num(n.protein),
+  fat: num(n.fat),
+  carbs: num(n.carbs),
+});
+
 export function toDraft(d: ProductData): ProductDraft {
   const units = {} as Record<ExtraUnit, string>;
   for (const key of UNIT_KEYS) units[key] = num(d.units[key], key === 'ml' ? 3 : 1);
@@ -52,12 +62,7 @@ export function toDraft(d: ProductData): ProductDraft {
     name: d.name,
     category: d.category,
     restaurant: d.restaurant ?? null,
-    nutrients: {
-      kcal: num(d.nutrients.kcal),
-      protein: num(d.nutrients.protein),
-      fat: num(d.nutrients.fat),
-      carbs: num(d.nutrients.carbs),
-    },
+    nutrients: nutrientsText(d.nutrients),
     units,
   };
 }
@@ -84,10 +89,11 @@ export const blankDraft = (name = '', restaurant: Restaurant | null = null): Pro
 /** Blank = 0 for nutrients and "no such unit" for units; null = something can't be parsed. */
 const parseOr = (text: string, blank: number | undefined) => (text.trim() ? parseNumberInput(text) : blank);
 
-function draftNutrients(d: ProductDraft): Nutrients | null {
+/** Typed KBJU (blank = 0), or null when something can't be parsed. */
+export function parseNutrientsDraft(d: NutrientsDraft): Nutrients | null {
   const out = {} as Nutrients;
   for (const { key } of NUTRIENT_ROWS) {
-    const v = parseOr(d.nutrients[key], 0);
+    const v = parseOr(d[key], 0);
     if (v == null) return null;
     out[key] = v;
   }
@@ -100,7 +106,7 @@ const unitKeysOf = (d: Pick<ProductDraft, 'restaurant'>): readonly ExtraUnit[] =
 
 /** Valid product data from the form, or null (then the save button stays disabled). */
 export function fromDraft(d: ProductDraft): ProductData | null {
-  const nutrients = draftNutrients(d);
+  const nutrients = parseNutrientsDraft(d.nutrients);
   if (!nutrients) return null;
   const units: ProductData['units'] = {};
   for (const key of unitKeysOf(d)) {
@@ -130,8 +136,63 @@ export type ProductFormProps = {
 /** Products: real data uses food-specific energy factors, so the check is looser than for norms. */
 const PRODUCT_CHECK = { tolerance: 0.1, minKcal: 10 };
 
-const sameNutrients = (a: Nutrients, b: Nutrients) =>
+export const sameNutrients = (a: Nutrients, b: Nutrients) =>
   a.kcal === b.kcal && a.protein === b.protein && a.fat === b.fat && a.carbs === b.carbs;
+
+export type NutrientsCardProps = {
+  value: NutrientsDraft;
+  onChange: (value: NutrientsDraft) => void;
+  /** Values to explain rather than flag while the card shows them (catalog data). */
+  reference?: Nutrients;
+  /** Where the reference values come from: "… — так в <label>". */
+  referenceLabel?: string;
+};
+
+/** "Пищевая ценность" card: KBJU per 100 g with an energy check. */
+export function NutrientsCard({ value, onChange, reference, referenceLabel }: NutrientsCardProps) {
+  const nutrients = parseNutrientsDraft(value);
+  const check = nutrients && nutrients.kcal > 0 ? energyCheck(nutrients, PRODUCT_CHECK) : null;
+  const fromReference = nutrients != null && reference != null && sameNutrients(nutrients, reference);
+  return (
+    <Card style={styles.card}>
+      <View style={styles.cardHead}>
+        <Text variant="h3">Пищевая ценность</Text>
+        <Text variant="caption">на 100 г</Text>
+      </View>
+      {NUTRIENT_ROWS.map((row) => {
+        const invalid = value[row.key].trim() !== '' && parseNumberInput(value[row.key]) == null;
+        return (
+          <View key={row.key} style={styles.row}>
+            <View style={[styles.dot, { backgroundColor: macroColors[row.key] }]} />
+            <Text variant="bodyStrong" style={styles.flex}>{row.label}</Text>
+            <NumberField
+              label={row.label}
+              value={value[row.key]}
+              onChangeText={(t) => onChange({ ...value, [row.key]: t })}
+              unit={row.unit}
+              placeholder="0"
+              invalid={invalid}
+              style={styles.field}
+            />
+          </View>
+        );
+      })}
+      {check && !check.close ? (
+        <View style={[styles.note, { backgroundColor: fromReference ? colors.bg : colors.warnSoft }]}>
+          {fromReference ? (
+            <Text variant="caption" color={colors.textSecondary}>
+              По БЖУ выходит {formatInt(check.fromMacros)} ккал — так в {referenceLabel}
+            </Text>
+          ) : (
+            <Text variant="caption" style={styles.noteText} color={colors.warn}>
+              По БЖУ выходит {formatInt(check.fromMacros)} ккал — расходится на {formatInt(Math.abs(check.diff))} ккал
+            </Text>
+          )}
+        </View>
+      ) : null}
+    </Card>
+  );
+}
 
 /**
  * ProductEdit mockup body: name, category, KBJU per 100 g with an energy check, units in grams.
@@ -139,9 +200,7 @@ const sameNutrients = (a: Nutrients, b: Nutrients) =>
  */
 export function ProductForm({ value, onChange, reference, restaurantFixed }: ProductFormProps) {
   const set = <K extends keyof ProductDraft>(key: K, v: ProductDraft[K]) => onChange({ ...value, [key]: v });
-  const nutrients = draftNutrients(value);
-  const check = nutrients && nutrients.kcal > 0 ? energyCheck(nutrients, PRODUCT_CHECK) : null;
-  const fromReference = nutrients != null && reference != null && sameNutrients(nutrients, reference);
+  const nutrients = parseNutrientsDraft(value.nutrients);
 
   return (
     <>
@@ -181,44 +240,12 @@ export function ProductForm({ value, onChange, reference, restaurantFixed }: Pro
         </View>
       )}
 
-      <Card style={styles.card}>
-        <View style={styles.cardHead}>
-          <Text variant="h3">Пищевая ценность</Text>
-          <Text variant="caption">на 100 г</Text>
-        </View>
-        {NUTRIENT_ROWS.map((row) => {
-          const invalid = value.nutrients[row.key].trim() !== '' && parseNumberInput(value.nutrients[row.key]) == null;
-          return (
-            <View key={row.key} style={styles.row}>
-              <View style={[styles.dot, { backgroundColor: macroColors[row.key] }]} />
-              <Text variant="bodyStrong" style={styles.flex}>{row.label}</Text>
-              <NumberField
-                label={row.label}
-                value={value.nutrients[row.key]}
-                onChangeText={(t) => set('nutrients', { ...value.nutrients, [row.key]: t })}
-                unit={row.unit}
-                placeholder="0"
-                invalid={invalid}
-                style={styles.field}
-              />
-            </View>
-          );
-        })}
-        {check && !check.close ? (
-          <View style={[styles.note, { backgroundColor: fromReference ? colors.bg : colors.warnSoft }]}>
-            {fromReference ? (
-              <Text variant="caption" color={colors.textSecondary}>
-                По БЖУ выходит {formatInt(check.fromMacros)} ккал — так в{' '}
-                {value.restaurant ? 'таблице ресторана' : 'справочнике USDA'}
-              </Text>
-            ) : (
-              <Text variant="caption" style={styles.noteText} color={colors.warn}>
-                По БЖУ выходит {formatInt(check.fromMacros)} ккал — расходится на {formatInt(Math.abs(check.diff))} ккал
-              </Text>
-            )}
-          </View>
-        ) : null}
-      </Card>
+      <NutrientsCard
+        value={value.nutrients}
+        onChange={(n) => set('nutrients', n)}
+        reference={reference}
+        referenceLabel={value.restaurant ? 'таблице ресторана' : 'справочнике USDA'}
+      />
 
       <Card style={styles.card}>
         <View style={styles.cardHead}>

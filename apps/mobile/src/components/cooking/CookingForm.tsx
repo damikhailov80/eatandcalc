@@ -27,7 +27,7 @@ import {
 } from '@/components/recipes/IngredientRow';
 import { newKey } from '@/components/recipes/RecipeForm';
 import { Card, IconButton, MacroBar, NumberField, SegmentedControl, Text, TextField } from '@/components/ui';
-import { RECIPE_SCALES, recipeDiff, rowsFromRecipe } from '@/lib/cooking';
+import { isEdited, RECIPE_SCALES, recipeDiff, rowsFromRecipe } from '@/lib/cooking';
 import type { ProductsById } from '@/lib/recipes';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -109,11 +109,13 @@ export type CookingFormProps = {
   recipe: RecipeDto | undefined;
   products: ProductsById;
   onAddProduct: () => void;
+  /** Open the row's name / KBJU editor. */
+  onEditRow: (key: string) => void;
   focusKey?: string | null;
 };
 
 /** CookingEdit mockup body: recipe ×N and comparison, name, date, rows, pot weights, totals and per 100 g. */
-export function CookingForm({ value, onChange, recipe, products, onAddProduct, focusKey }: CookingFormProps) {
+export function CookingForm({ value, onChange, recipe, products, onAddProduct, onEditRow, focusKey }: CookingFormProps) {
   const items = draftItems(value);
   const { cooked, wrong } = weightsOf(value);
   const totals = cookingTotals(items, cooked);
@@ -226,6 +228,8 @@ export function CookingForm({ value, onChange, recipe, products, onAddProduct, f
               first={i === 0}
               onChange={(next) => setRow(i, { ...row, amount: next.amount, item: { ...row.item, unit: next.unit } })}
               onRemove={() => removeRow(i)}
+              onEdit={() => onEditRow(row.key)}
+              edited={isEdited(row.item, products)}
             />
           );
         })}

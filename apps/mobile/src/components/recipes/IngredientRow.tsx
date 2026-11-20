@@ -60,6 +60,9 @@ export type IngredientRowProps = {
   first: boolean;
   onChange: (next: { amount: string; unit: UnitKey }) => void;
   onRemove: () => void;
+  /** Edit the row's own name and KBJU (cooking only); `edited` marks a row that differs from its product. */
+  onEdit?: () => void;
+  edited?: boolean;
 };
 
 /** Ingredient: name, weight and kcal, amount field with unit chips (switching a unit keeps the weight). */
@@ -73,6 +76,8 @@ export function IngredientRow({
   first,
   onChange,
   onRemove,
+  onEdit,
+  edited,
 }: IngredientRowProps) {
   const amount = parseAmount(text);
   const grams = product && amount != null ? quantityGrams(product, { amount, unit }) : null;
@@ -96,6 +101,15 @@ export function IngredientRow({
             <Text variant="caption" color={hintChanged ? colors.warn : colors.textMuted}>{hint}</Text>
           ) : null}
         </View>
+        {onEdit ? (
+          <IconButton
+            icon={edited ? 'pencil' : 'pencil-outline'}
+            variant="plain"
+            color={edited ? colors.warn : colors.textMuted}
+            label={`Изменить — ${name}`}
+            onPress={onEdit}
+          />
+        ) : null}
         <IconButton icon="close" variant="plain" color={colors.textMuted} label={`Убрать — ${name}`} onPress={onRemove} />
       </View>
       {product ? (

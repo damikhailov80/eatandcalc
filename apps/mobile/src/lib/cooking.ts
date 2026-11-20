@@ -29,6 +29,15 @@ export const snapshotOf = (p: ProductDto, amount: number, unit: CookingItemDto['
   unit,
 });
 
+/** The row's own name or KBJU differ from its product as the family sees it now (edited in the pot). */
+export function isEdited(item: CookingItemDto, products: ProductsById): boolean {
+  const p = item.productId ? products.get(item.productId) : undefined;
+  if (!p) return false;
+  const a = item.nutrients;
+  const b = p.nutrients;
+  return item.name !== p.name || a.kcal !== b.kcal || a.protein !== b.protein || a.fat !== b.fat || a.carbs !== b.carbs;
+}
+
 /**
  * Rows of a recipe × `scale`. A row already in `keep` (same product) keeps its frozen copy, only the amount changes;
  * other products are taken as they are now. Products gone or without the recipe's unit are left out.
