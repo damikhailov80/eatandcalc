@@ -8,7 +8,7 @@ import { Card, Chip, ChipRow, IconButton, SearchField, Text } from '@/components
 import { filterLabels, filterProducts, type ProductFilter } from '@/lib/products';
 import { colors, fonts, spacing } from '@/theme';
 
-const FILTERS: readonly ProductFilter[] = ['mine', 'all'];
+const FILTERS: readonly ProductFilter[] = ['all', 'favorites', 'mine'];
 
 const keyExtractor = (p: ProductDto) => p.id;
 
@@ -21,12 +21,8 @@ export type ProductPickerProps = {
 /** Full-screen product list with search (in place of the recipe editor): a tap adds the product. */
 export function ProductPicker({ products, onPick, onClose }: ProductPickerProps) {
   const [query, setQuery] = useState('');
-  const mineCount = useMemo(
-    () => filterProducts(products, { kind: 'products', filter: 'mine', query: '' }).length,
-    [products],
-  );
-  const [filter, setFilter] = useState<ProductFilter>(mineCount > 0 ? 'mine' : 'all');
-  // A search looks through everything: a product missing from "Свои" is the usual case.
+  const [filter, setFilter] = useState<ProductFilter>('all');
+  // A search looks through everything: a product missing from a narrow filter is the usual case.
   const effective = query.trim() ? 'all' : filter;
   const visible = useMemo(
     () => filterProducts(products, { kind: 'products', filter: effective, query }),
