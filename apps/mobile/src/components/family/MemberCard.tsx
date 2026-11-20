@@ -15,7 +15,7 @@ const MACROS = [
 
 export type MemberCardProps = {
   member: FamilyMemberDto;
-  /** Eaten today; zero until the daily planner exists (Stage 6). */
+  /** Eaten today (day plan). */
   eaten: Nutrients;
   onEdit: () => void;
 };

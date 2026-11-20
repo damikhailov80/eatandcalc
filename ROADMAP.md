@@ -10,7 +10,7 @@ Development goes in stages; each stage ends with a working app.
 | 3 | Recipes | Shared catalog + own recipes, editor (products in their units), totals / per 100 g, hide / ♥ / delete, merge on join | ✅ done (plan below) |
 | 4 | Family | Members list, profile editor, norms, macro-energy check; account roles (owner/member), invite link + code, join/leave/remove | ✅ done (today's eaten = 0 until stage 6) |
 | 5 | Cooking | Session from a recipe, a copy or blank; editor (multiplier, frozen product copies, pot and gross weight → per 100 g); history by day with search; delete, cook again; join / leave | ✅ done (plan below) |
-| 6 | Daily planner | Date strip, meals, add dish (history / recipe / product), distribution between members, member rings | 🔧 in progress (plan below) |
+| 6 | Daily planner | Date strip, meals, add dish (history / recipe / product), distribution between members, day totals | 🔧 in progress (plan below) |
 | 7 | Stats & history | Member day stats, history calendar, copy a day's plan | |
 | 8 | Polish | Frequent items, empty states, haptics, performance | |
 | 9 | Release | Vercel (API + landing), Neon, CI migrations, EAS production APK on the landing, EAS Update | code from stage 1 waits |
@@ -78,8 +78,8 @@ Steps (each one ends with a test on the phones, then commit):
 ## Stage 6 plan: daily planner
 
 Decisions:
-- An empty day shows Завтрак, Обед, Ужин; a meal is stored only with its first dish and goes with its last one (one breakfast / lunch / dinner per day, the server reuses it). «Добавить приём пищи» adds a snack («Перекус», «Перекус 2»).
-- A dish is a **frozen copy** of one of three sources, all only to count KBJU: a **cooking session** (exact: KBJU per 100 g of the finished dish via `cookingTotals`, weight, «сырой вес» flag, the session's date), a **recipe** (approximate, e.g. coffee with sugar: KBJU per 100 g of its raw ingredients via `recipeTotals`; no cooking session is created) or a **product** (KBJU per 100 g and its unit weights). Edits / deletes of the source never change the history. `session_id` / `recipe_id` / `product_id` (SetNull) only suggest «как в прошлый раз».
+- An empty day shows Завтрак, Обед, Ужин; a meal is stored only with its first dish and goes with its last one (four fixed meals per day: breakfast, lunch, dinner, snack; one of each, the server reuses it). No meals are added by hand.
+- A dish is a **frozen copy** of one of three sources, all only to count KBJU: a **cooking session** (exact: KBJU per 100 g of the finished dish via `cookingTotals`, weight, «сырой вес» flag, the session's date), a **recipe** (approximate, e.g. coffee with sugar: KBJU per 100 g of its raw ingredients via `recipeTotals`; no cooking session is created) or a **product** (KBJU per 100 g and its unit weights). Edits / deletes of the source never change the history; to pick up a changed source, remove the dish and add it again. `session_id` / `recipe_id` / `product_id` (SetNull) only suggest «как в прошлый раз».
 - Each member's amount is entered in grams, for a product in its units («1 шт (сред.)», «2 ст. л.»), for a recipe in portions (one portion = the whole recipe, its weight kept in the dish's `weight_g`; a new recipe dish starts at 0 portions, e.g. tea). Grams are stored, the entered amount and unit are kept for display.
 - Eaten = `Consumption` (member, grams): `dish per 100 g × grams / 100`. What is served is not checked against the pot's weight.
 - Join / leave: meals don't move (family members don't either): the joiner's meals go with the old household, on leave the family keeps all; moved / copied sessions start untouched.
@@ -87,8 +87,8 @@ Decisions:
 
 Steps (each one ends with a test on the phones, then commit):
 1. [x] Day + dish from a session + manual split: migration `meals`, `GET /api/meals?from&to`, `POST /api/meals/dishes`, `PATCH|DELETE /api/meals/dishes/:id`; Day tab (date strip, rings, meal cards), `day/add` (sessions), `day/dish` (per-member grams, edit, remove); today's eaten on Family.
-2. [ ] Other sources: «+ Блюдо» tabs Готовки / Рецепты / Продукты; a recipe or a product goes straight to the split (migration `meal_dish_units`: `recipe_id`, unit weights, entered amount + unit); per-member unit chips.
-3. [ ] Meals & extras: snacks, «Как в прошлый раз», ring over-badge details, «готовка изменена» → refresh the copy.
+2. [x] Other sources: «+ Блюдо» tabs Готовки / Рецепты / Продукты; a recipe or a product goes straight to the split (migration `meal_dish_units`: `recipe_id`, unit weights, entered amount + unit); per-member unit chips.
+3. [ ] Snack as a fixed meal, «Итоги дня» (per member kcal bar + Б / Ж / У bars instead of rings), «Как в прошлый раз» (last split of the same source, this week and the one before).
 4. [ ] Join / leave check, docs.
 
 ## Open questions

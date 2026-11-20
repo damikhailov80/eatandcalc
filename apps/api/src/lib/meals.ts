@@ -178,8 +178,8 @@ export async function addDish(me: RequestUser, input: AddDishRequest): Promise<M
     consumptions: { create: consumptionRows(input.consumptions) },
   };
   let mealId = input.mealId;
-  // Breakfast / lunch / dinner are one per day: an empty one on another phone may already have been filled.
-  if (!mealId && input.type !== 'snack') {
+  // One meal of each type per day: an empty one on another phone may already have been filled.
+  if (!mealId) {
     const existing = await prisma.meal.findFirst({
       where: { householdId: me.householdId, date: dbDate(input.date), type: input.type },
       orderBy: { createdAt: 'asc' },

@@ -8,6 +8,7 @@ import {
   formatOne,
   fromISODate,
   recipeTotals,
+  shiftISODate,
   todayISO,
   type ConsumptionDto,
   type ConsumptionInput,
@@ -32,8 +33,10 @@ import {
   dishUnits,
   eatenOf,
   findDish,
+  lastSplit,
   MEAL_TITLES,
   useWeekMeals,
+  weekStart,
   type MealType,
 } from '@/lib/day';
 import { queryClient, queryKeys } from '@/lib/query';
@@ -103,6 +106,8 @@ export default function DishScreen() {
     product: productId,
   } = useLocalSearchParams<Params>();
   const meals = useWeekMeals(date);
+  // «Как в прошлый раз» looks through this week and the one before.
+  const prevWeek = useWeekMeals(shiftISODate(weekStart(date), -7));
   const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
   const sessions = useQuery({ queryKey: queryKeys.cooking, queryFn: api.cookingList, enabled: !id && !!sessionId });
   const products = useQuery({
@@ -164,6 +169,14 @@ export default function DishScreen() {
     }
     return null;
   }, [found, session, recipe, product, products.data]);
+
+  const previous = useMemo(
+    () =>
+      id
+        ? null
+        : lastSplit([...(prevWeek.data ?? []), ...(meals.data ?? [])], { sessionId, recipeId, productId }, date),
+    [id, prevWeek.data, meals.data, sessionId, recipeId, productId, date],
+  );
 
   const eatenElsewhere = useMemo(() => dayEaten(meals.data ?? [], date, id), [meals.data, date, id]);
 
@@ -277,6 +290,14 @@ export default function DishScreen() {
             <Text variant="h3" style={styles.splitTitle}>Кто сколько съест</Text>
             <Text style={styles.sum}>{formatGrams(total)}</Text>
           </View>
+          {previous ? (
+            <Button
+              title="Как в прошлый раз"
+              variant="soft"
+              style={styles.previous}
+              onPress={() => setSplit(initialSplit(members.data ?? [], previous, info))}
+            />
+          ) : null}
           {members.data.length ? (
             members.data.map((m) => {
               const s = split[m.id] ?? { on: false, grams: 0, unit: 'g' };
@@ -359,5 +380,6 @@ const styles = StyleSheet.create({
   split: { paddingBottom: spacing.sm },
   splitHead: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, paddingBottom: spacing.sm },
   splitTitle: { flex: 1 },
+  previous: { alignSelf: 'flex-start', marginBottom: spacing.sm },
   sum: { fontFamily: fonts.bodySemibold, fontSize: 13 },
 });

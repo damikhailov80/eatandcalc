@@ -6,7 +6,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { DateStrip } from '@/components/day/DateStrip';
 import { MealCard } from '@/components/day/MealCard';
-import { MemberRings } from '@/components/day/MemberRings';
+import { DayTotals } from '@/components/day/DayTotals';
 import { IconButton, Screen, StateMessage } from '@/components/ui';
 import { api } from '@/lib/api';
 import { dayEaten, daySlots, useWeekMeals, type MealSlot } from '@/lib/day';
@@ -59,7 +59,7 @@ export default function DayScreen() {
   } else {
     body = (
       <>
-        <MemberRings members={members.data} eaten={eaten} />
+        <DayTotals members={members.data} eaten={eaten} />
         {slots.map((slot) => (
           <MealCard key={slot.key} slot={slot} members={membersById} onAddDish={onAddDish} onDishPress={onDishPress} />
         ))}

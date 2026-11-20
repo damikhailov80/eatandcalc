@@ -86,7 +86,7 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 
 | Mockup | Screen | Key elements |
 |---|---|---|
-| `Main` | Day plan (main tab) | weekday strip; copy-day & history buttons; per-member kcal rings with "ещё N" / over badge; meal cards grouped by member (dishes with weight and kcal, the member's kcal per meal; no meal / family totals); "+ Блюдо"; "Добавить приём пищи" |
+| `Main` | Day plan (main tab) | weekday strip; copy-day & history buttons; «Итоги дня»: per member kcal bar ("ещё N" / "+N") and Б / Ж / У bars; four fixed meal cards (завтрак, обед, ужин, перекус) grouped by member (dishes with weight and kcal, the member's kcal per meal; no meal / family totals); "+ Блюдо" |
 | `MemberStats` | Member's day | member switcher; kcal ring; macro bars; norm / eaten / remaining table; by meal |
 | `AddDish` | Add dish (sheet) | Готовки / Рецепты / Продукты with search; each pick goes straight to the split (a recipe is served as is, no new session) |
 | `Distribute` | Split dish | session summary; "Как в прошлый раз"; per-member toggle, grams, day remaining, macros |
@@ -101,7 +101,7 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 | `Family` | Family tab | member cards: norm, today's bar, macro chips |
 | `MemberEdit` | Member profile | color; name; sex; norm steppers; macro energy check |
 
-Components to build as needed: ProgressRing, MacroBar, MemberChip, DateStrip, SwipeRow, BottomSheet, NumericKeypad (built: MacroBar, Chip/ChipRow, SearchField, NumberField, SegmentedControl, Stepper, ProgressBar, MemberAvatar, StickyFooter, TextField, IconButton, QrCode).
+Components to build as needed: MacroBar, MemberChip, DateStrip, SwipeRow, BottomSheet, NumericKeypad (built: MacroBar, Chip/ChipRow, SearchField, NumberField, SegmentedControl, Stepper, ProgressBar, MemberAvatar, StickyFooter, TextField, IconButton, QrCode).
 
 ## File map
 

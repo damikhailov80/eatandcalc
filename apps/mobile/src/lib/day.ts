@@ -5,6 +5,7 @@ import {
   ZERO,
   unitGrams,
   UNIT_KEYS,
+  type ConsumptionDto,
   type DishUnit,
   type MealDto,
   type Nutrients,
@@ -24,8 +25,8 @@ export const MEAL_TITLES: Record<MealType, string> = {
   snack: 'Перекус',
 };
 
-/** Shown on every day, even with nothing planned (stored only with the first dish). */
-const STANDARD: readonly MealType[] = ['breakfast', 'lunch', 'dinner'];
+/** Shown on every day, even with nothing planned (stored only with the first dish); one of each per day. */
+const STANDARD: readonly MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 /** Monday of the week the date falls in. */
 export function weekStart(iso: string): string {
@@ -39,32 +40,21 @@ export const weekDays = (monday: string) => Array.from({ length: 7 }, (_, i) => 
 export type MealSlot = {
   key: string;
   type: MealType;
-  /** "Завтрак", "Перекус 2". */
   title: string;
   meal: MealDto | null;
 };
 
-/** The day's meal cards: breakfast, lunch, dinner (stored or empty), then snacks in the order they were added. */
+/** The day's meal cards: breakfast, lunch, dinner, snack (stored or empty). */
 export function daySlots(meals: readonly MealDto[], date: string): MealSlot[] {
   const own = meals.filter((m) => m.date === date);
   const slots: MealSlot[] = [];
   for (const type of STANDARD) {
     const stored = own.filter((m) => m.type === type);
     if (!stored.length) slots.push({ key: type, type, title: MEAL_TITLES[type], meal: null });
-    for (const meal of stored) slots.push(slotOf(meal, MEAL_TITLES[type]));
+    for (const meal of stored) slots.push({ key: meal.id, type, title: MEAL_TITLES[type], meal });
   }
-  own
-    .filter((m) => m.type === 'snack')
-    .forEach((meal, i) => slots.push(slotOf(meal, i ? `${MEAL_TITLES.snack} ${i + 1}` : MEAL_TITLES.snack)));
   return slots;
 }
-
-const slotOf = (meal: MealDto, title: string): MealSlot => ({
-  key: meal.id,
-  type: meal.type,
-  title,
-  meal,
-});
 
 /** What each member ate on the date (optionally without one dish, e.g. the one being edited). */
 export function dayEaten(meals: readonly MealDto[], date: string, exceptDishId?: string): Map<string, Nutrients> {
@@ -83,6 +73,25 @@ export const findDish = (meals: readonly MealDto[], dishId: string) => {
   }
   return null;
 };
+
+/** What a dish is served from (one of the ids). */
+export type DishSource = { sessionId?: string; recipeId?: string; productId?: string };
+
+/** Who ate how much the last time (up to `date`) the same session / recipe / product was served; null if never. */
+export function lastSplit(meals: readonly MealDto[], source: DishSource, date: string): ConsumptionDto[] | null {
+  let last: { date: string; consumptions: ConsumptionDto[] } | null = null;
+  for (const meal of meals) {
+    if (meal.date > date || (last && meal.date < last.date)) continue;
+    for (const d of meal.dishes) {
+      const same =
+        (source.sessionId && d.sessionId === source.sessionId) ||
+        (source.recipeId && d.recipeId === source.recipeId) ||
+        (source.productId && d.productId === source.productId);
+      if (same && d.consumptions.length) last = { date: meal.date, consumptions: d.consumptions };
+    }
+  }
+  return last?.consumptions ?? null;
+}
 
 /** Meals of the week the date falls in (one cached query per week). */
 export function useWeekMeals(date: string) {
