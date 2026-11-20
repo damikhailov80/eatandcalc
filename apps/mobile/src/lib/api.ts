@@ -63,6 +63,11 @@ export async function apiRequest<S extends z.ZodType>(
 ): Promise<z.infer<S>> {
   const cookie = await authClient.getCookie();
   const method = init.method ?? 'GET';
+  // Every write goes to the log (start and finish with duration), so a slow save can be traced.
+  const isWrite = method !== 'GET';
+  const started = Date.now();
+  const took = () => `${Date.now() - started} мс`;
+  if (isWrite) diag('api', `${method} ${path} …`);
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
@@ -76,13 +81,13 @@ export async function apiRequest<S extends z.ZodType>(
       },
     });
   } catch (e) {
-    diag('api', `${method} ${path}: сеть: ${e instanceof Error ? e.message : String(e)}`, 'error');
+    diag('api', `${method} ${path}: сеть за ${took()}: ${e instanceof Error ? e.message : String(e)}`, 'error');
     throw e;
   }
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
     // x-vercel-id matches the server's `"tag":"auth"` log lines in Vercel → Logs.
-    const line = `${method} ${path} → ${response.status} ${body?.error ?? ''} (cookie: ${cookieNames(cookie)}, id ${response.headers.get('x-vercel-id') ?? '-'})`;
+    const line = `${method} ${path} → ${response.status} ${body?.error ?? ''} за ${took()} (cookie: ${cookieNames(cookie)}, id ${response.headers.get('x-vercel-id') ?? '-'})`;
     diag('api', line, response.status >= 500 ? 'error' : 'warn');
     // Session gone on the server (expired, revoked, removed from allowlist) → back to sign-in.
     // Business errors (409, 404, 400) never sign out.
@@ -97,6 +102,7 @@ export async function apiRequest<S extends z.ZodType>(
     diag('api', `${method} ${path}: ответ не прошёл схему: ${result.error.message}`, 'error');
     throw result.error;
   }
+  if (isWrite) diag('api', `${method} ${path} → ${response.status} за ${took()} (id ${response.headers.get('x-vercel-id') ?? '-'})`);
   return result.data;
 }
 
