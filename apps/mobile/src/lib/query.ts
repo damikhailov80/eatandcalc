@@ -38,6 +38,8 @@ export const queryKeys = {
   meals: ['meals'] as const,
   /** Meals of the week starting on `monday`. */
   mealsWeek: (monday: string) => ['meals', monday] as const,
+  /** Meals of the 6-week calendar grid starting on `monday`. */
+  mealsGrid: (monday: string) => ['meals', 'grid', monday] as const,
 };
 
 /**

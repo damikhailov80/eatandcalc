@@ -1,5 +1,6 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, fonts, spacing } from '@/theme';
@@ -13,6 +14,9 @@ export type ScreenProps = {
   /** Small muted line (e.g. "Воскресенье · сегодня"): above the title, below it with `subtitleBelow`. */
   subtitle?: string;
   subtitleBelow?: boolean;
+  /** Makes the big title a button with a ▾ (e.g. the day plan's date → calendar). */
+  onTitlePress?: () => void;
+  titleLabel?: string;
   /** Right side of the header (buttons). */
   actions?: ReactNode;
   /** Shows a back chevron and a compact (20 pt) title: pushed screens like editors. */
@@ -60,7 +64,18 @@ export function ScreenHeader({ title, actions }: { title: string; actions?: Reac
 }
 
 /** Page shell: warm background, safe area (top only — the tab bar or footer handles the bottom), scrollable body. */
-export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer, onRefresh, children }: ScreenProps) {
+export function Screen({
+  title,
+  subtitle,
+  subtitleBelow,
+  onTitlePress,
+  titleLabel,
+  actions,
+  onBack,
+  footer,
+  onRefresh,
+  children,
+}: ScreenProps) {
   const refreshControl = useRefreshControl(onRefresh);
 
   const sub = subtitle ? (
@@ -87,7 +102,18 @@ export function Screen({ title, subtitle, subtitleBelow, actions, onBack, footer
             <View style={styles.header}>
               <View style={styles.headerText}>
                 {subtitleBelow ? null : sub}
-                <Text variant="title">{title}</Text>
+                {onTitlePress ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={titleLabel ?? title}
+                    onPress={onTitlePress}
+                    style={({ pressed }) => [styles.titleButton, pressed && styles.pressed]}>
+                    <Text variant="title">{title}</Text>
+                    <MaterialCommunityIcons name="chevron-down" size={26} color={colors.textMuted} />
+                  </Pressable>
+                ) : (
+                  <Text variant="title">{title}</Text>
+                )}
                 {subtitleBelow ? sub : null}
               </View>
               {actions}
@@ -106,6 +132,8 @@ const styles = StyleSheet.create({
   content: { padding: spacing.xl, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md, marginBottom: spacing.xs },
   headerText: { flex: 1, gap: 2 },
+  titleButton: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start' },
+  pressed: { opacity: 0.6 },
   backHeader: {
     flexDirection: 'row',
     alignItems: 'center',

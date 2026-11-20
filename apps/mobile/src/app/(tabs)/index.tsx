@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { DateStrip } from '@/components/day/DateStrip';
+import { DayCalendar } from '@/components/day/DayCalendar';
 import { MealCard } from '@/components/day/MealCard';
 import { DayTotals } from '@/components/day/DayTotals';
 import { IconButton, Screen, StateMessage } from '@/components/ui';
@@ -16,6 +17,7 @@ import { colors } from '@/theme';
 export default function DayScreen() {
   const today = todayISO();
   const [date, setDate] = useState(today);
+  const [calendar, setCalendar] = useState(false);
   const meals = useWeekMeals(date);
   const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
 
@@ -71,10 +73,13 @@ export default function DayScreen() {
     <Screen
       onRefresh={refreshAll}
       title={formatDayMonth(fromISODate(date))}
+      titleLabel="Выбрать дату"
+      onTitlePress={() => setCalendar(true)}
       subtitle={subtitle}
       actions={actions}>
       <DateStrip date={date} today={today} planned={planned} onChange={setDate} />
       {body}
+      <DayCalendar visible={calendar} date={date} today={today} onChange={setDate} onClose={() => setCalendar(false)} />
     </Screen>
   );
 }

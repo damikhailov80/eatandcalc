@@ -86,7 +86,7 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 
 | Mockup | Screen | Key elements |
 |---|---|---|
-| `Main` | Day plan (main tab) | weekday strip; copy-day & history buttons; «Итоги дня»: per member kcal bar ("ещё N" / "+N") and Б / Ж / У bars; four fixed meal cards (завтрак, обед, ужин, перекус) grouped by member (dishes with weight and kcal, the member's kcal per meal; no meal / family totals); "+ Блюдо" |
+| `Main` | Day plan (main tab) | weekday strip; tap the date title → month calendar (`DayCalendar`, dots on days with meals); copy-day & history buttons; «Итоги дня»: per member kcal bar ("ещё N" / "+N") and Б / Ж / У bars; four fixed meal cards (завтрак, обед, ужин, перекус) grouped by member (dishes with weight and kcal, the member's kcal per meal; no meal / family totals); "+ Блюдо" |
 | `MemberStats` | Member's day | member switcher; kcal ring; macro bars; norm / eaten / remaining table; by meal |
 | `AddDish` | Add dish (sheet) | Готовки / Рецепты / Продукты with search; each pick goes straight to the split (a recipe is served as is, no new session) |
 | `Distribute` | Split dish | session summary; "Как в прошлый раз"; per-member toggle, grams, day remaining, macros |

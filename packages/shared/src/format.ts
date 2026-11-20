@@ -37,6 +37,14 @@ export function formatWeekday(date: Date) {
   const day = weekday.format(date);
   return `${day.charAt(0).toUpperCase()}${day.slice(1)}`;
 }
+const MONTHS = [
+  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
+] as const;
+
+/** "Ноябрь 2026". */
+export const formatMonthYear = (date: Date) => `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /** Local calendar date → `YYYY-MM-DD`. */
