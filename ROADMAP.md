@@ -32,7 +32,7 @@ Decisions:
 - KBJU always **per 100 g**. Units are a fixed set, each converted to grams per product and editable: г (always 1), мл (grams per ml), ч. л., ст. л., шт мал/сред/бол.
 - Per **family** (`household_product`): an override of a catalog product (full copy, can be reset to the catalog values) and hiding (restorable). Own products are edited in place and deleted (not hidden); once recipes exist, a product used in them can't be deleted.
 - Per **account** (`product_favorite`): favorites (♥).
-- Filters: Свои (= избранное + добавленные, the quick list), Все, Избранное, Добавленные, Изменённые (reset), Скрытые (restore); category chips; instant name search on the client (case- and ё-insensitive).
+- Filters: Свои (= added by the family), Все, Избранное, Изменённые (reset), Скрытые (restore); the add-dish sheet offers only Избранное / Все; category chips; instant name search on the client (case- and ё-insensitive).
 - Release note: production needs `npm run db:seed` (catalog upsert) after migrations; wire it into the `migrate` workflow at the release stage.
 - Joining a family: the joiner's own products move over, hidden sets are merged, overrides are added; when both edited the same catalog product differently the joiner picks whose version stays (their own by default). Favorites stay with the account.
 - Leaving a family (or being removed): the family keeps everything; the account's new household gets a copy of own products (new ids, its ♥ follow the copies), overrides and hiding.

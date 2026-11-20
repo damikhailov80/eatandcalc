@@ -25,9 +25,9 @@ const SOURCES = [
   { value: 'recipes', label: 'Рецепты' },
   { value: 'products', label: 'Продукты' },
 ] as const;
-/** «Свои» / «Все» chips, the same for recipes and products. */
-const FILTERS = ['mine', 'all'] as const satisfies readonly (RecipeFilter & ProductFilter)[];
-type MineOrAll = (typeof FILTERS)[number];
+/** «Избранное» / «Все» chips, the same for recipes and products. */
+const FILTERS = ['favorites', 'all'] as const satisfies readonly (RecipeFilter & ProductFilter)[];
+type FavoritesOrAll = (typeof FILTERS)[number];
 
 const cookingKey = (row: CookingListRow) => (row.kind === 'day' ? `day-${row.date}` : row.view.session.id);
 const recipeKey = (v: RecipeView) => v.recipe.id;
@@ -52,7 +52,7 @@ export default function AddDishScreen() {
   const products = useQuery({ queryKey: queryKeys.products, queryFn: api.products });
   const [source, setSource] = useState<Source>('cooking');
   const [query, setQuery] = useState('');
-  const [chosen, setFilter] = useState<MineOrAll | null>(null);
+  const [chosen, setFilter] = useState<FavoritesOrAll | null>(null);
 
   const byId = useMemo(() => productsById(products.data), [products.data]);
   const recipesById = useMemo(() => new Map((recipes.data ?? []).map((r) => [r.id, r])), [recipes.data]);
@@ -62,14 +62,14 @@ export default function AddDishScreen() {
     [sessions.data, query, recipesById, byId],
   );
 
-  // «Свои» first when there is anything in it; a search looks through everything.
-  const mineCount = useMemo(() => {
-    if (source === 'recipes') return filterRecipes(recipes.data ?? [], byId, { filter: 'mine', query: '' }).length;
+  // «Избранное» first when there is anything in it; a search looks through everything.
+  const favoritesCount = useMemo(() => {
+    if (source === 'recipes') return filterRecipes(recipes.data ?? [], byId, { filter: 'favorites', query: '' }).length;
     if (source === 'products')
-      return filterProducts(products.data ?? [], { filter: 'mine', category: null, query: '' }).length;
+      return filterProducts(products.data ?? [], { filter: 'favorites', category: null, query: '' }).length;
     return 0;
   }, [source, recipes.data, products.data, byId]);
-  const filter: MineOrAll = query.trim() ? 'all' : (chosen ?? (mineCount > 0 ? 'mine' : 'all'));
+  const filter: FavoritesOrAll = query.trim() ? 'all' : (chosen ?? (favoritesCount > 0 ? 'favorites' : 'all'));
 
   const recipeViews = useMemo(
     () =>

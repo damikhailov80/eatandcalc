@@ -19,11 +19,10 @@ import {
 } from '@/lib/recipes';
 import { colors, spacing } from '@/theme';
 
-const FILTERS: readonly RecipeFilter[] = ['mine', 'all', 'favorites', 'own', 'modified', 'hidden'];
+const FILTERS: readonly RecipeFilter[] = ['mine', 'all', 'favorites', 'modified', 'hidden'];
 
 const emptyText: Partial<Record<RecipeFilter, string>> = {
-  mine: 'Здесь будут избранные и добавленные',
-  own: 'Добавленных рецептов нет',
+  mine: 'Своих рецептов нет',
   favorites: 'Избранных нет',
   modified: 'Изменённых рецептов нет',
   hidden: 'Скрытых нет',

@@ -7,8 +7,8 @@ import { familyErrorMessage } from '@/components/family/errors';
 import { api } from '@/lib/api';
 import { queryClient, queryKeys } from '@/lib/query';
 
-/** List filters (chips) of products and recipes. Hidden items show up only under `hidden`. */
-export type ListFilter = 'mine' | 'all' | 'favorites' | 'own' | 'modified' | 'hidden';
+/** List filters (chips) of products and recipes. Hidden items show up only under `hidden`. `mine` = added by the family. */
+export type ListFilter = 'mine' | 'all' | 'favorites' | 'modified' | 'hidden';
 export type ProductFilter = ListFilter;
 
 /** What the filters look at: products and recipes carry the same flags. */
@@ -18,16 +18,14 @@ export const filterLabels: Record<ListFilter, string> = {
   mine: 'Свои',
   all: 'Все',
   favorites: 'Избранное',
-  own: 'Добавленные',
   modified: 'Изменённые',
   hidden: 'Скрытые',
 };
 
 const predicates: Record<ListFilter, (p: ListFlags) => boolean> = {
-  mine: (p) => p.favorite || p.source === 'own',
+  mine: (p) => p.source === 'own',
   all: () => true,
   favorites: (p) => p.favorite,
-  own: (p) => p.source === 'own',
   modified: (p) => p.modified,
   hidden: (p) => p.hidden,
 };

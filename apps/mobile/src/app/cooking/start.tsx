@@ -26,7 +26,7 @@ import { queryKeys } from '@/lib/query';
 import { filterRecipes, productsById, toRecipeView, type RecipeFilter, type RecipeView } from '@/lib/recipes';
 import { colors, fonts, spacing } from '@/theme';
 
-const FILTERS: readonly RecipeFilter[] = ['mine', 'all'];
+const FILTERS: readonly RecipeFilter[] = ['mine', 'all', 'favorites'];
 
 type Source = 'recipes' | 'cooking';
 const SOURCES = [

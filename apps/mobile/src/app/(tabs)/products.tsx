@@ -19,7 +19,7 @@ import { filterLabels, filterProducts, useProductFlags, type ProductFilter } fro
 import { queryClient, queryKeys, refreshAll } from '@/lib/query';
 import { colors, spacing } from '@/theme';
 
-const FILTERS: readonly ProductFilter[] = ['mine', 'all', 'favorites', 'own', 'modified', 'hidden'];
+const FILTERS: readonly ProductFilter[] = ['mine', 'all', 'favorites', 'modified', 'hidden'];
 
 const productsWord = ['продукт', 'продукта', 'продуктов'] as const;
 
@@ -27,8 +27,7 @@ const openProduct = (product: Pick<ProductDto, 'id'>, name?: string) =>
   router.push({ pathname: '/product/[id]', params: name ? { id: product.id, name } : { id: product.id } });
 
 const emptyText: Partial<Record<ProductFilter, string>> = {
-  mine: 'Здесь будут избранные и добавленные',
-  own: 'Добавленных продуктов нет',
+  mine: 'Своих продуктов нет',
   favorites: 'Избранных нет',
   modified: 'Изменённых продуктов нет',
   hidden: 'Скрытых нет',
