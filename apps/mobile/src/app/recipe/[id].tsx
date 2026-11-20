@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { familyErrorMessage } from '@/components/family/errors';
+import { LoadError } from '@/components/LoadError';
 import { ProductPicker } from '@/components/recipes/ProductPicker';
 import { blankDraft, fromDraft, newIngredient, RecipeForm, toDraft, type RecipeDraft } from '@/components/recipes/RecipeForm';
 import { Button, Card, IconButton, Screen, StateMessage, StickyFooter, Text } from '@/components/ui';
@@ -199,12 +200,10 @@ export default function RecipeEditScreen() {
   if (isNew) return <Editor recipe={null} initial={blankDraft(name ?? '')} products={products.data} />;
   if (recipe.isError || !recipe.data) {
     return (
-      <StateMessage
-        icon="book-off-outline"
-        title="Рецепт не найден"
-        text={familyErrorMessage(recipe.error)}
-        actionTitle="Назад"
-        onAction={() => router.back()}
+      <LoadError
+        error={recipe.error}
+        onRetry={() => recipe.refetch()}
+        notFound={{ icon: 'book-off-outline', title: 'Рецепт не найден' }}
       />
     );
   }

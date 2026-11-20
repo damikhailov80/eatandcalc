@@ -11,8 +11,8 @@ Development goes in stages; each stage ends with a working app.
 | 4 | Family | Members list, profile editor, norms, macro-energy check; account roles (owner/member), invite link + code, join/leave/remove | ✅ done |
 | 5 | Cooking | Session from a recipe, a copy or blank; editor (multiplier, frozen product copies, pot and gross weight → per 100 g); history by day with search; delete, cook again; join / leave | ✅ done (plan below) |
 | 6 | Daily planner | Date strip, meals, add dish (history / recipe / product), distribution between members, day totals, month calendar | ✅ done (plan below) |
-| 7 | Stats & history | Member day stats, history calendar, copy a day's plan | |
-| 8 | Polish | Frequent items, empty states, haptics, performance | |
+| 7 | Stats & history | Member day stats, history calendar with day status, charts (no copying: not needed) | ✅ done (plan below) |
+| 8 | Polish | Empty states, haptics, performance | |
 | 9 | Release | Vercel (API + landing), Neon, CI migrations, EAS production APK on the landing, EAS Update | 🔧 running in production (API, landing, APK, OTA); final polish later |
 
 ## Decided
@@ -90,6 +90,20 @@ Steps (each one ends with a test on the phones, then commit):
 2. [x] Other sources: «+ Блюдо» tabs Готовки / Рецепты / Продукты; a recipe or a product goes straight to the split (migration `meal_dish_units`: `recipe_id`, unit weights, entered amount + unit); per-member unit chips.
 3. [x] Snack as a fixed meal, «Итоги дня» (per member kcal bar + Б / Ж / У bars instead of rings), «Как в прошлый раз» (last split of the same source, this week and the one before).
 4. [x] Join / leave check (no code: meals cascade with the joiner's old household, the family keeps them on leave), docs; date title → month calendar.
+
+## Stage 7 plan: stats & history
+
+Decisions:
+- No copying of a day's plan (not needed); the stage is about looking back: how a member and the family ate.
+- A day is **in norm** when kcal eaten is 90–110 % of the norm, above = over, below = under (`dayStatus`); the «Семья» filter compares the members' sum with the sum of their norms. Norms are not historized: past days use the current norms of active members. A day with nothing eaten has no status (not "under"); today has none either.
+- Everything is computed on the client from `GET /api/meals` (`packages/shared/src/stats.ts`); no new API. Charts are drawn with Views (no SVG), so all ships over the air.
+- Local test data: `npm run db:seed-history` (90 days of catalog-product dishes near each member's norm; local DB only).
+
+Steps (each one ends with a test on the phones, then commit):
+1. [x] Member's day (`day/member`, from «Итоги дня»): kcal, Б / Ж / У vs. norm, norm table, by meal; stats math; history seed.
+2. [x] History (`history`, from the day plan header): filter, month calendar with status dots (shared `MonthGrid`), average, days in norm, past days; a day opens on the day plan.
+3. [x] Charts: kcal by day, Б / Ж / У averages, energy shares, by month (6 months).
+4. [x] Docs.
 
 ## Open questions
 

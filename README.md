@@ -20,7 +20,7 @@ Three entities are kept separate: **Recipe** (template, e.g. chicken 200 g + ric
 
 Accounts: Google sign-in only, limited to the family's accounts (allowlist); data in Neon PostgreSQL. Each account starts with its own household and becomes its **owner**; the owner invites the second adult with a link/code (Семья → «Пригласить в семью»), who joins as a **member**. Everyone edits data; only the owner manages invites and removes accounts. The app is online-only.
 
-UX priorities: minimal taps to add a dish, easy weight editing with the numeric keyboard, automatic recalculation, quick access to frequent products and recipes, easy date switching. Visual style: light warm background, green accents, rounded cards, progress rings and bars.
+UX priorities: minimal taps to add a dish, easy weight editing with the numeric keyboard, automatic recalculation, easy date switching. Visual style: light warm background, green accents, rounded cards, progress rings and bars.
 
 Design: [Claude Design canvas](https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR), 14 screens; local copy in `design/mockups/`.
 Development plan: [ROADMAP.md](ROADMAP.md).
@@ -51,6 +51,7 @@ cp apps/web/.env.example    apps/web/.env.local      # optional, Blob token
 npm run db:up          # Postgres 17 in Docker on localhost:5434
 npm run db:migrate     # prisma migrate dev
 npm run db:seed        # shared product catalog (upsert, re-run after editing packages/db/prisma/catalog.ts)
+npm run db:seed-history # local only: 90 days of test meals for your family (-- --reset to redo)
 npm run dev:api        # API on 0.0.0.0:3000
 npm run dev:mobile     # Metro on :8081 for the dev build; the app calls http://<Mac LAN IP>:3000
 npm run dev:web        # landing on :3001 (+ dev APK download for phones)

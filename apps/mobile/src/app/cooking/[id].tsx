@@ -12,6 +12,7 @@ import {
   type CookingDraft,
 } from '@/components/cooking/CookingForm';
 import { familyErrorMessage } from '@/components/family/errors';
+import { LoadError } from '@/components/LoadError';
 import { ProductPicker } from '@/components/recipes/ProductPicker';
 import { Button, IconButton, Screen, StateMessage, StickyFooter } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -185,12 +186,10 @@ export default function CookingEditScreen() {
   if (isNew && from) {
     if (origin.isError || !origin.data) {
       return (
-        <StateMessage
-          icon="pot-steam-outline"
-          title="Готовка не найдена"
-          text={familyErrorMessage(origin.error)}
-          actionTitle="Назад"
-          onAction={() => router.back()}
+        <LoadError
+          error={origin.error}
+          onRetry={() => origin.refetch()}
+          notFound={{ icon: 'pot-steam-outline', title: 'Готовка не найдена' }}
         />
       );
     }
@@ -217,12 +216,10 @@ export default function CookingEditScreen() {
   }
   if (session.isError || !session.data) {
     return (
-      <StateMessage
-        icon="pot-steam-outline"
-        title="Готовка не найдена"
-        text={familyErrorMessage(session.error)}
-        actionTitle="Назад"
-        onAction={() => router.back()}
+      <LoadError
+        error={session.error}
+        onRetry={() => session.refetch()}
+        notFound={{ icon: 'pot-steam-outline', title: 'Готовка не найдена' }}
       />
     );
   }

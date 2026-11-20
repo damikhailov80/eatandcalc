@@ -4,7 +4,7 @@
 
 Monorepo (npm workspaces): Expo / React Native Android app for family nutrition planning, a Next.js API and a Next.js landing page: products, recipes (templates), cooking sessions (concrete pots), per-member consumption, daily planner with norms. The idea is in `README.md`, stages in `ROADMAP.md`, design in `design/mockups/`.
 
-Current stage: stages 1–6 are done (decisions in `ROADMAP.md` → "Stage N plan"); next is **7 (stats & history)**. Production runs: API and landing on Vercel, Neon, the production APK from the landing, JS updates over the air (`npm run prod:update`, `/push-update`; `docs/production-release.md`). Development is local: Docker DB, local API, dev build on the phones over Wi-Fi (Google OAuth setup in README "One-time setup → Local").
+Current stage: stages 1–7 are done (decisions in `ROADMAP.md` → "Stage N plan"); next is **8 (polish)**. Production runs: API and landing on Vercel, Neon, the production APK from the landing, JS updates over the air (`npm run prod:update`, `/push-update`; `docs/production-release.md`). Development is local: Docker DB, local API, dev build on the phones over Wi-Fi (Google OAuth setup in README "One-time setup → Local").
 
 Decided: Android only; Google sign-in only, allowlist `ALLOWED_EMAILS` filters who can sign in; each account starts with its own household as **owner**, others join by **invite** (link/code/QR, valid until the owner revokes or replaces it) as **member**; everyone edits data, only the owner invites/removes accounts, a member can leave; the app is **online-only** (TanStack Query is a request cache, no offline writes); domains `*.vercel.app` for now.
 
@@ -26,6 +26,7 @@ npm run dev:mobile      # Expo (dev build, not Expo Go)
 npm run dev:web         # landing on :3001
 npm run dev             # db:up + api + web + mobile together (concurrently)
 npm run db:seed         # upsert the shared product + recipe catalogs (packages/db/prisma/catalog.ts, recipes.ts)
+npm run db:seed-history # local only: 90 days of test meals for a family (-- --household <id>, -- --reset)
 npm run db:studio       # Prisma Studio on :5555
 npm run dev:build       # local dev APK build + install over USB (only after native changes)
 npm run prod:update     # OTA (EAS Update) of JS/TS to production; optional -- "msg", default = last commit subject
@@ -78,6 +79,7 @@ Household ─┬─ HouseholdUser (account, role owner|member), HouseholdInvite 
 | Cooking per 100 g | `total × 100 / cookedWeight` (raw weight until weighed) (`cookingTotals`) |
 | **Consumption** | `dish per 100 g × grams / 100` (`dishConsumed`); grams = `amount × grams per unit` (portion = `weight_g`) |
 | Remaining | `norm − eaten` (negative = exceeded) |
+| Day status | kcal eaten vs. norm: 90–110 % ok, above over, below under (`dayStatus`, `DAY_TOLERANCE`); family = sum of members vs. sum of norms; current norms (not historized), today has no status |
 | Energy check | `P×4 + F×9 + C×4` vs. entered kcal (`energyCheck`: norms ±3 %, products ±10 % / 10 kcal; shown only when out of tolerance; unedited catalog values get an explanation instead of a warning) |
 
 ## Design
@@ -86,14 +88,14 @@ Canvas: https://claude.ai/artifact/2z294jKrReMD5qKXG5vYUR (local copy `design/mo
 
 | Mockup | Screen | Key elements |
 |---|---|---|
-| `Main` | Day plan (main tab) | weekday strip; tap the date title → month calendar (`DayCalendar`, dots on days with meals); copy-day & history buttons; «Итоги дня»: per member kcal bar ("ещё N" / "+N") and Б / Ж / У bars; four fixed meal cards (завтрак, обед, ужин, перекус) grouped by member (dishes with weight and kcal, the member's kcal per meal; no meal / family totals); "+ Блюдо" |
-| `MemberStats` | Member's day | member switcher; kcal ring; macro bars; norm / eaten / remaining table; by meal |
+| `Main` | Day plan (main tab) | weekday strip; tap the date title → month calendar (`DayCalendar`, dots on days with meals); history button; «Итоги дня»: per member kcal bar ("ещё N" / "+N") and Б / Ж / У bars; four fixed meal cards (завтрак, обед, ужин, перекус) grouped by member (dishes with weight and kcal, the member's kcal per meal; no meal / family totals); "+ Блюдо" |
+| `MemberStats` | Member's day (`day/member`, tap a member in «Итоги дня») | member switcher; big kcal + bar, «Осталось / Превышено» tiles; macro bars; norm / eaten / remaining table; by meal (no ring) |
 | `AddDish` | Add dish (sheet) | Готовки / Рецепты / Продукты with search; each pick goes straight to the split (a recipe is served as is, no new session) |
 | `Distribute` | Split dish | session summary; "Как в прошлый раз"; per-member toggle, grams, day remaining, macros |
-| `History` | Nutrition history | family/member filter; month calendar with status dots; week average; past days with copy-to-today |
+| `History` | Nutrition history (`history`) | family/member filter; month calendar with status dots (tap → the day); average per day, days in norm; kcal by day chart, Б / Ж / У averages, energy shares, by month (6 months); past days (no copying: not needed) |
 | `CookingHistory` | Cooking tab | name search; by date; card: kcal, source (по рецепту / изменено N / копия / без рецепта), weight, kcal/100 g; "Приготовить снова" |
 | `CookingEdit` | Session editor | recipe multiplier ×1..×4; rows vs. recipe («в рецепте N г», «изменено: N»); date ‹ ›; pot + gross weight → cooked weight; totals, per 100 g (no portions; "В рецепт…" dropped, "Сохранить и распределить" with Stage 6) |
-| `WeightPad` | Amount entry (sheet) | frequent products; unit switch (г / ст. л. / ч. л.); keypad; live kcal |
+| `WeightPad` | Amount entry (sheet) | unit switch (г / ст. л. / ч. л.); keypad; live kcal |
 | `Recipes` | Recipes tab | search (name or product); filter chips as in Products; card with kcal per dish, ingredients, macro bar, weight, kcal/100 g; menu: edit, delete (no "copy": not needed); «Приготовить» sits in the recipe editor header |
 | `RecipeEdit` | Recipe editor | ingredients in their units; weight = sum of ingredients (no total-weight field, no portions); per dish / 100 g |
 | `Products` | Products tab | search; category chips; rows with category tile, macros, basis; swipe edit/delete |
@@ -117,13 +119,16 @@ Components to build as needed: MacroBar, MemberChip, DateStrip, SwipeRow, Bottom
 | `apps/mobile/src/components/products/` | Products pieces: `ProductRow` (badges, ♥ or a trailing action), `ProductForm` (draft ↔ `ProductData`, KBJU, units) |
 | `apps/mobile/src/components/recipes/` | Recipes pieces: `RecipeRow` (card: kcal, ingredients, macro bar, weight), `RecipeForm` (draft ↔ `RecipeData`, totals), `IngredientRow` (amount + unit chips for a live or frozen product, shared with cooking), `ProductPicker` (search + Свои / Все) |
 | `apps/mobile/src/app/cooking/` | `start` (Рецепты / Готовки: what a new session starts from, or none), `[id]` (session editor with repeat and delete; `new` = draft, `?recipe=` or `?from=`) |
-| `apps/mobile/src/app/day/` | `add` (Готовки / Рецепты / Продукты, search, Избранное / Все → the split), `dish` (per-member amount in g / units / portions, «Как в прошлый раз», edit, remove) |
-| `apps/mobile/src/components/day/` | `DateStrip`, `DayCalendar` (month, dots on days with meals), `DayTotals` (per member kcal + Б / Ж / У bars), `MealCard` (grouped by member), `PortionRow` |
+| `apps/mobile/src/app/day/` | `add` (Готовки / Рецепты / Продукты, search, Избранное / Все → the split), `dish` (per-member amount in g / units / portions, «Как в прошлый раз», edit, remove), `member` (one member's day) |
+| `apps/mobile/src/app/history.tsx` | nutrition history: calendar with day status, charts, past days; a picked day opens on the day plan (`/?date=&at=`) |
+| `apps/mobile/src/components/stats/` | `BarChart` (columns drawn with Views, norm line, tap selects) |
+| `apps/mobile/src/components/day/` | `DateStrip`, `MonthGrid` (month ‹ ›, 6 weeks, dots / rings per day), `DayCalendar` (modal `MonthGrid`, dots on days with meals), `DayTotals` (per member kcal + Б / Ж / У bars), `MealCard` (grouped by member), `PortionRow` |
 | `apps/mobile/src/components/cooking/` | `CookingRow` (card, «Приготовить снова»), `CookingForm` (draft ↔ `CookingData`: ×N, rows vs. recipe, date, weights, totals) |
 | `apps/mobile/src/components/family/` | Family tab pieces: `MemberCard`, `MemberForm`, `AccountsCard` (roles, invite with QR), `JoinFamily`, `JoinConflicts` (whose product / recipe version stays), `InviteScanner` (expo-camera QR → `parseInviteCode`), `errors` |
 | `apps/mobile/src/app/(tabs)/` | tab screens (День, Готовка, Рецепты, Продукты, Семья); `_layout` = `expo-router/js-top-tabs` (pager-view, swipe between tabs) with `tabBarPosition="bottom"` and an own bottom bar; swiping is off while a finger is on a `ListScreen` header or a `ChipRow` (`lib/swipeLock`) |
+| `apps/mobile/src/components/LoadError.tsx` | failed load of one record in an editor: no answer / 5xx → «Нет связи» + retry, 4xx → «… не найден» + back |
 | `apps/mobile/src/components/ui/` | Screen (`onBack`, `footer`, `onRefresh`), ListScreen (virtualized FlatList page for long lists), QrCode (pure-JS `qrcode` matrix drawn with Views), Text, Card, Button, IconButton, TextField, Stepper, SegmentedControl, ProgressBar, MemberAvatar, StickyFooter, Placeholder, StateMessage |
-| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` (client, focus/online wiring, `refreshAll`), `sync` (`useHouseholdSync`), `products` (list filters shared with recipes, optimistic ♥ / hide `useListFlags` → `useProductFlags`), `recipes` (totals view, ingredient line, search, `useRecipeFlags`), `cooking` (frozen rows from products / recipe ×N, `recipeDiff`, card view, search, day titles), `day` (meals of a week, meal slots, eaten per member, dish units, `lastSplit`), `diagnostics` (SecureStore ring buffer, `diag(tag, msg, level)`, console/crash capture, auto sign-out reason) |
+| `apps/mobile/src/lib/` | `config` (API and landing URLs), `auth` (Better Auth client, Google), `api` (fetch + zod), `query` (client, focus/online wiring, `refreshAll`), `sync` (`useHouseholdSync`), `products` (list filters shared with recipes, optimistic ♥ / hide `useListFlags` → `useProductFlags`), `recipes` (totals view, ingredient line, search, `useRecipeFlags`), `cooking` (frozen rows from products / recipe ×N, `recipeDiff`, card view, search, day titles), `day` (meals of a week / month grid, meal slots, eaten per member, member's meals, dish units, `lastSplit`), `diagnostics` (SecureStore ring buffer, `diag(tag, msg, level)`, console/crash capture, auto sign-out reason) |
 | `apps/mobile/scripts/` | `android-dev` (local Gradle build → `dist-dev/eatandcalc-dev.apk` + `dist-dev/dev.json`), `android-sha1`, `android-env` (JDK/SDK, keystore) |
 | `apps/mobile/eas.json` | build profiles (development / production APK), update channels |
 | `apps/api/src/lib/` | `auth` (Better Auth), `session` (`withUser`), `http` (`HttpError`, `parseBody`), `household` (membership, invites, join/leave/remove), `family`, `products` (merged list, join merge / leave copy), `recipes` (merged list, create / override / reset / hide / ♥ / delete, `recipesUsing`), `cooking` (sessions CRUD, join move / leave copy), `meals` (list, add with snapshot, update split, delete), `env`, `log` (`authLog`: JSON lines `"tag":"auth"` for Vercel Logs) |
@@ -134,8 +139,8 @@ Components to build as needed: MacroBar, MemberChip, DateStrip, SwipeRow, Bottom
 | `apps/web/src/app-download.ts` | APK to offer: local dev build under `next dev`, else the Blob release |
 | `apps/web/src/dev-build.ts`, `app/download/dev/` | local-only dev APK info and download (404 in production) |
 | `apps/web/scripts/release-android.mjs` | EAS build → Vercel Blob (`android/eatandcalc.apk`, `android/latest.json`) |
-| `packages/db/prisma/` | `schema.prisma`, `migrations/`, `seed.ts`, `catalog.ts` (shared product catalog), `recipes.ts` (shared recipe catalog); config `packages/db/prisma.config.ts` |
-| `packages/shared/src/` | `domain`, `api` (zod), `nutrition`, `format`, `products` (labels, search), `tokens` |
+| `packages/db/prisma/` | `schema.prisma`, `migrations/`, `seed.ts`, `seed-history.ts` (local test meals), `catalog.ts` (shared product catalog), `recipes.ts` (shared recipe catalog); config `packages/db/prisma.config.ts` |
+| `packages/shared/src/` | `domain`, `api` (zod), `nutrition`, `stats` (day status, eaten by day, period summary, energy shares), `format`, `products` (labels, search), `tokens` |
 | `docker-compose.yml` | local Postgres 17 (+ shadow DB) |
 | `.husky/pre-commit` | git hook: `npm run typecheck` |
 | `.github/workflows/` | `check` (typecheck, lint), `migrate` (prod migrations) |

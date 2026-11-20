@@ -7,7 +7,8 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-nat
 
 import { familyErrorMessage } from '@/components/family/errors';
 import { blankDraft, fromDraft, ProductForm, productSummary, toDraft, type ProductDraft } from '@/components/products/ProductForm';
-import { Button, Card, IconButton, Screen, StateMessage, StickyFooter, Text } from '@/components/ui';
+import { LoadError } from '@/components/LoadError';
+import { Button, Card, IconButton, Screen, StickyFooter, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useProductFlags } from '@/lib/products';
 import { queryClient, queryKeys } from '@/lib/query';
@@ -170,12 +171,10 @@ export default function ProductEditScreen() {
   }
   if (product.isError) {
     return (
-      <StateMessage
-        icon="food-off-outline"
-        title="Продукт не найден"
-        text={familyErrorMessage(product.error)}
-        actionTitle="Назад"
-        onAction={() => router.back()}
+      <LoadError
+        error={product.error}
+        onRetry={() => product.refetch()}
+        notFound={{ icon: 'food-off-outline', title: 'Продукт не найден' }}
       />
     );
   }

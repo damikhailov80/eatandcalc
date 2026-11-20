@@ -22,7 +22,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { MonthGrid, type DayMark } from '@/components/day/MonthGrid';
 import { BarChart } from '@/components/stats/BarChart';
-import { Card, Chip, ChipRow, ProgressBar, Screen, StateMessage, Text } from '@/components/ui';
+import { Button, Card, Chip, ChipRow, ProgressBar, Screen, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { monthDays, monthOf, useMonthGridMeals } from '@/lib/day';
 import { queryKeys } from '@/lib/query';
@@ -123,6 +123,14 @@ export default function HistoryScreen() {
           if (meals.isError) meals.refetch();
         }}
       />
+    );
+  } else if (!members.data.length) {
+    body = (
+      <Pressable accessibilityRole="button" onPress={() => router.navigate('/family')}>
+        <Card>
+          <Text variant="h3">Добавьте членов семьи</Text>
+        </Card>
+      </Pressable>
     );
   } else {
     const dayBar = selectedDay ? eaten.get(selectedDay) : undefined;
@@ -254,6 +262,11 @@ export default function HistoryScreen() {
           </View>
           {range.isPending ? (
             <ActivityIndicator color={colors.primary} />
+          ) : range.isError ? (
+            <View style={styles.rangeError}>
+              <Text color={colors.textMuted} style={styles.flex}>Нет связи с сервером</Text>
+              <Button title="Повторить" variant="soft" onPress={() => range.refetch()} />
+            </View>
           ) : (
             <BarChart
               bars={monthly.map((m) => ({
@@ -348,6 +361,7 @@ function EnergyRow({ label, n }: { label: string; n: Nutrients }) {
 }
 
 const styles = StyleSheet.create({
+  rangeError: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   loading: { paddingVertical: 48, alignItems: 'center' },
   flex: { flex: 1 },
   pressed: { opacity: 0.6 },

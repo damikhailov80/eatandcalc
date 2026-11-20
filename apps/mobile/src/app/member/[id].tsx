@@ -6,7 +6,8 @@ import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 
 import { familyErrorMessage } from '@/components/family/errors';
 import { MemberForm } from '@/components/family/MemberForm';
-import { Button, Screen, StateMessage, StickyFooter } from '@/components/ui';
+import { LoadError } from '@/components/LoadError';
+import { Button, Screen, StickyFooter } from '@/components/ui';
 import { api } from '@/lib/api';
 import { queryClient, queryKeys } from '@/lib/query';
 import { colors, memberColors } from '@/theme';
@@ -99,12 +100,10 @@ export default function MemberEditScreen() {
   }
   if (member.isError) {
     return (
-      <StateMessage
-        icon="account-question-outline"
-        title="Профиль не найден"
-        text={familyErrorMessage(member.error)}
-        actionTitle="Назад"
-        onAction={() => router.back()}
+      <LoadError
+        error={member.error}
+        onRetry={() => member.refetch()}
+        notFound={{ icon: 'account-question-outline', title: 'Профиль не найден' }}
       />
     );
   }
