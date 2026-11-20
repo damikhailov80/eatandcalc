@@ -12,12 +12,17 @@ const MACROS = [
   { key: 'carbs', short: 'У' },
 ] as const;
 
-export type DayTotalsProps = { members: readonly FamilyMemberDto[]; eaten: ReadonlyMap<string, Nutrients> };
+export type DayTotalsProps = {
+  members: readonly FamilyMemberDto[];
+  eaten: ReadonlyMap<string, Nutrients>;
+  /** Tapping a member opens their day (`day/member`). */
+  date: string;
+};
 
 const share = (eaten: number, norm: number) => (norm > 0 ? eaten / norm : 0);
 
 /** "Итоги дня": per member a kcal bar (eaten / norm, "ещё N" or "+N") and Б / Ж / У bars. */
-export function DayTotals({ members, eaten }: DayTotalsProps) {
+export function DayTotals({ members, eaten, date }: DayTotalsProps) {
   if (!members.length) {
     return (
       <Pressable accessibilityRole="button" onPress={() => router.navigate('/family')}>
@@ -36,7 +41,12 @@ export function DayTotals({ members, eaten }: DayTotalsProps) {
         const left = norm - e.kcal;
         const over = left < 0;
         return (
-          <View key={m.id} style={styles.member}>
+          <Pressable
+            key={m.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Итоги дня — ${m.name}`}
+            onPress={() => router.push({ pathname: '/day/member', params: { id: m.id, date } })}
+            style={({ pressed }) => [styles.member, pressed && styles.pressed]}>
             <View style={styles.head}>
               <MemberAvatar name={m.name} color={m.color} size={32} />
               <Text style={styles.name} numberOfLines={1}>{m.name}</Text>
@@ -73,7 +83,7 @@ export function DayTotals({ members, eaten }: DayTotalsProps) {
                 );
               })}
             </View>
-          </View>
+          </Pressable>
         );
       })}
     </Card>
@@ -83,6 +93,7 @@ export function DayTotals({ members, eaten }: DayTotalsProps) {
 const styles = StyleSheet.create({
   card: { gap: spacing.lg },
   member: { gap: spacing.sm },
+  pressed: { opacity: 0.6 },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   name: { flex: 1, fontFamily: fonts.bodySemibold, fontSize: 15 },
   kcal: { fontFamily: fonts.body, fontSize: 13, fontVariant: ['tabular-nums'] },

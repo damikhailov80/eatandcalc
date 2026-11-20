@@ -1,12 +1,18 @@
 import {
+  dishConsumed,
+  dishUnitShort,
   eatenByMember,
+  formatGrams,
+  formatNumberInput,
   fromISODate,
+  sum,
   shiftISODate,
   ZERO,
   unitGrams,
   UNIT_KEYS,
   type ConsumptionDto,
   type DishUnit,
+  type MealDishDto,
   type MealDto,
   type Nutrients,
   type ProductUnits,
@@ -73,6 +79,29 @@ export const findDish = (meals: readonly MealDto[], dishId: string) => {
   }
   return null;
 };
+
+/** "1 шт (сред.)", "1 порц." when entered in a unit, otherwise "150 г". */
+export const amountText = (c: ConsumptionDto) =>
+  c.unit && c.unit !== 'g' && c.amount != null
+    ? `${formatNumberInput(c.amount)} ${dishUnitShort(c.unit)}`
+    : formatGrams(c.grams);
+
+export type MemberLine = { dish: MealDishDto; amount: string; eaten: Nutrients };
+export type MemberMeal = { key: string; title: string; lines: MemberLine[]; eaten: Nutrients };
+
+/** What the member ate in each meal of the date (meals in the day's order, only those with their dishes). */
+export function memberMeals(meals: readonly MealDto[], date: string, memberId: string): MemberMeal[] {
+  const result: MemberMeal[] = [];
+  for (const slot of daySlots(meals, date)) {
+    const lines: MemberLine[] = [];
+    for (const dish of slot.meal?.dishes ?? [])
+      for (const c of dish.consumptions)
+        if (c.memberId === memberId)
+          lines.push({ dish, amount: amountText(c), eaten: dishConsumed(dish.nutrients, c.grams) });
+    if (lines.length) result.push({ key: slot.key, title: slot.title, lines, eaten: sum(lines.map((l) => l.eaten)) });
+  }
+  return result;
+}
 
 /** What a dish is served from (one of the ids). */
 export type DishSource = { sessionId?: string; recipeId?: string; productId?: string };

@@ -2,19 +2,16 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   dishConsumed,
   formatDayMonthShort,
-  formatGrams,
   formatInt,
   formatKcal,
-  formatNumberInput,
   fromISODate,
-  dishUnitShort,
   type FamilyMemberDto,
   type MealDishDto,
 } from '@eatandcalc/shared';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card, MemberAvatar, Text } from '@/components/ui';
-import type { MealSlot } from '@/lib/day';
+import { amountText, type MealSlot } from '@/lib/day';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 export type MealCardProps = {
@@ -31,12 +28,6 @@ export function dishMeta(dish: MealDishDto) {
   if (dish.recipeId) return `Рецепт · ${per100}`;
   return dish.productId ? `Продукт · ${per100}` : per100;
 }
-
-/** "1 шт (сред.)", "1 порц." when entered in a unit, otherwise "150 г". */
-const amountText = (c: MealDishDto['consumptions'][number]) =>
-  c.unit && c.unit !== 'g' && c.amount != null
-    ? `${formatNumberInput(c.amount)} ${dishUnitShort(c.unit)}`
-    : formatGrams(c.grams);
 
 type MemberLine = { dish: MealDishDto; amount: string; kcal: number };
 type MemberGroup = { memberId: string; member: FamilyMemberDto | undefined; kcal: number; lines: MemberLine[] };

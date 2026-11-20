@@ -61,7 +61,7 @@ export default function DayScreen() {
   } else {
     body = (
       <>
-        <DayTotals members={members.data} eaten={eaten} />
+        <DayTotals members={members.data} eaten={eaten} date={date} />
         {slots.map((slot) => (
           <MealCard key={slot.key} slot={slot} members={membersById} onAddDish={onAddDish} onDishPress={onDishPress} />
         ))}

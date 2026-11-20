@@ -13,6 +13,7 @@
     "db:down": "docker compose down",
     "db:migrate": "npm run migrate:dev -w @eatandcalc/db",
     "db:seed": "npm run seed -w @eatandcalc/db",
+    "db:seed-history": "npm run seed:history -w @eatandcalc/db --",
     "db:studio": "npm run studio -w @eatandcalc/db",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",

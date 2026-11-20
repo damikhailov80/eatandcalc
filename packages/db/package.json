@@ -12,6 +12,7 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "prisma db seed",
+    "seed:history": "tsx prisma/seed-history.ts",
     "studio": "prisma studio --port 5555",
     "typecheck": "tsc --noEmit"
   },

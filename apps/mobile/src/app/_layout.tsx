@@ -81,6 +81,7 @@ export default function RootLayout() {
             <Stack.Screen name="cooking/[id]" />
             <Stack.Screen name="day/add" />
             <Stack.Screen name="day/dish" />
+            <Stack.Screen name="day/member" />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn}>
             <Stack.Screen name="sign-in" />
