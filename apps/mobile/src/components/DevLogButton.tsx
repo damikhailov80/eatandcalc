@@ -58,7 +58,8 @@ export function DevLogButton() {
 
 const styles = StyleSheet.create({
   // Above native-stack screens on Android (they draw with elevation).
-  wrap: { position: 'absolute', right: 4, zIndex: 1000, elevation: 1000 },
+  // Top centre: the header's actions sit in the top-right corner.
+  wrap: { position: 'absolute', left: '50%', marginLeft: -SIZE / 2, zIndex: 1000, elevation: 1000 },
   button: {
     width: SIZE,
     height: SIZE,
