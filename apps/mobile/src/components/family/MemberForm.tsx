@@ -39,22 +39,16 @@ const NORM_ROWS: NormRow[] = [
 
 const percent = (share: number) => `${Math.round(share * 100)}%`;
 
-export type MemberFormProps = {
-  value: FamilyMemberInput;
-  onChange: (value: FamilyMemberInput) => void;
+type Identity = Pick<FamilyMemberInput, 'name' | 'sex' | 'color'>;
+
+export type MemberIdentityFormProps<T extends Identity> = {
+  value: T;
+  onChange: (value: T) => void;
 };
 
-/** MemberEdit mockup body: avatar + name, sex and color, norm steppers, macro energy check. */
-export function MemberForm({ value, onChange }: MemberFormProps) {
-  const set = <K extends keyof FamilyMemberInput>(key: K, v: FamilyMemberInput[K]) =>
-    onChange({ ...value, [key]: v });
-  const setNorm = (key: keyof Nutrients, v: number) => set('norms', { ...value.norms, [key]: v });
-
-  const check = energyCheck(value.norms);
-  const diffAbs = formatInt(Math.abs(check.diff));
-  const diffText = check.close
-    ? `Нормы согласованы: разница с калориями ${diffAbs} ккал`
-    : `БЖУ дают на ${diffAbs} ккал ${check.diff > 0 ? 'меньше' : 'больше'}, чем норма калорий`;
+/** MemberEdit mockup top: avatar + name, sex and color. */
+export function MemberIdentityForm<T extends Identity>({ value, onChange }: MemberIdentityFormProps<T>) {
+  const set = <K extends keyof Identity>(key: K, v: T[K]) => onChange({ ...value, [key]: v });
 
   return (
     <>
@@ -96,7 +90,27 @@ export function MemberForm({ value, onChange }: MemberFormProps) {
           })}
         </View>
       </View>
+    </>
+  );
+}
 
+export type NormsFormProps = {
+  value: Nutrients;
+  onChange: (value: Nutrients) => void;
+};
+
+/** MemberEdit mockup norms: norm steppers and the macro energy check. */
+export function NormsForm({ value, onChange }: NormsFormProps) {
+  const setNorm = (key: keyof Nutrients, v: number) => onChange({ ...value, [key]: v });
+
+  const check = energyCheck(value);
+  const diffAbs = formatInt(Math.abs(check.diff));
+  const diffText = check.close
+    ? `Нормы согласованы: разница с калориями ${diffAbs} ккал`
+    : `БЖУ дают на ${diffAbs} ккал ${check.diff > 0 ? 'меньше' : 'больше'}, чем норма калорий`;
+
+  return (
+    <>
       <Card style={styles.normsCard}>
         <View style={styles.normsHead}>
           <Text variant="h3">Дневные нормы</Text>
@@ -108,12 +122,12 @@ export function MemberForm({ value, onChange }: MemberFormProps) {
             <View style={styles.flex}>
               <Text variant="bodyStrong">{row.label}</Text>
               <Text variant="caption">
-                {row.kcalPerG === null ? 'в день' : `${formatInt(value.norms[row.key] * row.kcalPerG)} ккал`}
+                {row.kcalPerG === null ? 'в день' : `${formatInt(value[row.key] * row.kcalPerG)} ккал`}
               </Text>
             </View>
             <Stepper
               label={row.label}
-              value={value.norms[row.key]}
+              value={value[row.key]}
               onChange={(v) => setNorm(row.key, v)}
               step={row.step}
               unit={row.unit}

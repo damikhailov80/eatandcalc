@@ -9,6 +9,7 @@ import { AccountsCard } from '@/components/family/AccountsCard';
 import { MemberCard } from '@/components/family/MemberCard';
 import { Button, Screen, StateMessage, Text } from '@/components/ui';
 import { api } from '@/lib/api';
+import { useFamilyMembers } from '@/lib/family';
 import { signOut } from '@/lib/auth';
 import { dayEaten, eatenOf, useWeekMeals } from '@/lib/day';
 import { queryClient, queryKeys, refreshAll } from '@/lib/query';
@@ -16,8 +17,8 @@ import { colors, fonts, radii, spacing } from '@/theme';
 
 export default function FamilyScreen() {
   const me = useQuery({ queryKey: queryKeys.me, queryFn: api.me });
-  const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
   const today = todayISO();
+  const members = useFamilyMembers(today);
   const meals = useWeekMeals(today);
   const eaten = useMemo(() => dayEaten(meals.data ?? [], today), [meals.data, today]);
 

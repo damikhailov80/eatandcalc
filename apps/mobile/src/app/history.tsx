@@ -9,7 +9,7 @@ import {
   formatMonthShort,
   formatMonthYear,
   fromISODate,
-  normOf,
+  familyNormOn,
   periodSummary,
   todayISO,
   type DayStatus,
@@ -17,7 +17,7 @@ import {
 } from '@eatandcalc/shared';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { MonthGrid, type DayMark } from '@/components/day/MonthGrid';
@@ -78,29 +78,32 @@ export default function HistoryScreen() {
     return one ? [one] : all;
   }, [members.data, filter]);
   const ids = useMemo(() => new Set(chosen.map((m) => m.id)), [chosen]);
-  const norm = useMemo(() => normOf(chosen), [chosen]);
+  const normFor = useCallback((d: string) => familyNormOn(chosen, d), [chosen]);
 
   const eaten = useMemo(() => eatenByDay(meals.data ?? [], ids), [meals.data, ids]);
   const days = useMemo(() => monthDays(month), [month]);
   const inMonth = (d: string) => d.startsWith(month.slice(0, 7)) && d < today;
-  const summary = periodSummary(eaten, norm, inMonth);
+  const summary = periodSummary(eaten, normFor, inMonth);
+  // Average norm of the month's days with data; without data, the norm on the month's last past day.
+  const norm = summary.days ? summary.norm : normFor(days.filter((d) => d < today).at(-1) ?? today);
   const status = (d: string) => {
     const n = eaten.get(d);
-    return n && d < today ? dayStatus(n.kcal, norm.kcal) : null;
+    return n && d < today ? dayStatus(n.kcal, normFor(d).kcal) : null;
   };
   const past = days
     .filter((d) => d < today && eaten.has(d))
     .reverse()
-    .map((d) => ({ date: d, eaten: eaten.get(d)!, status: status(d)! }));
+    .map((d) => ({ date: d, eaten: eaten.get(d)!, status: status(d)!, norm: normFor(d).kcal }));
 
   const monthly = useMemo(() => {
     const byDay = eatenByDay(range.data ?? [], ids);
     return Array.from({ length: MONTHS_BACK + 1 }, (_, i) => {
       const m = monthOf(today, i - MONTHS_BACK);
-      const s = periodSummary(byDay, norm, (d) => d.startsWith(m.slice(0, 7)) && d < today);
-      return { month: m, average: s.average.kcal, days: s.days };
+      const s = periodSummary(byDay, normFor, (d) => d.startsWith(m.slice(0, 7)) && d < today);
+      return { month: m, average: s.average.kcal, norm: s.norm.kcal, days: s.days };
     });
-  }, [range.data, ids, norm, today]);
+  }, [range.data, ids, normFor, today]);
+  const todayNorm = normFor(today);
 
   const openDay = (date: string) => router.navigate({ pathname: '/', params: { date, at: String(Date.now()) } });
 
@@ -272,10 +275,10 @@ export default function HistoryScreen() {
               bars={monthly.map((m) => ({
                 key: m.month,
                 value: m.average,
-                color: m.days ? STATUS_COLOR[dayStatus(m.average, norm.kcal)] : colors.track,
+                color: m.days ? STATUS_COLOR[dayStatus(m.average, m.norm)] : colors.track,
                 label: formatMonthShort(fromISODate(m.month)),
               }))}
-              norm={norm.kcal}
+              norm={todayNorm.kcal}
               height={110}
               selected={selectedMonth}
               onSelect={setSelectedMonth}
@@ -299,16 +302,16 @@ export default function HistoryScreen() {
                       <Text style={styles.dayKcal} color={d.status === 'over' ? colors.over : colors.text}>
                         {formatInt(d.eaten.kcal)}
                       </Text>
-                      <Text style={styles.dayKcal} color={colors.textMuted}>{` / ${formatInt(norm.kcal)}`}</Text>
+                      <Text style={styles.dayKcal} color={colors.textMuted}>{` / ${formatInt(d.norm)}`}</Text>
                     </Text>
                   </View>
-                  <ProgressBar value={share(d.eaten.kcal, norm.kcal)} height={6} color={STATUS_COLOR[d.status]} />
+                  <ProgressBar value={share(d.eaten.kcal, d.norm)} height={6} color={STATUS_COLOR[d.status]} />
                   <View style={styles.dayHead}>
                     <Text variant="caption" style={styles.flex}>{bju(d.eaten)}</Text>
                     <Text
                       style={styles.flag}
                       color={FLAG_COLOR[d.status]}>
-                      {d.status === 'ok' ? 'В норме' : kcalDiff(d.eaten.kcal, norm.kcal)}
+                      {d.status === 'ok' ? 'В норме' : kcalDiff(d.eaten.kcal, d.norm)}
                     </Text>
                   </View>
                 </Card>

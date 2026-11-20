@@ -1,5 +1,4 @@
 import { formatDayMonth, formatWeekday, fromISODate, todayISO, type MealDishDto } from '@eatandcalc/shared';
-import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -9,9 +8,9 @@ import { DayCalendar } from '@/components/day/DayCalendar';
 import { MealCard } from '@/components/day/MealCard';
 import { DayTotals } from '@/components/day/DayTotals';
 import { IconButton, Screen, StateMessage } from '@/components/ui';
-import { api } from '@/lib/api';
+import { useFamilyMembers } from '@/lib/family';
 import { dayEaten, daySlots, useWeekMeals, type MealSlot } from '@/lib/day';
-import { queryKeys, refreshAll } from '@/lib/query';
+import { refreshAll } from '@/lib/query';
 import { colors, spacing } from '@/theme';
 
 export default function DayScreen() {
@@ -27,7 +26,7 @@ export default function DayScreen() {
   }
   const [calendar, setCalendar] = useState(false);
   const meals = useWeekMeals(date);
-  const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
+  const members = useFamilyMembers(date);
 
   const list = meals.data;
   const slots = useMemo(() => daySlots(list ?? [], date), [list, date]);

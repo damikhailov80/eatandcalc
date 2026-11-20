@@ -126,6 +126,8 @@ export type CookingSession = {
 
 export type Sex = 'male' | 'female';
 
+export type NormRecord = { date: ISODate; norms: Nutrients };
+
 export type FamilyMember = {
   id: Id;
   householdId: Id;
@@ -133,8 +135,10 @@ export type FamilyMember = {
   sex: Sex;
   /** Avatar color, one of theme `memberColors`. */
   color: string;
-  /** Daily norms. */
+  /** Daily norms in effect (resolved for a date with `normOn`). */
   norms: Nutrients;
+  /** Norm records by date ascending: each applies from its date to the next; before the first, the first. */
+  normHistory: NormRecord[];
   archived?: boolean;
 };
 

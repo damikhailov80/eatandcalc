@@ -1,11 +1,13 @@
 /**
  * Local-only test data: fills a family's meal history (the last 90 days up to yesterday) with dishes copied from
- * catalog products, each member eating about 75–125 % of their kcal norm, so the history shows days in norm,
- * over and under. Days that already have meals are skipped; today is never touched.
+ * catalog products, each member eating about 75–125 % of their kcal norm on that day, so the history shows days in
+ * norm, over and under. Each member also gets a dated norm history (the current norm ×0.85 from 90 days ago, ×0.93
+ * from 45 days ago, ×1 from 14 days ago), replacing their records with --reset or when they have only one.
+ * Days that already have meals are skipped; today is never touched.
  *
  *   npm run db:seed-history                      # the only household with family members
  *   npm run db:seed-history -- --household <id>  # a specific one
- *   npm run db:seed-history -- --reset           # first delete the family's meals before today
+ *   npm run db:seed-history -- --reset           # first delete the family's meals before today, redo norms
  *
  * Refuses to run against a non-local database.
  */
@@ -25,6 +27,13 @@ if (!/@(localhost|127\.0\.0\.1)(:\d+)?\//.test(url)) {
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 
 const DAYS = 90;
+
+/** Norm history per member: [days ago, share of the current norm]. */
+const NORM_STEPS: [number, number][] = [
+  [90, 0.85],
+  [45, 0.93],
+  [14, 1],
+];
 
 /** [catalog product id, grams for an adult, unit to show (or none = grams)]. */
 type Item = [string, number, ('pieceM' | 'tbsp' | 'ml')?];
@@ -147,6 +156,7 @@ async function main() {
   const members = await prisma.familyMember.findMany({
     where: { householdId, archivedAt: null },
     orderBy: { createdAt: 'asc' },
+    include: { norms: { orderBy: { date: 'asc' } } },
   });
   if (!members.length) throw new Error(`Household ${householdId} has no family members.`);
 
@@ -159,6 +169,31 @@ async function main() {
     const { count } = await prisma.meal.deleteMany({ where: { householdId, date: { lt: dbDate(today) } } });
     console.log(`Deleted ${count} meals before ${today}.`);
   }
+  const daysAgo = (n: number) => iso(new Date(dbDate(today).getTime() - n * 86_400_000));
+
+  // Dated norms: the latest record is the current norm; earlier periods had lower ones.
+  for (const m of members) {
+    if (!reset && m.norms.length > 1) continue;
+    const base = m.norms.at(-1) ?? m;
+    const records = NORM_STEPS.map(([ago, k]) => ({
+      memberId: m.id,
+      date: dbDate(daysAgo(ago)),
+      kcal: Math.round((base.kcal * k) / 50) * 50,
+      protein: Math.round(base.protein * k),
+      fat: Math.round(base.fat * k),
+      carbs: Math.round(base.carbs * k),
+    }));
+    await prisma.$transaction([
+      prisma.memberNorm.deleteMany({ where: { memberId: m.id } }),
+      prisma.memberNorm.createMany({ data: records }),
+    ]);
+    m.norms = await prisma.memberNorm.findMany({ where: { memberId: m.id }, orderBy: { date: 'asc' } });
+  }
+  console.log(`Norms: ${members.map((m) => `${m.name} ${m.norms.map((n) => `${iso(n.date)}=${n.kcal}`).join(', ')}`).join('; ')}`);
+  /** The norm in effect on `day` (latest record on or before it; before the first, the first). */
+  const kcalNormOn = (m: (typeof members)[number], day: string) =>
+    (m.norms.filter((n) => iso(n.date) <= day).at(-1) ?? m.norms[0] ?? m).kcal;
+
   const taken = new Set(
     (await prisma.meal.findMany({ where: { householdId }, select: { date: true } })).map((m) => iso(m.date)),
   );
@@ -166,7 +201,7 @@ async function main() {
   let days = 0;
   let meals = 0;
   for (let i = DAYS; i >= 1; i--) {
-    const day = iso(new Date(dbDate(today).getTime() - i * 86_400_000));
+    const day = daysAgo(i);
     if (taken.has(day) || random() < 0.06) continue; // some days nobody logged anything
     const types: MealType[] = ['breakfast', 'lunch', 'dinner', ...(random() < 0.7 ? (['snack'] as const) : [])];
     // who eats each dish (not everyone eats everything); grams are scaled so each member lands near their norm
@@ -184,7 +219,7 @@ async function main() {
               .reduce((t, { item: [id, g] }) => t + (products.get(id)!.kcal * g) / 100, 0),
           0,
         );
-        return [m.id, kcal > 0 ? (m.kcal * between(0.8, 1.2)) / kcal : 0];
+        return [m.id, kcal > 0 ? (kcalNormOn(m, day) * between(0.8, 1.2)) / kcal : 0];
       }),
     );
 

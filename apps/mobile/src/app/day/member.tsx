@@ -6,15 +6,13 @@ import {
   type FamilyMemberDto,
   type Nutrients,
 } from '@eatandcalc/shared';
-import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Card, ChipRow, MemberAvatar, ProgressBar, Screen, StateMessage, Text } from '@/components/ui';
-import { api } from '@/lib/api';
+import { useFamilyMembers } from '@/lib/family';
 import { dayEaten, eatenOf, memberMeals, useWeekMeals } from '@/lib/day';
-import { queryKeys } from '@/lib/query';
 import { colors, fonts, macroColors, radii, spacing } from '@/theme';
 
 const MACROS = [
@@ -40,7 +38,7 @@ export default function MemberDayScreen() {
   const date = params.date;
   const [memberId, setMemberId] = useState(params.id);
   const meals = useWeekMeals(date);
-  const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
+  const members = useFamilyMembers(date);
 
   const list = meals.data;
   const eaten = useMemo(() => dayEaten(list ?? [], date), [list, date]);

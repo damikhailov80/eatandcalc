@@ -151,6 +151,7 @@ model FamilyMember {
   name         String
   sex          Sex
   color        String
+  /// Legacy: the norm at creation, no longer read (norms live in `member_norm`). Drop in a later migration.
   kcal         Float
   protein      Float
   fat          Float
@@ -160,9 +161,27 @@ model FamilyMember {
   archivedAt   DateTime?     @map("archived_at")
   household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
   consumptions Consumption[]
+  norms        MemberNorm[]
 
   @@index([householdId])
   @@map("family_member")
+}
+
+/// A member's daily norm in effect from `date` until the next record; at most one per day.
+/// A date before the first record uses the first one.
+model MemberNorm {
+  memberId  String       @map("member_id")
+  date      DateTime     @db.Date
+  kcal      Float
+  protein   Float
+  fat       Float
+  carbs     Float
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  member    FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@id([memberId, date])
+  @@map("member_norm")
 }
 
 // ---------- Products ----------

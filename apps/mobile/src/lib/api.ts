@@ -22,6 +22,8 @@ import {
   type MealDto,
   type FamilyMemberDto,
   type FamilyMemberInput,
+  type FamilyMemberUpdate,
+  type PutMemberNormRequest,
   type Invite,
   type JoinPreviewResponse,
   type MeResponse,
@@ -138,7 +140,7 @@ export const api = {
   createFamilyMember: async (input: FamilyMemberInput): Promise<FamilyMemberDto> =>
     (await apiRequest('/api/family-members', FamilyMemberResponseSchema, { method: 'POST', json: input }))
       .member,
-  updateFamilyMember: async (id: string, input: FamilyMemberInput): Promise<FamilyMemberDto> =>
+  updateFamilyMember: async (id: string, input: FamilyMemberUpdate): Promise<FamilyMemberDto> =>
     (
       await apiRequest(`/api/family-members/${encodeURIComponent(id)}`, FamilyMemberResponseSchema, {
         method: 'PATCH',
@@ -150,6 +152,22 @@ export const api = {
       method: 'DELETE',
     });
   },
+  /** Saves the norm record on `date`; `from` = the record moved from another date. */
+  putMemberNorm: async (id: string, input: PutMemberNormRequest): Promise<FamilyMemberDto> =>
+    (
+      await apiRequest(`/api/family-members/${encodeURIComponent(id)}/norms`, FamilyMemberResponseSchema, {
+        method: 'PUT',
+        json: input,
+      })
+    ).member,
+  deleteMemberNorm: async (id: string, date: string): Promise<FamilyMemberDto> =>
+    (
+      await apiRequest(
+        `/api/family-members/${encodeURIComponent(id)}/norms/${encodeURIComponent(date)}`,
+        FamilyMemberResponseSchema,
+        { method: 'DELETE' },
+      )
+    ).member,
 
   products: async (): Promise<ProductDto[]> =>
     (await apiRequest('/api/products', ProductsResponseSchema)).products,

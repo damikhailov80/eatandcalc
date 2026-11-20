@@ -1,8 +1,8 @@
 /**
  * History and stats math (pure): what a member or the family ate per day and how a day compares with the norm.
- * Norms are not historized: past days are compared with the current norms.
+ * Norms are dated: a day is compared with the norm in effect on it (`normOn`).
  */
-import type { ISODate, Id, Meal, Nutrients } from './domain';
+import type { ISODate, Id, Meal, NormRecord, Nutrients } from './domain';
 import { add, dishConsumed, scale, sum, ZERO } from './nutrition';
 
 export type DayStatus = 'ok' | 'over' | 'under';
@@ -36,6 +36,32 @@ export function eatenByDay(
 /** Sum of the members' norms (the family's norm). */
 export const normOf = (members: readonly { norms: Nutrients }[]) => sum(members.map((m) => m.norms));
 
+/**
+ * The norm in effect on `date`: the latest record on or before it; before the first record, the first one.
+ * `history` is sorted by date ascending; null without records.
+ */
+export function normOn(history: readonly NormRecord[], date: ISODate): Nutrients | null {
+  let found: Nutrients | null = history[0]?.norms ?? null;
+  for (const r of history) {
+    if (r.date > date) break;
+    found = r.norms;
+  }
+  return found;
+}
+
+type WithNorms = { norms: Nutrients; normHistory?: readonly NormRecord[] };
+
+/** A member's norm on `date` (`norms` when there is no history, e.g. an old server). */
+export const memberNormOn = (m: WithNorms, date: ISODate) => normOn(m.normHistory ?? [], date) ?? m.norms;
+
+/** Copies of the members with `norms` = the norm in effect on `date`. */
+export const withNormsOn = <M extends WithNorms>(members: readonly M[], date: ISODate): M[] =>
+  members.map((m) => ({ ...m, norms: memberNormOn(m, date) }));
+
+/** The family's norm on `date` (sum of the members' norms in effect then). */
+export const familyNormOn = (members: readonly WithNorms[], date: ISODate) =>
+  sum(members.map((m) => memberNormOn(m, date)));
+
 export type PeriodSummary = {
   /** Days with anything eaten. */
   days: number;
@@ -44,18 +70,28 @@ export type PeriodSummary = {
   under: number;
   /** Average per day with data (ZERO without days). */
   average: Nutrients;
+  /** Average norm over the same days (ZERO without days). */
+  norm: Nutrients;
 };
 
-/** Days of `eaten` that pass `include` (e.g. the month without today), averaged and counted by status. */
+/**
+ * Days of `eaten` that pass `include` (e.g. the month without today), averaged and counted by status;
+ * each day is compared with its own norm (`normFor`).
+ */
 export function periodSummary(
   eaten: ReadonlyMap<ISODate, Nutrients>,
-  norm: Nutrients,
+  normFor: (date: ISODate) => Nutrients,
   include: (date: ISODate) => boolean = () => true,
 ): PeriodSummary {
-  const list = [...eaten].filter(([date]) => include(date)).map(([, n]) => n);
+  const list = [...eaten].filter(([date]) => include(date));
   const counts = { ok: 0, over: 0, under: 0 };
-  for (const n of list) counts[dayStatus(n.kcal, norm.kcal)]++;
-  return { days: list.length, ...counts, average: list.length ? scale(sum(list), 1 / list.length) : ZERO };
+  const norms = list.map(([date, n]) => {
+    const norm = normFor(date);
+    counts[dayStatus(n.kcal, norm.kcal)]++;
+    return norm;
+  });
+  const avg = (all: Nutrients[]) => (all.length ? scale(sum(all), 1 / all.length) : ZERO);
+  return { days: list.length, ...counts, average: avg(list.map(([, n]) => n)), norm: avg(norms) };
 }
 
 /** Shares of energy from protein, fat and carbs (P×4, F×9, C×4), 0..1 each; all 0 without macros. */

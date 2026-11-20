@@ -29,6 +29,7 @@ import { PortionRow } from '@/components/day/PortionRow';
 import { familyErrorMessage } from '@/components/family/errors';
 import { Button, Card, IconButton, Screen, StateMessage, StickyFooter, Text } from '@/components/ui';
 import { api } from '@/lib/api';
+import { useFamilyMembers } from '@/lib/family';
 import {
   dayEaten,
   defaultDishUnit,
@@ -128,7 +129,7 @@ export default function DishScreen() {
   const meals = useWeekMeals(date);
   // «Как в прошлый раз» looks through this week and the one before.
   const prevWeek = useWeekMeals(shiftISODate(weekStart(date), -7));
-  const members = useQuery({ queryKey: queryKeys.familyMembers, queryFn: api.familyMembers });
+  const members = useFamilyMembers(date);
   const sessions = useQuery({ queryKey: queryKeys.cooking, queryFn: api.cookingList, enabled: !id && !!sessionId });
   const products = useQuery({
     queryKey: queryKeys.products,

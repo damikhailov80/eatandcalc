@@ -12,23 +12,47 @@ export type DayCalendarProps = {
   today: string;
   onChange: (date: string) => void;
   onClose: () => void;
+  /** Days to mark instead of days with meals (e.g. norm dates). */
+  marked?: ReadonlySet<string>;
 };
 
-/** Month calendar (Mon-first, 6 weeks) to jump to any date; dots on days with meals. */
-export function DayCalendar({ visible, date, today, onChange, onClose }: DayCalendarProps) {
+/** Month calendar (Mon-first, 6 weeks) to jump to any date; dots on days with meals (or on `marked`). */
+export function DayCalendar({ visible, date, today, onChange, onClose, marked }: DayCalendarProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel="Закрыть">
-        {visible ? <CalendarCard date={date} today={today} onChange={onChange} onClose={onClose} /> : null}
+        {visible ? (
+          marked ? (
+            <CalendarCard date={date} today={today} onChange={onChange} onClose={onClose} marked={marked} />
+          ) : (
+            <MealsCalendarCard date={date} today={today} onChange={onChange} onClose={onClose} />
+          )
+        ) : null}
       </Pressable>
     </Modal>
   );
 }
 
-function CalendarCard({ date, today, onChange, onClose }: Omit<DayCalendarProps, 'visible'>) {
-  const [month, setMonth] = useState(() => monthOf(date));
+type CardProps = Omit<DayCalendarProps, 'visible' | 'marked'>;
+
+function MealsCalendarCard(props: CardProps) {
+  const [month, setMonth] = useState(() => monthOf(props.date));
   const meals = useMonthGridMeals(month);
   const planned = new Set((meals.data ?? []).filter((m) => m.dishes.length).map((m) => m.date));
+  return <CalendarCard {...props} month={month} onMonthChange={setMonth} marked={planned} />;
+}
+
+function CalendarCard({
+  date,
+  today,
+  onChange,
+  onClose,
+  marked: planned,
+  ...rest
+}: CardProps & { marked: ReadonlySet<string>; month?: string; onMonthChange?: (month: string) => void }) {
+  const [ownMonth, setOwnMonth] = useState(() => monthOf(date));
+  const month = rest.month ?? ownMonth;
+  const setMonth = rest.onMonthChange ?? setOwnMonth;
 
   const pick = (day: string) => {
     onChange(day);

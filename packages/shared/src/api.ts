@@ -81,24 +81,53 @@ export const OkResponseSchema = z.object({ ok: z.literal(true) });
 
 // ---------- Family members ----------
 
+/** Calendar date `YYYY-MM-DD` (the household's local date). */
+export const ISODateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 const norm = z.number().min(0).max(9999);
+
+export const NormsSchema = z.object({ kcal: norm, protein: norm, fat: norm, carbs: norm });
+
+/** A member's norm in effect from `date` until the next record (one per day). */
+export const MemberNormSchema = z.object({ date: ISODateSchema, norms: NormsSchema });
+export type MemberNormDto = z.infer<typeof MemberNormSchema>;
 
 export const FamilyMemberInputSchema = z.object({
   name: z.string().trim().min(1).max(40),
   sex: z.enum(['male', 'female']),
   color: z.enum(memberColors),
-  norms: z.object({ kcal: norm, protein: norm, fat: norm, carbs: norm }),
+  norms: NormsSchema,
+  /** Date of the first norm record on create (the family's local today); missing = the server's UTC date. */
+  normsDate: ISODateSchema.optional(),
 });
 export type FamilyMemberInput = z.infer<typeof FamilyMemberInputSchema>;
 
-export const FamilyMemberSchema = FamilyMemberInputSchema.extend({
+/** PATCH: name, sex, color. `norms` comes only from old apps (saved as today's record when it differs). */
+export const FamilyMemberUpdateSchema = FamilyMemberInputSchema.omit({ normsDate: true }).extend({
+  norms: NormsSchema.optional(),
+});
+export type FamilyMemberUpdate = z.infer<typeof FamilyMemberUpdateSchema>;
+
+export const FamilyMemberSchema = FamilyMemberInputSchema.omit({ normsDate: true }).extend({
   id: z.string(),
   color: z.string(),
+  /** The latest record (what old apps show); new apps resolve the norm per date from `normHistory`. */
+  norms: NormsSchema,
+  /** Norm records by date ascending; empty from an old server. */
+  normHistory: z.array(MemberNormSchema).default([]),
 });
 export type FamilyMemberDto = z.infer<typeof FamilyMemberSchema>;
 
 export const FamilyMembersResponseSchema = z.object({ members: z.array(FamilyMemberSchema) });
 export const FamilyMemberResponseSchema = z.object({ member: FamilyMemberSchema });
+
+/** PUT /api/family-members/:id/norms: the record on `date` (replaced if it exists); `from` = the record moved here. */
+export const PutMemberNormRequestSchema = z.object({
+  date: ISODateSchema,
+  norms: NormsSchema,
+  from: ISODateSchema.optional(),
+});
+export type PutMemberNormRequest = z.infer<typeof PutMemberNormRequestSchema>;
 
 // ---------- Products ----------
 
@@ -221,9 +250,6 @@ export const RecipesResponseSchema = z.object({ recipes: z.array(RecipeSchema) }
 export const RecipeResponseSchema = z.object({ recipe: RecipeSchema });
 
 // ---------- Cooking sessions ----------
-
-/** Calendar date `YYYY-MM-DD` (the household's local date). */
-export const ISODateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 /** One row of a real pot with the product frozen as it was when added (`CookingItem`). */
 export const CookingItemSchema = z.object({
@@ -360,4 +386,5 @@ export const ApiErrors = {
   ownerCannotLeave: 'OWNER_CANNOT_LEAVE',
   cannotRemoveSelf: 'CANNOT_REMOVE_SELF',
   productInUse: 'PRODUCT_IN_USE',
+  lastNorm: 'LAST_NORM',
 } as const;

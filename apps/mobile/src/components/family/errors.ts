@@ -12,6 +12,7 @@ const messages: Record<string, string> = {
   [ApiErrors.notFound]: 'Не найдено. Возможно, уже удалено.',
   [ApiErrors.validation]: 'Проверьте введённые данные.',
   [ApiErrors.productInUse]: 'Продукт есть в рецептах. Сначала уберите его оттуда.',
+  [ApiErrors.lastNorm]: 'Это единственная норма. Её можно изменить, но не удалить.',
 };
 
 /** Russian message for a failed family/household request. */
