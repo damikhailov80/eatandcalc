@@ -65,6 +65,8 @@ function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean })
   });
   const preview = useMutation({
     mutationFn: () => api.joinPreview(normalizeInviteCode(code)),
+    // A lookup, not a change: the join itself buzzes.
+    meta: { haptic: false },
     onSuccess: (found) =>
       found.conflicts.length || found.recipeConflicts.length
         ? setConflicts(found)

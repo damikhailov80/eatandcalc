@@ -1,14 +1,25 @@
-import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
+import { focusManager, MutationCache, onlineManager, QueryClient } from '@tanstack/react-query';
 import * as Network from 'expo-network';
 import { AppState } from 'react-native';
 
 import { diag } from './diagnostics';
+import { haptics } from './haptics';
 
 /**
  * The app is online-only; the query cache just avoids refetching on every screen focus.
  * Changes from other devices arrive through `useHouseholdSync` (`lib/sync.ts`).
  */
 export const queryClient = new QueryClient({
+  // Every change the server accepted (or refused) gets a short haptic; `meta: { haptic: false }` opts out
+  // (toggles tap on press instead).
+  mutationCache: new MutationCache({
+    onSuccess: (_data, _vars, _ctx, mutation) => {
+      if (mutation.meta?.haptic !== false) haptics.success();
+    },
+    onError: (_error, _vars, _ctx, mutation) => {
+      if (mutation.meta?.haptic !== false) haptics.error();
+    },
+  }),
   defaultOptions: {
     queries: { staleTime: 30_000, retry: 1 },
   },

@@ -5,6 +5,7 @@ import { Alert } from 'react-native';
 
 import { familyErrorMessage } from '@/components/family/errors';
 import { api } from '@/lib/api';
+import { haptics } from '@/lib/haptics';
 import { queryClient, queryKeys } from '@/lib/query';
 
 /** List filters (chips) of products and recipes. Hidden items show up only under `hidden`. `mine` = added by the family. */
@@ -68,7 +69,9 @@ export function useListFlags(
   const { mutate } = useMutation({
     mutationKey,
     mutationFn: ({ id, flag, value }: FlagChange) => request(id, flag, value),
+    meta: { haptic: false },
     onMutate: async (change) => {
+      haptics.tap();
       await queryClient.cancelQueries({ queryKey: key });
       patchCache(key, change);
     },

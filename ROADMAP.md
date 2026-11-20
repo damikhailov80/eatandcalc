@@ -105,6 +105,18 @@ Steps (each one ends with a test on the phones, then commit):
 3. [x] Charts: kcal by day, Б / Ж / У averages, energy shares, by month (6 months).
 4. [x] Docs.
 
+## Stage 8 plan: polish
+
+Decisions:
+- No "frequent items" (dropped: not needed).
+- Haptics: every change the server accepts buzzes once (`Confirm`), a refused one `Reject` (TanStack `MutationCache` in `lib/query.ts`); toggles (♥, hide) tap on press (`meta: { haptic: false }` on the mutation). Android view haptics follow the system touch-feedback setting. Native module → app version `0.0.2`, new APK.
+- Performance: no static problems found (React Compiler, virtualized lists, 30 s query cache); fix only what feels slow on the phones.
+
+Steps:
+1. [x] Empty states: editors tell «Нет связи» (retry) from «не найден» (`LoadError`); history without members, retry for the monthly chart.
+2. [x] Haptics (`expo-haptics`, `lib/haptics.ts`), version `0.0.2` → `npm run prod:release`.
+3. [ ] Performance: what turns out slow in use.
+
 ## Open questions
 
 - Time zones: `date` is the household's local calendar date.
