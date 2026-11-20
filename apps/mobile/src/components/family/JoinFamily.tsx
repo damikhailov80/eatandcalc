@@ -127,7 +127,7 @@ function JoinStep({ initialCode, scan }: { initialCode: string; scan: boolean })
         <Text variant="caption" style={styles.flex} color={othersInFamily ? colors.over : colors.warn}>
           {othersInFamily
             ? 'В вашей текущей семье есть другие аккаунты. Сначала выйдите из неё или удалите их.'
-            : 'Профили вашей текущей семьи будут удалены, продукты и правки перейдут в новую семью.'}
+            : 'Профили и план питания вашей текущей семьи будут удалены, продукты, рецепты и готовки перейдут в новую семью.'}
         </Text>
       </View>
 

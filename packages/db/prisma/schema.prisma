@@ -361,9 +361,9 @@ model MealDish {
   protein      Float
   fat          Float
   carbs        Float
-  /// Date of the cooking session (null for a product).
+  /// Date of the cooking session (null for a recipe or a product).
   sourceDate   DateTime?       @map("source_date") @db.Date
-  /// Weight of the cooked dish when copied (null for a product).
+  /// Session: the cooked weight when copied; recipe: one portion (the whole recipe); null for a product.
   weightG      Float?          @map("weight_g")
   /// The session was not weighed yet: per 100 g is of the raw weight.
   rawWeight    Boolean         @default(false) @map("raw_weight")
