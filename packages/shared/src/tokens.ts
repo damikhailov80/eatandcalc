@@ -62,6 +62,7 @@ export const categoryColors = {
   nuts: { bg: '#EFE3DA', fg: '#5C3A24' },
   oils: { bg: '#F6F0CF', fg: '#5F5310' },
   sweets: { bg: '#F7E1EA', fg: '#7F2A4E' },
+  convenience: { bg: '#E2E6F0', fg: '#3A4766' },
   drinks: { bg: '#DCF0F1', fg: '#1E5A5E' },
   other: { bg: '#EDEAE2', fg: '#4A4740' },
 } as const;

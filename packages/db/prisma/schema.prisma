@@ -213,6 +213,7 @@ enum ProductCategory {
   nuts
   oils
   sweets
+  convenience
   drinks
   other
 

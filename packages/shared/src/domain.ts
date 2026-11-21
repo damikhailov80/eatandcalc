@@ -42,6 +42,7 @@ export const PRODUCT_CATEGORIES = [
   'nuts',
   'oils',
   'sweets',
+  'convenience',
   'drinks',
   'other',
 ] as const;

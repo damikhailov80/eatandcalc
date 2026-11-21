@@ -16,6 +16,7 @@ export const categoryLabels: Record<ProductCategory, string> = {
   nuts: 'Орехи и семена',
   oils: 'Масла и соусы',
   sweets: 'Сладкое',
+  convenience: 'Полуфабрикаты',
   drinks: 'Напитки',
   other: 'Бакалея',
 };
@@ -34,6 +35,7 @@ export const categoryAbbr: Record<ProductCategory, string> = {
   nuts: 'Ор',
   oils: 'Ма',
   sweets: 'Сл',
+  convenience: 'По',
   drinks: 'На',
   other: 'Ба',
 };
