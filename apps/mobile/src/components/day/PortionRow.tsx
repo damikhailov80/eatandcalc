@@ -81,6 +81,8 @@ export function PortionRow({
       {on ? (
         <View style={styles.amount}>
           <Stepper
+            // A unit switch while the field is focused must drop the typed text and show the converted amount.
+            key={unit}
             value={Math.round((grams / per) * 10) / 10}
             onChange={(amount) => onChange({ grams: amount * per })}
             step={stepOf(unit)}
