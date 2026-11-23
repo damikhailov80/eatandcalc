@@ -49,6 +49,8 @@ export class ApiRequestError extends Error {
   }
 }
 
+const REQUEST_TIMEOUT_MS = 30_000;
+
 type RequestOptions = Omit<RequestInit, 'headers' | 'body'> & {
   headers?: Record<string, string>;
   /** JSON-serialized into the request body. */
@@ -61,17 +63,21 @@ export async function apiRequest<S extends z.ZodType>(
   schema: S,
   { json, ...init }: RequestOptions = {},
 ): Promise<z.infer<S>> {
-  const cookie = await authClient.getCookie();
   const method = init.method ?? 'GET';
   // Every write goes to the log (start and finish with duration), so a slow save can be traced.
   const isWrite = method !== 'GET';
   const started = Date.now();
   const took = () => `${Date.now() - started} мс`;
   if (isWrite) diag('api', `${method} ${path} …`);
+  const cookie = await authClient.getCookie();
+  // A hung connection must end in an error (and a log line), not an endless spinner.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...init,
+      signal: controller.signal,
       body: json === undefined ? undefined : JSON.stringify(json),
       credentials: 'omit',
       headers: {
@@ -81,8 +87,11 @@ export async function apiRequest<S extends z.ZodType>(
       },
     });
   } catch (e) {
-    diag('api', `${method} ${path}: сеть за ${took()}: ${e instanceof Error ? e.message : String(e)}`, 'error');
+    const reason = controller.signal.aborted ? 'таймаут' : e instanceof Error ? e.message : String(e);
+    diag('api', `${method} ${path}: сеть за ${took()}: ${reason}`, 'error');
     throw e;
+  } finally {
+    clearTimeout(timer);
   }
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;

@@ -13,6 +13,10 @@ export const queryClient = new QueryClient({
   // Every change the server accepted (or refused) gets a short haptic; `meta: { haptic: false }` opts out
   // (toggles tap on press instead).
   mutationCache: new MutationCache({
+    // Runs before the request (and before any pause): proves a press actually started a save.
+    onMutate: () => {
+      diag('api', `сохранение запущено${onlineManager.isOnline() ? '' : ' (приложение считает, что сети нет)'}`);
+    },
     onSuccess: (_data, _vars, _ctx, mutation) => {
       if (mutation.meta?.haptic !== false) haptics.success();
     },
@@ -20,8 +24,12 @@ export const queryClient = new QueryClient({
       if (mutation.meta?.haptic !== false) haptics.error();
     },
   }),
+  // networkMode 'always': never park a request while the OS reports "offline" (expo-network sometimes does
+  // with a working connection, and a paused save just spins forever with nothing in the log); the request
+  // runs and fails honestly instead (fetch timeout in `apiRequest`).
   defaultOptions: {
-    queries: { staleTime: 30_000, retry: 1 },
+    queries: { staleTime: 30_000, retry: 1, networkMode: 'always' },
+    mutations: { networkMode: 'always' },
   },
 });
 
@@ -33,7 +41,13 @@ focusManager.setEventListener((setFocused) => {
   return () => sub.remove();
 });
 onlineManager.setEventListener((setOnline) => {
-  const sub = Network.addNetworkStateListener((state) => setOnline(state.isConnected !== false));
+  const sub = Network.addNetworkStateListener((state) => {
+    const online = state.isConnected !== false;
+    if (online !== onlineManager.isOnline()) {
+      diag('net', `${online ? 'сеть есть' : 'сети нет'} (${state.type ?? '?'}, internet ${String(state.isInternetReachable)})`, online ? 'info' : 'warn');
+    }
+    setOnline(online);
+  });
   return () => sub.remove();
 });
 
@@ -72,5 +86,8 @@ export async function refreshAll() {
     .findAll({ type: 'active' })
     .map((q) => q.queryKey.join('/'));
   diag('sync', `обновление свайпом: ${keys.join(', ') || 'нет запросов на экране'}`);
+  const started = Date.now();
   await queryClient.refetchQueries({ type: 'active' });
+  const failed = queryClient.getQueryCache().findAll({ type: 'active' }).filter((q) => q.state.status === 'error').length;
+  diag('sync', `обновление свайпом закончено за ${Date.now() - started} мс${failed ? `, с ошибкой: ${failed}` : ''}`, failed ? 'warn' : 'info');
 }
